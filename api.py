@@ -1,6 +1,8 @@
 from fastapi import FastAPI
 from controller import Controller
 from pydantic import BaseModel
+from sqlalchemy import text
+from database import engine
 
 app = FastAPI()
 game = Controller()
@@ -57,15 +59,13 @@ def getInventory():
 
 @app.get("/shop")
 def getShop():
-    items = []
-
-    for name, qty in game.shop.stock.items():
-        items.append({
-            "itemName": name,
-            "stock": qty
-        })
+    with engine.connect() as conn:
+        rows = conn.execute(text("SELECT itemName, stock FROM shop")).fetchall()
 
     return {
         "success": True,
-        "data": items
+        "data": [
+            {"itemName": r[0], "stock": r[1]}
+            for r in rows
+            ]
     }
