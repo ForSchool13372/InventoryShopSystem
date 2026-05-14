@@ -32,13 +32,8 @@ def buy(data: BuyRequest):
 
     result = game.buy(data.itemName, data.quantity)
 
-    if not result:
-        return {
-            "success": False,
-            "data": {
-            "message": "Purchase Failed (Not enough gold or stock)"
-                }
-            }
+    if not result["success"]:
+        return result
 
     return{
         "success": True,

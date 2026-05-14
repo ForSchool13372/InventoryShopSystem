@@ -1,1 +1,1 @@
-{"gold": 100, "inventory": {"sword": 1}, "stock": {"sword": 5, "potion": 10, "garbage": 10}, "level": 1, "xp": 0, "hp": 100}
+{"version": 1, "player": {"gold": 100, "level": 1, "xp": 0, "hp": 100, "inventory": {"sword": 1}}, "shop": {"stock": {"sword": 5, "potion": 10, "garbage": 10}}}

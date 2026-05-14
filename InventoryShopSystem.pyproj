@@ -35,8 +35,8 @@
     <Compile Include="gameEvents.py" />
     <Compile Include="menuService.py" />
     <Compile Include="api.py" />
+    <Compile Include="database.py" />
     <Compile Include="shopService.py" />
-    <Compile Include="saveManager.py" />
     <Compile Include="questManager.py" />
     <Compile Include="quest.py" />
     <Compile Include="shop.py" />

@@ -18,3 +18,9 @@ class Inventory:
 
             if self.items[item.name] <= 0:
                 del self.items[item.name]
+
+    def fromDict(self, data):
+        self.items = data
+
+    def toDict(self):
+        return self.items

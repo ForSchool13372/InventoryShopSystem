@@ -27,11 +27,12 @@ class Player:
             print("Level Up! Now level", self.level)
 
     #Convert player state to dict for saving
-    def toDict(self):
-        return {
-            "gold": self.gold,
-            "inventory": self.inventory.items
-            }
+    def fromDict(self, data):
+        self.gold = data.get("gold", 0)
+        self.level = data.get("level", 1)
+        self.xp = data.get("xp", 0)
+        self.hp = data.get("hp", 100)
+        self.inventory.fromDict(data.get("inventory", {}))
 
     #Show stats method
     def showStats(self):
@@ -42,3 +43,12 @@ class Player:
 
     def revive(self):
         self.hp = 100
+
+    def toDict(self):
+        return {
+            "gold": self.gold,
+            "level": self.level,
+            "xp": self.xp,
+            "hp": self.hp,
+            "inventory": self.inventory.toDict()
+            }

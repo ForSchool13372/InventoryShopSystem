@@ -2,66 +2,46 @@
 from player import Player
 from item import Item
 from enemy import Enemy
-from shop import Shop
 from quest import Quest
 from questManager import QuestManager
-from saveManager import SaveManager
-from inputHandler import InputHandler
 from combatService import CombatService
 from shopService import ShopService
 from gameEventService import GameEventService
 from menuService import MenuService
 from itemService import ItemService
 from gameData import createEnemies,createItems,createQuests, seedShop
+from database import engine, loadPlayer, savePlayer
+from sqlalchemy import text
 
 class Controller:
     def __init__(self):
-        self.player = Player(100)
-        self.shop = Shop()
+        with engine.begin() as conn:
+            data = loadPlayer(conn)
+
+        self.player = Player(data["gold"])
+        self.player.hp = data["hp"]
+        self.player.level = data["level"]
+        self.player.xp = data["xp"]
         self.isRunning = True
         self.enemies = createEnemies()
         self.quests = createQuests()
         self.questManager = QuestManager(self.quests, self.player)
         self.gameEventService = GameEventService(self.player, self.questManager)
-        self.saveManager = SaveManager()
-        self.inputHandler = InputHandler()
         self.combatService = CombatService()
-        self.shopService = ShopService(self.shop)
+        self.shopService = ShopService()
         self.menuService = MenuService(self)
         self.itemService = ItemService()
-        
-        loaded = self.saveManager.loadgame(self.player, self.shop)
-
-        if not loaded:
-            seedShop(self.shop)
 
     #Event Handlers
     def handleInventory(self):
         self.player.inventory.showInventory()
 
-    def handleBuy(self):
-        self.shop.showStock()
-        itemName = self.inputHandler.getInput("Enter item name: ").lower()
+    def handleBuy(self, itemName, quantity):
+        self.buy(itemName.lower(), quantity)
 
-        try:
-            quantity = int(self.inputHandler.getInput("Enter quantity: "))
-        except ValueError:
-            print("Invalid Quantity")
-            return 
-
-        self.buy(itemName, quantity)
-
-    def handleSell(self):
+    def handleSell(self, itemName, quantity):
         self.player.inventory.showInventory()
-        itemName = self.inputHandler.getInput("Enter item name: ").strip().lower()
-
-        try:
-            quantity = int(self.inputHandler.getInput("Enter quantity: "))
-        except ValueError:
-            print("Invalid quantity")
-            return
-
-        self.sell(itemName, quantity)
+        self.sell(itemName.lower(), quantity)
 
     def handleStats(self):
         self.player.showStats()
@@ -70,7 +50,7 @@ class Controller:
         print("\nGame Over")
 
         while True:
-            choice = self.inputHandler.getInput("Revive? (y/n): ").lower()
+            choice = input("Revive? (y/n): ").lower()
 
             if choice == "y":
                 self.revive()
@@ -95,9 +75,9 @@ class Controller:
                 "type": "fightLose"
                 })
 
-    def handleSave(self):
-        self.saveGame()
-        print("Game Saved")
+    def persist(self):
+        with engine.begin() as conn:
+            savePlayer(conn, self.player)
 
     def handleExit(self):
         self.isRunning = False
@@ -123,13 +103,11 @@ class Controller:
 
     def getInventory(self):
         return self.player.inventory.items
-
-    def saveGame(self):
-        self.saveManager.saveGame(self.player, self.shop)
     
     def buy(self, itemName, quantity):
         itemName = itemName.lower()
         item = self.getItem(itemName)
+
         return self.shopService.buy(self.player, item, quantity)
 
     def sell(self, itemName, quantity):
@@ -137,6 +115,12 @@ class Controller:
         item = self.getItem(itemName)
 
         return self.shopService.sell(self.player, item, quantity)
+    
+    def promptBuy(self):
+        return self.menuService.getBuyInput()
+
+    def promptSell(self):
+        return self.menuService.getSellInput()
 
     def run(self):
         actions = self.menuService.getActions()
@@ -147,14 +131,26 @@ class Controller:
             print("1) Buy        2) Sell")
             print("3) Inventory  4) Stats")
             print("5) Fight      6) Exit")
-            print("7) Save       8) Quests")
+            print("7) Quest")
             print("-"*35)
-            choice = self.inputHandler.getInput("> ")
+            choice = input("> ")
 
             action = actions.get(choice)
 
             if action:
-                action()
+                if choice == "1":
+                    with engine.begin() as conn:
+                        rows = conn.execute(text("SELECT itemName, stock FROM shop")).fetchall()
+                        for r in rows:
+                            print(r[0], "x", r[1])
+                    self.handleBuy(*self.promptBuy())
+                    self.persist()
+                elif choice == "2":
+                    self.handleSell(*self.promptSell())
+                    self.persist()
+                else:
+                    action()
+                    self.persist()
             else:
                 print("Invalid Choice")
 
