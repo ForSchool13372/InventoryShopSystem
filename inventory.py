@@ -23,4 +23,7 @@ class Inventory:
         self.items = data
 
     def toDict(self):
-        return self.items
+        return [
+            {"itemName": name, "quantity": qty}
+            for name, qty in self.items.items()
+            ]

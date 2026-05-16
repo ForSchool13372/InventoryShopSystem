@@ -15,10 +15,30 @@ class MenuService:
 
     def getBuyInput(self):
         itemName = input("Enter item name: ")
-        quantity = int(input("Enter quantity: "))
+
+        while True:
+            try:
+                quantity = int(input("Enter quantity: "))
+                if quantity <= 0:
+                    print("Quantity must be > 0")
+                    continue
+                break
+            except ValueError:
+                print("Please enter a valid number")
+
         return itemName, quantity
 
     def getSellInput(self):
         itemName = input("Enter item name: ")
-        quantity = int(input("Enter quantity: "))
+
+        while True:
+            try:
+                quantity = int(input("Enter quantity: "))
+                if quantity <= 0:
+                    print("Quantity must be > 0")
+                    continue
+                break
+            except ValueError:
+                print("Please enter a valid number")
+
         return itemName, quantity

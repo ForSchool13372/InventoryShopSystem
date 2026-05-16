@@ -1,9 +1,6 @@
-from inventory import Inventory
-
 class Player:
     def __init__(self, gold):
         self.gold = gold
-        self.inventory = Inventory()
 
         #XP System
         self.level = 1
@@ -32,7 +29,6 @@ class Player:
         self.level = data.get("level", 1)
         self.xp = data.get("xp", 0)
         self.hp = data.get("hp", 100)
-        self.inventory.fromDict(data.get("inventory", {}))
 
     #Show stats method
     def showStats(self):
@@ -50,5 +46,4 @@ class Player:
             "level": self.level,
             "xp": self.xp,
             "hp": self.hp,
-            "inventory": self.inventory.toDict()
-            }
+        }

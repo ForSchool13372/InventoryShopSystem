@@ -1,6 +1,6 @@
 from sqlalchemy import create_engine, text
 
-#Create in memory database
+# Create SQLite database (file-based)
 engine = create_engine("sqlite:///game.db", echo = False)
 
 def seedShop(conn):
@@ -74,6 +74,17 @@ with engine.begin() as conn:
             itemName TEXT UNIQUE,
             stock INTEGER,
             price INTEGER
+        )
+    """))
+
+    #Create Inventory Table
+    conn.execute(text("""
+        CREATE TABLE IF NOT EXISTS playerItems (
+            id INTEGER PRIMARY KEY,
+            playerID INTEGER,
+            itemName TEXT,
+            quantity INTEGER,
+            UNIQUE(playerID, itemName)
         )
     """))
 

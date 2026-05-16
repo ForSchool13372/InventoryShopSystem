@@ -34,13 +34,13 @@ class Controller:
 
     #Event Handlers
     def handleInventory(self):
-        self.player.inventory.showInventory()
+        items = self.getInventory()
+        print(items)
 
     def handleBuy(self, itemName, quantity):
         self.buy(itemName.lower(), quantity)
 
     def handleSell(self, itemName, quantity):
-        self.player.inventory.showInventory()
         self.sell(itemName.lower(), quantity)
 
     def handleStats(self):
@@ -102,20 +102,62 @@ class Controller:
         return self.itemService.getItem(itemName)
 
     def getInventory(self):
-        return self.player.inventory.items
+        with engine.begin() as conn:
+            rows = conn.execute(text("""
+                SELECT itemName, quantity
+                FROM playerItems
+                WHERE playerID = 1
+            """)).fetchall()
+
+        return [
+            {"itemName": r[0], "quantity": r[1]}
+                for r in rows
+            ]
     
     def buy(self, itemName, quantity):
         itemName = itemName.lower()
         item = self.getItem(itemName)
 
-        return self.shopService.buy(self.player, item, quantity)
+        result = self.shopService.buy(self.player, item, quantity)
+
+        if result["success"]:
+            with engine.begin() as conn:
+                conn.execute(text("""
+                    INSERT INTO playerItems (playerID, itemName, quantity)
+                    VALUES (1, :itemName, :qty)
+                    ON CONFLICT(playerID, itemName)
+                    DO UPDATE SET quantity = quantity + :qty
+                """),{
+                             "itemName": itemName,
+                             "qty": quantity
+                })
+
+        return result
 
     def sell(self, itemName, quantity):
         itemName = itemName.lower()
         item = self.getItem(itemName)
 
-        return self.shopService.sell(self.player, item, quantity)
+        result = self.shopService.sell(self.player, item, quantity)
+
+        if result["success"]:
+            with engine.begin() as conn:
+                conn.execute(text("""
+                    UPDATE playerItems
+                    SET quantity = quantity - :qty
+                    WHERE playerID = 1 AND itemName = :itemName
+                """),{
+                    "itemName": itemName,
+                    "qty": quantity
+                    })
     
+                conn.execute(text("""
+                    DELETE FROM playerItems
+                    WHERE playerID = 1 AND quantity <= 0
+                """))
+
+        return result
+
     def promptBuy(self):
         return self.menuService.getBuyInput()
 

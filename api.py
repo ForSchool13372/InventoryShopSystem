@@ -24,6 +24,14 @@ def getPlayer():
 
 @app.post("/buy")
 def buy(data: BuyRequest):
+    if not data.itemName or not data.itemName.strip():
+        return {
+                "success": False,
+                "data": {
+                    "message": "Item name cannot be empty"
+                    }
+            }
+
     if data.quantity <= 0:
         return {
             "success": False,
@@ -59,13 +67,21 @@ def getInventory():
 
 @app.get("/shop")
 def getShop():
-    with engine.connect() as conn:
-        rows = conn.execute(text("SELECT itemName, stock FROM shop")).fetchall()
+    try:
+        with engine.connect() as conn:
+            rows = conn.execute(text("SELECT itemName, stock FROM shop")).fetchall()
 
-    return {
-        "success": True,
-        "data": [
-            {"itemName": r[0], "stock": r[1]}
-            for r in rows
-            ]
-    }
+        return {
+            "success": True,
+            "data": [
+                {"itemName": r[0], "stock": r[1]}
+                for r in rows
+                ]
+        }
+    except Exception:
+        return {
+            "success": False,
+            "data": {
+                    "message": "Failed to fetch shop data"
+                }
+            }

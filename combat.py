@@ -8,18 +8,22 @@ def dealEnemyDamage(enemy):
     return random.randint(enemy.minDamage, enemy.maxDamage)
 
 def combatRound(player, enemy):
+    logs = []
+
     # Player attacks
     damage = dealPlayerDamage()
     enemy.takeDamage(damage)
-    print(f"You deal {damage} damage. Enemy HP: {enemy.hp}")
+    logs.append(f"You deal {damage} damage. Enemy HP: {enemy.hp}")
 
     if enemy.hp <= 0:
-        return
+        return logs
 
     # Enemy attacks
     enemyDamage = dealEnemyDamage(enemy)
     player.takeDamage(enemyDamage)
-    print(f"Enemy hits you for {enemyDamage}. Your HP: {player.hp}")
+    logs.append(f"Enemy hits you for {enemyDamage}. Your HP: {player.hp}")
+
+    return logs
 
 def fight(player, enemies):
     enemyTemplate = random.choice(enemies)
@@ -35,7 +39,9 @@ def fight(player, enemies):
     print(f"You fight a {enemy.name}!")
 
     while enemy.hp > 0 and player.hp > 0:
-        combatRound(player, enemy)
+        logs = combatRound(player, enemy)
+        for log in logs:
+            print(log)
 
     if player.hp <= 0:
         return {
