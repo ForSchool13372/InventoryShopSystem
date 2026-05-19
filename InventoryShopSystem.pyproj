@@ -36,6 +36,11 @@
     <Compile Include="menuService.py" />
     <Compile Include="api.py" />
     <Compile Include="database.py" />
+    <Compile Include="characterSelectService.py" />
+    <Compile Include="inventoryRepository.py" />
+    <Compile Include="commands.py" />
+    <Compile Include="cli.py" />
+    <Compile Include="shopRepository.py" />
     <Compile Include="shopService.py" />
     <Compile Include="questManager.py" />
     <Compile Include="quest.py" />
@@ -54,8 +59,12 @@
     </Interpreter>
   </ItemGroup>
   <ItemGroup>
+    <Content Include=".vscode\launch.json" />
     <Content Include="README.md" />
     <Content Include="requirements.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include=".vscode\" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />
   <!-- Uncomment the CoreCompile target to enable the Build command in

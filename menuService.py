@@ -1,17 +1,6 @@
 class MenuService:
-    def __init__(self, controller):
-        self.controller = controller
-
-    def getActions(self):
-        return {
-            "1": self.controller.handleBuy,
-            "2": self.controller.handleSell,
-            "3": self.controller.handleInventory,
-            "4": self.controller.handleStats,
-            "5": self.controller.handleFight,
-            "6": self.controller.handleExit,
-            "7": self.controller.handleQuest,
-            }
+    def __init__(self, shopRepo):
+        self.shopRepo = shopRepo
 
     def getBuyInput(self):
         itemName = input("Enter item name: ")
@@ -42,3 +31,21 @@ class MenuService:
                 print("Please enter a valid number")
 
         return itemName, quantity
+
+    def showStock(self):
+        rows = self.shopRepo.getShopStock()
+        for r in rows:
+            print(r["itemName"], "x", r["stock"])
+
+    def showInventory(self, items):
+        print(items)
+
+    def getBuyFlow(self):
+        self.showStock()
+        return self.getBuyInput()
+
+    def getSellFlow(self):
+        return self.getSellInput()
+
+    def getChoice(self):
+        return input("> ")

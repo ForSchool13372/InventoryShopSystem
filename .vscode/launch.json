@@ -1,0 +1,13 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Run CLI in CMD",
+      "type": "python",
+      "request": "launch",
+      "program": "${workspaceFolder}/cli.py",
+      "console": "externalTerminal",
+      "cwd": "${workspaceFolder}"
+    }
+  ]
+}

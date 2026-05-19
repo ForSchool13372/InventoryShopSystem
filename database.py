@@ -20,8 +20,11 @@ def seedShop(conn):
                 "price": price
             })
 
-def loadPlayer(conn):
-    result = conn.execute(text("SELECT gold, hp, level, xp FROM player WHERE id = 1"))
+def loadPlayer(conn, playerId):
+    result = conn.execute(
+        text("SELECT gold, hp, level, xp FROM player WHERE id = :id"),
+        {"id": playerId}
+    )
     row = result.fetchone()
 
     if not row:
@@ -32,22 +35,23 @@ def loadPlayer(conn):
         "hp": row[1],
         "level": row[2],
         "xp": row[3]
-        }
+    }
 
-def savePlayer(conn, player):
+def savePlayer(conn, player, playerId):
     conn.execute(text("""
         UPDATE player
         SET gold = :gold,
             hp = :hp,
             level = :level,
             xp = :xp
-        WHERE id = 1
-    """),{
-            "gold": player.gold,
-            "hp": player.hp,
-            "level": player.level,
-            "xp": player.xp
-        })
+        WHERE id = :id
+    """), {
+        "gold": player.gold,
+        "hp": player.hp,
+        "level": player.level,
+        "xp": player.xp,
+        "id": playerId
+    })
 
 with engine.begin() as conn:
     #Player Table
@@ -61,10 +65,20 @@ with engine.begin() as conn:
         )
     """))
 
-    #Insert Player Table
+    #Insert Player Table (3 Slots)
     conn.execute(text("""
-        INSERT OR IGNORE INTO player (gold, hp, level, xp)
-        VALUES (100, 100, 1, 0)
+    INSERT OR IGNORE INTO player (id, gold, hp, level, xp)
+    VALUES (1, 100, 100, 1, 0)
+    """))
+
+    conn.execute(text("""
+    INSERT OR IGNORE INTO player (id, gold, hp, level, xp)
+    VALUES (2, 100, 100, 1, 0)
+    """))
+
+    conn.execute(text("""
+    INSERT OR IGNORE INTO player (id, gold, hp, level, xp)
+    VALUES (3, 100, 100, 1, 0)
     """))
 
     #Create Shop Table

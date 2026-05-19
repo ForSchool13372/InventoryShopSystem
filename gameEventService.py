@@ -11,4 +11,4 @@ class GameEventService:
             self.questManager.update(event["enemy"])
 
         elif eventType == "fightLose":
-            self.player.hp = 100
+            self.player.hp = 0
