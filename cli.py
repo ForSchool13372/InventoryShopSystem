@@ -1,17 +1,45 @@
-#Imports
+# Imports
 from controller import Controller
 from characterSelectService import selectCharacter
 from menuService import MenuService
+
 from shopRepository import ShopRepository
 from inventoryRepository import InventoryRepository
+from shopService import ShopService
+from itemService import ItemService
 
-#Command Line Interface
+from combatService import CombatService
+from gameData import createEnemies, createQuests
+
+
+# Command Line Interface
 class GameCLI:
     def __init__(self, playerId):
-        self.controller = Controller(playerId)
 
-        self.menuService = MenuService(ShopRepository())
-        self.inventoryRepo = InventoryRepository()
+        # ---------------- SHARED DEPENDENCIES ----------------
+        shopRepo = ShopRepository()
+        shopService = ShopService()
+        inventoryRepo = InventoryRepository()
+        itemService = ItemService()
+
+        combatService = CombatService()
+        enemies = createEnemies()
+        quests = createQuests()
+
+        # ---------------- CONTROLLER ----------------
+        self.controller = Controller(
+            playerId,
+            shopService,
+            shopRepo,
+            inventoryRepo,
+            itemService,
+            combatService,
+            enemies,
+            quests
+        )
+
+        # ---------------- MENU ----------------
+        self.menuService = MenuService(shopRepo)
 
         self.isRunning = True
 
@@ -28,9 +56,11 @@ class GameCLI:
     # ---------------- MAIN LOOP ----------------
     def run(self):
         while self.isRunning:
-            print("\n[ GOLD:", self.controller.player.gold,
-                  "| HP:", self.controller.player.hp,
-                  "| Level:", self.controller.player.level, "]")
+            player = self.controller.player
+
+            print("\n[ GOLD:", player.gold,
+                  "| HP:", player.hp,
+                  "| Level:", player.level, "]")
 
             print("-" * 35)
             print("1) Buy        2) Sell")
@@ -55,7 +85,7 @@ class GameCLI:
         print(result)
 
     def handleSell(self):
-        items = self.inventoryRepo.loadInventory(self.controller.playerId)
+        items = self.controller.getInventory()
         self.menuService.showInventory(items)
 
         itemName, quantity = self.menuService.getSellFlow()
@@ -67,27 +97,27 @@ class GameCLI:
         self.menuService.showInventory(items)
 
     def handleStats(self):
+        stats = self.controller.getPlayerStats()
+
         print("\n--- PLAYER STATS ---")
-        print("Gold:", self.controller.player.gold)
-        print("HP:", self.controller.player.hp)
-        print("Level:", self.controller.player.level)
-        print("XP:", self.controller.player.xp)
+        print("Gold:", stats["gold"])
+        print("HP:", stats["hp"])
+        print("Level:", stats["level"])
+        print("XP:", stats["xp"])
 
     def handleFight(self):
-        result = self.controller.combatService.handleFight(
-            self.controller.player,
-            self.controller.enemies
-        )
-
+        result = self.controller.fight()
         print(result)
 
-        if result["result"] == "lose":
-            self.controller.handleDeath()
+        if result.get("result") == "lose":
+            self.controller.revive()
 
         self.controller.persist()
 
     def handleQuest(self):
-        for quest in self.controller.quests:
+        quests = self.controller.getQuests()
+
+        for quest in quests:
             if quest.unlocked:
                 quest.showQuest()
             else:

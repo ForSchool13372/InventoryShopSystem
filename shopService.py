@@ -6,6 +6,9 @@ class ShopService:
         if quantity <= 0:
             return {"success": False, "message": "Invalid quantity"}
 
+        if not hasattr(item, "price"):
+            return {"success": False, "message": "Invalid Item"}
+
         totalCost = item.price * quantity
 
         if player.gold < totalCost:
@@ -29,6 +32,9 @@ class ShopService:
 
         if quantity <= 0:
             return {"success": False, "message": "Invalid quantity"}
+
+        if not hasattr(item, "price"):
+            return {"success": False, "message": "Invalid Item"}
 
         totalGain = item.price * quantity
 

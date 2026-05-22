@@ -4,14 +4,14 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>bcbd5d31-dfb1-4f67-9fbf-dc4f028f5a91</ProjectGuid>
     <ProjectHome>.</ProjectHome>
-    <StartupFile>controller.py</StartupFile>
+    <StartupFile>cli.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
     <OutputPath>.</OutputPath>
     <Name>InventoryShopSystem</Name>
     <RootNamespace>InventoryShopSystem</RootNamespace>
-    <InterpreterId>MSBuild|env1|$(MSBuildProjectFullPath)</InterpreterId>
+    <InterpreterId>MSBuild|env|$(MSBuildProjectFullPath)</InterpreterId>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
     <DebugSymbols>true</DebugSymbols>
@@ -40,6 +40,9 @@
     <Compile Include="inventoryRepository.py" />
     <Compile Include="commands.py" />
     <Compile Include="cli.py" />
+    <Compile Include="auth.py" />
+    <Compile Include="gameFactory.py" />
+    <Compile Include="playerRepository.py" />
     <Compile Include="shopRepository.py" />
     <Compile Include="shopService.py" />
     <Compile Include="questManager.py" />
@@ -57,14 +60,19 @@
       <PathEnvironmentVariable>PYTHONPATH</PathEnvironmentVariable>
       <Architecture>X64</Architecture>
     </Interpreter>
+    <Interpreter Include="env\">
+      <Id>env</Id>
+      <Version>3.13</Version>
+      <Description>env (Python 3.13 (64-bit))</Description>
+      <InterpreterPath>Scripts\python.exe</InterpreterPath>
+      <WindowsInterpreterPath>Scripts\pythonw.exe</WindowsInterpreterPath>
+      <PathEnvironmentVariable>PYTHONPATH</PathEnvironmentVariable>
+      <Architecture>X64</Architecture>
+    </Interpreter>
   </ItemGroup>
   <ItemGroup>
-    <Content Include=".vscode\launch.json" />
     <Content Include="README.md" />
     <Content Include="requirements.txt" />
-  </ItemGroup>
-  <ItemGroup>
-    <Folder Include=".vscode\" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />
   <!-- Uncomment the CoreCompile target to enable the Build command in

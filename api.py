@@ -1,79 +1,146 @@
-from fastapi import FastAPI
-from pydantic import BaseModel
-from sqlalchemy import text
+from fastapi import FastAPI, HTTPException, Header
+from pydantic import BaseModel, field_validator
+from auth import verifyToken
+from gameFactory import GameFactory
 from database import engine
-from controller import Controller
+from sqlalchemy import text
+
+# ---------------- APP ----------------
 
 app = FastAPI()
 
-def getGame(playerId: int):
-    return Controller(playerId)
+# ---------------- FACTORY ----------------
+
+gameFactory = GameFactory()
+
+# ---------------- HELPERS ----------------
+
+def ok(data):
+    return {"success": True, "data": data}
+
+
+def handleResult(result):
+    if not result.get("success"):
+        raise HTTPException(status_code=400, detail=result.get("message", "Bad request"))
+    return {"message": result["message"]}
+
+
+def getCurrentPlayer(token: str | None = Header(default=None)):
+    if not token:
+        raise HTTPException(status_code=401, detail="Missing token")
+
+    payload = verifyToken(token)
+    if not payload:
+        raise HTTPException(status_code=401, detail="Invalid token")
+
+    return payload["playerId"]
+
+
+def validatePlayerId(playerId: int):
+    with engine.begin() as conn:
+        result = conn.execute(
+            text("SELECT 1 FROM player WHERE id = :id"),
+            {"id": playerId}
+        ).fetchone()
+
+    if not result:
+        raise HTTPException(status_code=404, detail="Player does not exist")
+
+
+def authorizePlayer(playerId: int, token: str):
+    validatePlayerId(playerId)
+
+    authPlayerId = getCurrentPlayer(token)
+    if authPlayerId != playerId:
+        raise HTTPException(status_code=403, detail="Not your player")
+
+
+def normalizeItemName(name: str):
+    return name.strip().lower()
+
+
+# ---------------- REQUEST MODEL ----------------
 
 class BuyRequest(BaseModel):
     itemName: str
     quantity: int
 
+    @field_validator("itemName")
+    def itemNameNotEmpty(cls, v):
+        if not v.strip():
+            raise ValueError("Item name cannot be empty")
+        return v
 
-# ---------------- PLAYER ----------------
+    @field_validator("quantity")
+    def quantityPositive(cls, v):
+        if v <= 0:
+            raise ValueError("Quantity must be greater than 0")
+        return v
+
+
+# ---------------- GAME FACTORY ACCESS ----------------
+
+def getGame(playerId: int):
+    return gameFactory.create(playerId)
+
+
+# ---------------- ROUTES ----------------
+
 @app.get("/player/{playerId}")
-def getPlayer(playerId: int):
+def getPlayer(playerId: int, token: str = Header(None)):
+    authorizePlayer(playerId, token)
+
     game = getGame(playerId)
 
-    return {
-        "success": True,
-        "data": {
-            "gold": game.player.gold,
-            "hp": game.player.hp,
-            "level": game.player.level
-        }
-    }
+    return ok({
+        "gold": game.player.gold,
+        "hp": game.player.hp,
+        "level": game.player.level
+    })
 
 
-# ---------------- BUY ----------------
 @app.post("/buy/{playerId}")
-def buy(playerId: int, data: BuyRequest):
+def buy(playerId: int, data: BuyRequest, token: str = Header(None)):
+    authorizePlayer(playerId, token)
+
     game = getGame(playerId)
 
-    if not data.itemName.strip():
-        return {
-            "success": False,
-            "data": {"message": "Item name cannot be empty"}
-        }
+    itemName = normalizeItemName(data.itemName)
+    result = game.buy(itemName, data.quantity)
 
-    if data.quantity <= 0:
-        return {
-            "success": False,
-            "data": {"message": "Quantity must be greater than 0"}
-        }
+    game.persist()
 
-    return game.buy(data.itemName, data.quantity)
+    return ok(handleResult(result))
 
 
-# ---------------- INVENTORY ----------------
 @app.get("/inventory/{playerId}")
-def getInventory(playerId: int):
+def getInventory(playerId: int, token: str = Header(None)):
+    authorizePlayer(playerId, token)
+
     game = getGame(playerId)
 
-    return {
-        "success": True,
-        "data": {
-            "items": game.getInventory()
-        }
-    }
+    return ok({
+        "items": game.getInventory()
+    })
 
 
-# ---------------- SHOP ----------------
 @app.get("/shop")
 def getShop():
-    with engine.connect() as conn:
+    with engine.begin() as conn:
         rows = conn.execute(
             text("SELECT itemName, stock FROM shop")
         ).fetchall()
 
-    return {
-        "success": True,
-        "data": [
-            {"itemName": r[0], "stock": r[1]}
-            for r in rows
-        ]
-    }
+    return ok([
+        {"itemName": r[0], "stock": r[1]}
+        for r in rows
+    ])
+
+
+@app.post("/login/{playerId}")
+def login(playerId: int):
+    validatePlayerId(playerId)
+
+    game = getGame(playerId)
+
+    return game.login()

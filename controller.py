@@ -1,69 +1,84 @@
 from player import Player
-from questManager import QuestManager
 from combatService import CombatService
-from shopService import ShopService
+from auth import createAccessToken
+from playerRepository import PlayerRepository
+from questManager import QuestManager
 from gameEventService import GameEventService
-from itemService import ItemService
-from shopRepository import ShopRepository
-from inventoryRepository import InventoryRepository
-from gameData import createEnemies, createQuests
-from database import engine, loadPlayer, savePlayer
 
 
 class Controller:
-    def __init__(self, playerId):
-        with engine.begin() as conn:
-            data = loadPlayer(conn, playerId)
+    def __init__(
+        self,
+        playerId,
+        shopService,
+        shopRepo,
+        inventoryRepo,
+        itemService,
+        combatService,
+        enemies,
+        quests
+    ):
+        # ---------------- REPOSITORY ----------------
+        self.playerRepo = PlayerRepository()
 
+        data = self.playerRepo.load(playerId)
+        if not data:
+            raise ValueError("Player not found")
+
+        # ---------------- PLAYER STATE ----------------
         self.playerId = playerId
-
         self.player = Player(data["gold"])
         self.player.hp = data["hp"]
         self.player.level = data["level"]
         self.player.xp = data["xp"]
 
-        self.enemies = createEnemies()
-        self.quests = createQuests()
+        # ---------------- DOMAIN STATE (INJECTED) ----------------
+        # Important: Controller does NOT construct game world
+        self.enemies = enemies
+        self.quests = quests
 
+        # ---------------- SYSTEMS ----------------
         self.questManager = QuestManager(self.quests, self.player)
         self.gameEventService = GameEventService(self.player, self.questManager)
 
-        self.combatService = CombatService()
-        self.shopService = ShopService()
+        # ---------------- SERVICES ----------------
+        self.combatService = combatService
+        self.shopService = shopService
+        self.shopRepo = shopRepo
+        self.inventoryRepo = inventoryRepo
+        self.itemService = itemService
 
-        self.shopRepo = ShopRepository()
-        self.inventoryRepo = InventoryRepository()
-        self.itemService = ItemService()
+    # =========================================================
+    # AUTH / LIFECYCLE
+    # =========================================================
 
-    # ---------------- CORE GAME ACTIONS ----------------
+    def login(self):
+        return {
+            "success": True,
+            "token": createAccessToken({"playerId": self.playerId})
+        }
 
-    def getInventory(self):
-        return self.inventoryRepo.loadInventory(self.playerId)
+    def revive(self):
+        self.player.revive()
 
-    def getItem(self, itemName):
-        return self.itemService.getItem(itemName)
+    def persist(self):
+        self.playerRepo.save(self.playerId, self.player)
 
-    def buy(self, itemName, quantity):
-        item = self.getItem(itemName.lower())
+    # =========================================================
+    # PLAYER INFO
+    # =========================================================
 
-        return self.shopService.buy(
-            self.player,
-            item,
-            quantity,
-            self.playerId,
-            self.shopRepo
-        )
+    def getPlayerStats(self):
+        return {
+            "gold": self.player.gold,
+            "hp": self.player.hp,
+            "level": self.player.level,
+            "xp": self.player.xp
+        }
 
-    def sell(self, itemName, quantity):
-        item = self.getItem(itemName.lower())
-
-        return self.shopService.sell(
-            self.player,
-            item,
-            quantity,
-            self.playerId,
-            self.shopRepo
-        )
+    # =========================================================
+    # GAME ACTIONS (ORCHESTRATION ONLY)
+    # =========================================================
 
     def fight(self):
         result = self.combatService.handleFight(self.player, self.enemies)
@@ -75,31 +90,48 @@ class Controller:
                 "enemy": result["enemy"]
             })
         else:
-            self.emitEvent({
-                "type": "fightLose"
-            })
+            self.emitEvent({"type": "fightLose"})
 
         return result
 
-    def getPlayerStats(self):
-        return {
-            "gold": self.player.gold,
-            "hp": self.player.hp,
-            "level": self.player.level,
-            "xp": self.player.xp
-        }
+    def buy(self, itemName, quantity):
+        item = self.itemService.getItem(itemName.lower())
+
+        return self.shopService.buy(
+            self.player,
+            item,
+            quantity,
+            self.playerId,
+            self.shopRepo
+        )
+
+    def sell(self, itemName, quantity):
+        item = self.itemService.getItem(itemName.lower())
+
+        return self.shopService.sell(
+            self.player,
+            item,
+            quantity,
+            self.playerId,
+            self.shopRepo
+        )
+
+    # =========================================================
+    # DATA ACCESS
+    # =========================================================
+
+    def getShop(self):
+        return self.shopRepo.getShopItems()
+
+    def getInventory(self):
+        return self.inventoryRepo.loadInventory(self.playerId)
 
     def getQuests(self):
         return self.quests
 
-    # ---------------- SYSTEM ----------------
+    # =========================================================
+    # INTERNAL EVENTS
+    # =========================================================
 
     def emitEvent(self, event):
         self.gameEventService.handleEvent(event)
-
-    def revive(self):
-        self.player.revive()
-
-    def persist(self):
-        with engine.begin() as conn:
-            savePlayer(conn, self.player, self.playerId)
