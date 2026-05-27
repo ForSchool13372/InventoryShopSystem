@@ -17,7 +17,10 @@ gameFactory = GameFactory()
 #Security layer which websites can talk to my backend API
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "http://localhost:5173",
+        "https://inventoryshopsystem.vercel.app"
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

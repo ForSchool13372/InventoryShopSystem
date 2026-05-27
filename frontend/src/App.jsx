@@ -12,7 +12,7 @@ function App() {
     const [inputPlayerId, setInputPlayerId] = useState("");
 
     //Website
-    const API = "https://inventory-shop-api.onrender.com";
+    const API = "https://inventoryshopsystem.onrender.com";
 
     // --------------------------------
     // HELPERS
