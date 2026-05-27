@@ -13,7 +13,7 @@ class InventoryRepository:
                     "playerId": playerId
                 }).fetchall()
 
-        return {r[0]: r[1] for r in rows}
+        return [{"itemName": r[0], "quantity": r[1]} for r in rows]
 
     def saveInventory(self, playerId, inventoryDict):
         with engine.begin() as conn:

@@ -5,41 +5,33 @@ from menuService import MenuService
 
 from shopRepository import ShopRepository
 from inventoryRepository import InventoryRepository
+from playerRepository import PlayerRepository
+
 from shopService import ShopService
 from itemService import ItemService
-
 from combatService import CombatService
 from gameData import createEnemies, createQuests
 
+from gameFactory import GameFactory
 
-# Command Line Interface
+
+# =========================================================
+# CLI
+# =========================================================
+
 class GameCLI:
     def __init__(self, playerId):
 
-        # ---------------- SHARED DEPENDENCIES ----------------
-        shopRepo = ShopRepository()
-        shopService = ShopService()
-        inventoryRepo = InventoryRepository()
-        itemService = ItemService()
+        # =====================================================
+        # FACTORY (NEW CLEAN APPROACH)
+        # =====================================================
+        self.gameFactory = GameFactory()
+        self.controller = self.gameFactory.create(playerId)
 
-        combatService = CombatService()
-        enemies = createEnemies()
-        quests = createQuests()
-
-        # ---------------- CONTROLLER ----------------
-        self.controller = Controller(
-            playerId,
-            shopService,
-            shopRepo,
-            inventoryRepo,
-            itemService,
-            combatService,
-            enemies,
-            quests
-        )
-
-        # ---------------- MENU ----------------
-        self.menuService = MenuService(shopRepo)
+        # =====================================================
+        # MENU
+        # =====================================================
+        self.menuService = MenuService(self.controller.shopRepo)
 
         self.isRunning = True
 

@@ -42,6 +42,7 @@
     <Compile Include="cli.py" />
     <Compile Include="auth.py" />
     <Compile Include="gameFactory.py" />
+    <Compile Include="gameContext.py" />
     <Compile Include="playerRepository.py" />
     <Compile Include="shopRepository.py" />
     <Compile Include="shopService.py" />
@@ -73,6 +74,8 @@
   <ItemGroup>
     <Content Include="README.md" />
     <Content Include="requirements.txt" />
+    <Content Include="AuthProvider.jsx" />
+    <Content Include="useAuth.js" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />
   <!-- Uncomment the CoreCompile target to enable the Build command in
