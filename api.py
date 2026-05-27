@@ -25,6 +25,9 @@ allowOrigins = [
     "https://inventoryshopsystem.vercel.app"
 ]
 
+if FRONTEND_URL:
+    allowOrigins.append(FRONTEND_URL)
+
 # if you set env var on Render, it overrides / extends safely
 if FRONTEND_URL:
     allowOrigins.append(FRONTEND_URL)
