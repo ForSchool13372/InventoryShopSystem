@@ -11,7 +11,8 @@ function App() {
     const [loading, setLoading] = useState(true);
     const [inputPlayerId, setInputPlayerId] = useState("");
 
-    const API = "http://127.0.0.1:8000";
+    //Website
+    const API = "https://inventory-shop-api.onrender.com";
 
     // --------------------------------
     // HELPERS
