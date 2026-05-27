@@ -21,7 +21,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:5173",
-        "https://inventoryshopsystem.vercel.app"
+        "https://inventory-shop-system.vercel.app/"
     ],
     allow_credentials=True,
     allow_methods=["*"],
