@@ -1,4 +1,4 @@
-const API = "https://inventoryshopsystem.onrender.com";
+const API = import.meta.env.VITE_API_URL;
 
 // ----------------------------
 // Generic request wrapper
