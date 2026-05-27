@@ -1,104 +1,84 @@
-﻿//Use state = Store Data
-//useEffect = run code when something happens like (load/update)
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState, useCallback } from "react";
 import { useAuth } from "./useAuth";
+
+import {
+    getShop,
+    buyItem,
+    sellItem,
+    getInventory,
+    getPlayer,
+    loginPlayer
+} from "./apiClient";
+
 function App() {
     const { token, playerId, login, logout } = useAuth();
+
     const [items, setItems] = useState([]);
     const [inventory, setInventory] = useState([]);
-    const [error, setError] = useState(""); 
     const [playerStats, setPlayerStats] = useState(null);
+    const [error, setError] = useState("");
     const [loading, setLoading] = useState(true);
     const [inputPlayerId, setInputPlayerId] = useState("");
 
-    //Website
-    const API = "https://inventoryshopsystem.onrender.com";
-
-    // --------------------------------
-    // HELPERS
-    // --------------------------------
-    const loadInventory = async (jwt, id) => {
-        if (!jwt || !id) return;
-
-        const res = await fetch(`${API}/inventory/${id}`, { 
-            headers: {
-                token: jwt
-            }
-        });
-
-        const data = await res.json();
-        setInventory(data.data.items);
+    // ----------------------------
+    // STYLES (clean system)
+    // ----------------------------
+    const cardStyle = {
+        background: "#fff",
+        padding: "20px",
+        borderRadius: "14px",
+        boxShadow: "0 10px 30px rgba(0,0,0,0.08)",
+        marginBottom: "20px",
+        border: "1px solid rgba(0,0,0,0.05)"
     };
 
-    const loadPlayerStats = async (jwt, id) => {
-        if (!jwt || !id) return;
-
-        const res = await fetch(`${API}/player/${id}`, {
-            headers: { token: jwt }
-        });
-
-        const data = await res.json();
-        setPlayerStats(data.data);
-    }
-
-    const refreshPlayerData = (jwt, id) => {
-        loadInventory(jwt, id);
-        loadPlayerStats(jwt, id);
+    const buttonStyle = {
+        padding: "8px 12px",
+        borderRadius: "8px",
+        border: "none",
+        cursor: "pointer",
+        fontWeight: "600",
+        transition: "0.2s"
     };
 
-    const apiRequest = async (url, options = {}) => {
-        const res = await fetch(url, options);
-        const data = await res.json();
+    // ----------------------------
+    // API LOADERS
+    // ----------------------------
 
-        if (!res.ok) {
-            throw new Error(data.detail || "Request Failed")
-        }
+    const loadShop = useCallback(async () => {
+        const data = await getShop();
+        setItems(data.data);
+    }, []);
 
-        return data;
-    };
-
-    const refreshAll = async () => {
+    const loadInventory = useCallback(async () => {
         if (!token || !playerId) return;
 
-        refreshPlayerData(token, playerId);
+        const data = await getInventory(playerId, token);
+        setInventory(data.data.items);
+    }, [token, playerId]);
 
-        const shopData = await apiRequest(`${API}/shop`);
-        setItems(shopData.data);
-    };
+    const loadPlayerStats = useCallback(async () => {
+        if (!token || !playerId) return;
 
+        const data = await getPlayer(playerId, token);
+        setPlayerStats(data.data);
+    }, [token, playerId]);
 
-    //useEffect = runs code automatically when something happens in React.
-    //Async allows waiting code
-    //Await = pauses until result comes
-    // res = send result back to user
-    //invRes inventory response
-    //Headers extra info sent
-    //Json way to send data between systems in clean text format
-    //Try it, catch if it fails, finally always runs
+    const refreshAll = useCallback(async () => {
+        await loadShop();
+        await loadInventory();
+        await loadPlayerStats();
+    }, [loadShop, loadInventory, loadPlayerStats]);
+
+    // ----------------------------
+    // INIT
+    // ----------------------------
     useEffect(() => {
         const init = async () => {
-            setLoading(true);
-
             try {
-                const data = await apiRequest(`${API}/shop`);
-                setItems(data.data);
-
-                if (token && playerId) {
-                    const invData = await apiRequest(`${API}/inventory/${playerId}`, {
-                        headers: { token }
-                    });
-
-                    setInventory(invData.data.items);
-
-                    const statsData = await apiRequest(`${API}/player/${playerId}`, {
-                        headers: { token }
-                    });
-
-                    setPlayerStats(statsData.data);
-                }
-
+                setLoading(true);
+                await refreshAll();
             } catch (err) {
-                console.error(err);
                 setError(err.message);
             } finally {
                 setLoading(false);
@@ -106,130 +86,77 @@ function App() {
         };
 
         init();
+    }, [refreshAll]);
 
-    }, [token, playerId]);
-
-    //Error handling
+    // ----------------------------
+    // AUTO CLEAR ERROR
+    // ----------------------------
     useEffect(() => {
         if (!error) return;
-
-        const timer = setTimeout(() => {
-            setError("");
-        }, 3000);
-
+        const timer = setTimeout(() => setError(""), 3000);
         return () => clearTimeout(timer);
     }, [error]);
 
-    // --------------------------------
-    // Login
-    // --------------------------------
+    // ----------------------------
+    // LOGIN
+    // ----------------------------
     const handleLogin = async (id) => {
         if (!id) return;
 
         try {
-            setError(""); //Clear old errors immediately
-            
-            const data = await apiRequest(`${API}/login/${id}`, {
-                method: "POST"
-            });
+            setError("");
 
+            const data = await loginPlayer(id);
             const jwt = data.data.token;
 
-            login(jwt, id); //Context update
+            login(jwt, id);
+            setInputPlayerId("");
 
-            setInputPlayerId(""); // Clear input after success
-
-            refreshPlayerData(jwt, id);
-        }
-        catch (err) {
+            await refreshAll();
+        } catch (err) {
             setError(err.message);
         }
     };
 
-    // --------------------------------
-    // Logout Method
-    // --------------------------------
+    // ----------------------------
+    // LOGOUT
+    // ----------------------------
     const handleLogout = () => {
         logout();
+        setItems([]);
         setInventory([]);
         setPlayerStats(null);
-        setItems([]);
         setError("");
     };
 
-    // --------------------------------
-    // Buy Item
-    // --------------------------------
-    const buyItem = async (itemName) => {
-        if (!token || !playerId) return;
-
+    // ----------------------------
+    // BUY
+    // ----------------------------
+    const handleBuy = async (itemName) => {
         try {
-            const data = await apiRequest(`${API}/buy/${playerId}`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    token: token
-                },
-                body: JSON.stringify({
-                    itemName,
-                    quantity: 1
-                })
-            });
-
-            setError("");
-
-            if (data.success) {
-                alert(`Bought ${itemName}`);
-                refreshPlayerData(token, playerId);
-                refreshAll();
-            }
+            await buyItem(playerId, token, itemName, 1);
+            await refreshAll();
         } catch (err) {
             setError(err.message);
         }
     };
 
-    // --------------------------------
-    // Sell Item
-    // --------------------------------
-    const sellItem = async (itemName) => {
-        if (!token || !playerId) return;
-
+    // ----------------------------
+    // SELL
+    // ----------------------------
+    const handleSell = async (itemName) => {
         try {
-            const data = await apiRequest(`${API}/sell/${playerId}`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    token: token
-                },
-                body: JSON.stringify({
-                    itemName,
-                    quantity: 1
-                })
-            });
-
-            setError("");
-
-            if (data.success) {
-                alert(`Sold ${itemName}`);
-                refreshAll();
-            }
-
+            await sellItem(playerId, token, itemName, 1);
+            await refreshAll();
         } catch (err) {
             setError(err.message);
         }
     };
 
+    // ----------------------------
+    // UI
+    // ----------------------------
     return (
-        //Div is a container in HTML (HyperText Markup Language (The structure of a webpage))
-        //Padding space inside the box and its border
-        //h1 - Biggest title on a webpage
-        //h2 - Second header title
-        //JSX = JavaScript XML which is HTML-Style coding inside JavaScript for building UI (React)
-        //? if this then do this the quesiton mark thing
-        //e means event object so details of the event that just happened
-        //onChange = do this when a value changes
-        //Error UI under login UI
-        // <p> paragraph of text
         <div style={{
             padding: "20px",
             minHeight: "100vh",
@@ -239,47 +166,33 @@ function App() {
             justifyContent: "center"
         }}>
 
-            {/* CONTAINER CARD */}
-            <div style={{
-                width: "100%",
-                maxWidth: "900px"
-            }}>
+            <div style={{ width: "100%", maxWidth: "900px" }}>
 
                 <h1 style={{
                     textAlign: "center",
                     color: "#111827",
                     marginBottom: "25px",
                     fontSize: "2.2rem",
-                    fontWeight: "800",
-                    letterSpacing: "0.5px"
+                    fontWeight: "800"
                 }}>
                     Inventory Shop System
                 </h1>
 
-                {loading && <p>Loading...</p>}
+                {loading && <p>Loading game world...</p>}
 
-                {/* ---------------- LOGIN CARD ---------------- */}
-                <div style={{
-                    background: "#ffffff",
-                    padding: "15px",
-                    borderRadius: "10px",
-                    boxShadow: "0 8px 20px rgba(0,0,0,0.08)",
-                    marginBottom: "20px"
-                }}>
+                {/* LOGIN */}
+                <div style={cardStyle}>
                     <h2>Login</h2>
 
                     {!token ? (
-                        <div>
+                        <>
                             <input
-                                placeholder="Player ID (1-3)"
+                                placeholder="Player ID"
                                 value={inputPlayerId}
-                                onChange={(e) => {
-                                    setInputPlayerId(e.target.value);
-                                    setError("");
-                                }}
+                                onChange={(e) => setInputPlayerId(e.target.value)}
                                 style={{
                                     padding: "8px",
-                                    borderRadius: "6px",
+                                    borderRadius: "8px",
                                     border: "1px solid #ddd",
                                     marginRight: "10px"
                                 }}
@@ -288,29 +201,24 @@ function App() {
                             <button
                                 onClick={() => handleLogin(inputPlayerId)}
                                 style={{
-                                    padding: "8px 12px",
+                                    ...buttonStyle,
                                     background: "#4f46e5",
-                                    color: "white",
-                                    border: "none",
-                                    borderRadius: "6px",
-                                    cursor: "pointer"
+                                    color: "white"
                                 }}
                             >
                                 Login
                             </button>
-                        </div>
+                        </>
                     ) : (
                         <>
-                            <p>Logged In ✔</p>
+                            <p>Logged in ✔</p>
+
                             <button
                                 onClick={handleLogout}
                                 style={{
-                                    padding: "8px 12px",
+                                    ...buttonStyle,
                                     background: "#ef4444",
-                                    color: "white",
-                                    border: "none",
-                                    borderRadius: "6px",
-                                    cursor: "pointer"
+                                    color: "white"
                                 }}
                             >
                                 Logout
@@ -319,21 +227,13 @@ function App() {
                     )}
 
                     {error && (
-                        <div style={{
-                            marginTop: "10px",
-                            padding: "10px",
-                            background: "#fff1f2",
-                            color: "#be123c",
-                            border: "1px solid #fecdd3",
-                            borderRadius: "8px"
-                        }}>
-                            ⚠ {error}
-                        </div>
+                        <p style={{ color: "red", marginTop: "10px" }}>
+                            {error}
+                        </p>
                     )}
 
                     {playerStats && (
-                        <div style={{ marginTop: "10px" }}>
-                            <h2>Stats</h2>
+                        <div>
                             <p>Gold: {playerStats.gold}</p>
                             <p>HP: {playerStats.hp}</p>
                             <p>Level: {playerStats.level}</p>
@@ -341,101 +241,63 @@ function App() {
                     )}
                 </div>
 
-                {/* ---------------- SHOP CARD ---------------- */}
-                <div style={{
-                    background: "#ffffff",
-                    padding: "15px",
-                    borderRadius: "10px",
-                    boxShadow: "0 8px 20px rgba(0,0,0,0.08)",
-                    marginBottom: "20px"
-                }}>
+                {/* SHOP */}
+                <div style={cardStyle}>
                     <h2>Shop</h2>
 
-                    <ul style={{ listStyle: "none", padding: 0 }}>
-                        {items.map((item, index) => (
-                            <li key={index} style={{
-                                display: "flex",
-                                justifyContent: "space-between",
-                                padding: "8px 0",
-                                borderBottom: "1px solid #eee"
-                            }}>
-                                <span>
-                                    {item.itemName} - Stock: {item.stock}
-                                </span>
+                    {items.length === 0 && <p>No items available</p>}
 
-                                {token && (
-                                    <button
-                                        onClick={() => buyItem(item.itemName)}
-                                        style={{
-                                            background: "#4f46e5",
-                                            color: "white",
-                                            border: "none",
-                                            borderRadius: "6px",
-                                            padding: "6px 10px",
-                                            cursor: "pointer"
-                                        }}
-                                    >
-                                        Buy
-                                    </button>
-                                )}
-                            </li>
-                        ))}
-                    </ul>
+                    {items.map((item, i) => (
+                        <div key={i} style={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                            padding: "8px 0"
+                        }}>
+                            <span>{item.itemName} - {item.stock}</span>
+
+                            {token && (
+                                <button
+                                    onClick={() => handleBuy(item.itemName)}
+                                    style={{
+                                        ...buttonStyle,
+                                        background: "#4f46e5",
+                                        color: "white"
+                                    }}
+                                >
+                                    Buy
+                                </button>
+                            )}
+                        </div>
+                    ))}
                 </div>
 
-                {/* ---------------- INVENTORY CARD ---------------- */}
+                {/* INVENTORY */}
                 {token && (
-                    <div style={{
-                        background: "#ffffff",
-                        padding: "15px",
-                        borderRadius: "10px",
-                        boxShadow: "0 8px 20px rgba(0,0,0,0.08)"
-                    }}>
+                    <div style={cardStyle}>
                         <h2>Inventory</h2>
 
-                        <button
-                            onClick={() => loadInventory(token)}
-                            style={{
-                                marginBottom: "10px",
-                                padding: "6px 10px",
-                                borderRadius: "6px",
-                                border: "none",
-                                background: "#111827",
-                                color: "white",
-                                cursor: "pointer"
-                            }}
-                        >
-                            Refresh Inventory
-                        </button>
+                        {inventory.length === 0 && <p>No items in inventory</p>}
 
-                        <ul>
-                            {inventory.map((item, index) => (
-                                <li key={index} style={{
-                                    display: "flex",
-                                    justifyContent: "space-between",
-                                    alignItems: "center",
-                                    marginBottom: "8px"
-                                }}>
-                                    <span>
-                                        {item.itemName} x {item.quantity}
-                                    </span>
+                        {inventory.map((item, i) => (
+                            <div key={i} style={{
+                                display: "flex",
+                                justifyContent: "space-between",
+                                padding: "8px 0"
+                            }}>
+                                <span>{item.itemName} x {item.quantity}</span>
 
-                                    <button
-                                        onClick={() => sellItem(item.itemName)}
-                                        style={{
-                                            background: "#ef4444",
-                                            color: "white",
-                                            border: "none",
-                                            borderRadius: "6px",
-                                            padding: "6px 10px",
-                                            cursor: "pointer"
-                                        }}
-                                    >
-                                        Sell
-                                    </button>
-                                </li>
-                            ))}
-                        </ul>
+                                <button
+                                    onClick={() => handleSell(item.itemName)}
+                                    style={{
+                                        ...buttonStyle,
+                                        background: "#ef4444",
+                                        color: "white"
+                                    }}
+                                >
+                                    Sell
+                                </button>
+                            </div>
+                        ))}
                     </div>
                 )}
 

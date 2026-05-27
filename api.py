@@ -5,26 +5,38 @@ from auth import verifyToken
 from gameFactory import GameFactory
 from database import engine
 from sqlalchemy import text
+import os
 
 # =========================================================
 # APP
 # =========================================================
 
 app = FastAPI()
-
 gameFactory = GameFactory()
 
-#Security layer which websites can talk to my backend API
+# =========================================================
+# CORS (FIXED / PRODUCTION SAFE)
+# =========================================================
+
+FRONTEND_URL = os.getenv("FRONTEND_URL")
+
+allowOrigins = [
+    "http://localhost:5173",
+    "https://inventoryshopsystem.vercel.app"
+]
+
+# if you set env var on Render, it overrides / extends safely
+if FRONTEND_URL:
+    allowOrigins.append(FRONTEND_URL)
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",
-        "https://inventoryshopsystem.vercel.app"
-    ],
+    allow_origins=allowOrigins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 # =========================================================
 # HELPERS
 # =========================================================
@@ -72,16 +84,14 @@ def authorizePlayer(playerId: int, token: str):
 def normalizeItemName(name: str):
     return name.strip().lower()
 
-
 # =========================================================
-# REQUEST MODELS
+# REQUEST MODEL
 # =========================================================
 
 class BuyRequest(BaseModel):
     itemName: str
     quantity: int
 
-    #Field validator, checks if data is correct
     @field_validator("itemName")
     def itemNameNotEmpty(cls, v):
         if not v.strip():
@@ -94,14 +104,12 @@ class BuyRequest(BaseModel):
             raise ValueError("Quantity must be greater than 0")
         return v
 
-
 # =========================================================
-# GAME FACTORY ACCESS
+# GAME
 # =========================================================
 
 def getGame(playerId: int):
     return gameFactory.create(playerId)
-
 
 # =========================================================
 # ROUTES
@@ -110,7 +118,6 @@ def getGame(playerId: int):
 @app.get("/player/{playerId}")
 def getPlayer(playerId: int, token: str = Header(default=None)):
     authorizePlayer(playerId, token)
-
     game = getGame(playerId)
 
     return ok({
@@ -123,7 +130,6 @@ def getPlayer(playerId: int, token: str = Header(default=None)):
 @app.post("/buy/{playerId}")
 def buy(playerId: int, data: BuyRequest, token: str = Header(default=None)):
     authorizePlayer(playerId, token)
-
     game = getGame(playerId)
 
     itemName = normalizeItemName(data.itemName)
@@ -133,10 +139,10 @@ def buy(playerId: int, data: BuyRequest, token: str = Header(default=None)):
 
     return ok(handleResult(result))
 
+
 @app.post("/sell/{playerId}")
 def sell(playerId: int, data: BuyRequest, token: str = Header(default=None)):
     authorizePlayer(playerId, token)
-
     game = getGame(playerId)
 
     itemName = normalizeItemName(data.itemName)
@@ -146,10 +152,10 @@ def sell(playerId: int, data: BuyRequest, token: str = Header(default=None)):
 
     return ok(handleResult(result))
 
+
 @app.get("/inventory/{playerId}")
 def getInventory(playerId: int, token: str = Header(default=None)):
     authorizePlayer(playerId, token)
-
     game = getGame(playerId)
 
     return ok({
@@ -173,7 +179,6 @@ def getShop():
 @app.post("/login/{playerId}")
 def login(playerId: int):
     validatePlayerId(playerId)
-
     game = getGame(playerId)
 
     return ok(game.login())
