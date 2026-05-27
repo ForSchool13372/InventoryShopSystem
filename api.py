@@ -17,18 +17,13 @@ gameFactory = GameFactory()
 # =========================================================
 # CORS (FIXED / PRODUCTION SAFE)
 # =========================================================
-
 FRONTEND_URL = os.getenv("FRONTEND_URL")
 
 allowOrigins = [
     "http://localhost:5173",
-    "https://inventoryshopsystem.vercel.app"
 ]
 
-if FRONTEND_URL:
-    allowOrigins.append(FRONTEND_URL)
-
-# if you set env var on Render, it overrides / extends safely
+# production frontend only
 if FRONTEND_URL:
     allowOrigins.append(FRONTEND_URL)
 
@@ -39,7 +34,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
 # =========================================================
 # HELPERS
 # =========================================================
