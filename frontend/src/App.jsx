@@ -10,6 +10,12 @@ import {
     loginPlayer
 } from "./apiClient";
 
+// Components
+import Login from "./components/Login";
+import Shop from "./components/Shop";
+import Inventory from "./components/Inventory";
+import PlayerStats from "./components/PlayerStats";
+
 function App() {
     const { token, playerId, login, logout } = useAuth();
 
@@ -18,28 +24,6 @@ function App() {
     const [playerStats, setPlayerStats] = useState(null);
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(true);
-    const [inputPlayerId, setInputPlayerId] = useState("");
-
-    // ----------------------------
-    // STYLES (clean system)
-    // ----------------------------
-    const cardStyle = {
-        background: "#fff",
-        padding: "20px",
-        borderRadius: "14px",
-        boxShadow: "0 10px 30px rgba(0,0,0,0.08)",
-        marginBottom: "20px",
-        border: "1px solid rgba(0,0,0,0.05)"
-    };
-
-    const buttonStyle = {
-        padding: "8px 12px",
-        borderRadius: "8px",
-        border: "none",
-        cursor: "pointer",
-        fontWeight: "600",
-        transition: "0.2s"
-    };
 
     // ----------------------------
     // API LOADERS
@@ -73,6 +57,7 @@ function App() {
     // ----------------------------
     // INIT
     // ----------------------------
+
     useEffect(() => {
         const init = async () => {
             try {
@@ -91,15 +76,17 @@ function App() {
     // ----------------------------
     // AUTO CLEAR ERROR
     // ----------------------------
+
     useEffect(() => {
         if (!error) return;
-        const timer = setTimeout(() => setError(""), 3000);
+        const timer = setTimeout(() => setError(""), 1500);
         return () => clearTimeout(timer);
     }, [error]);
 
     // ----------------------------
-    // LOGIN
+    // AUTH
     // ----------------------------
+
     const handleLogin = async (id) => {
         if (!id) return;
 
@@ -110,7 +97,6 @@ function App() {
             const jwt = data.data.token;
 
             login(jwt, id);
-            setInputPlayerId("");
 
             await refreshAll();
         } catch (err) {
@@ -118,9 +104,6 @@ function App() {
         }
     };
 
-    // ----------------------------
-    // LOGOUT
-    // ----------------------------
     const handleLogout = () => {
         logout();
         setItems([]);
@@ -130,8 +113,9 @@ function App() {
     };
 
     // ----------------------------
-    // BUY
+    // GAME ACTIONS
     // ----------------------------
+
     const handleBuy = async (itemName) => {
         try {
             await buyItem(playerId, token, itemName, 1);
@@ -141,9 +125,6 @@ function App() {
         }
     };
 
-    // ----------------------------
-    // SELL
-    // ----------------------------
     const handleSell = async (itemName) => {
         try {
             await sellItem(playerId, token, itemName, 1);
@@ -154,8 +135,9 @@ function App() {
     };
 
     // ----------------------------
-    // UI
+    // UI COMPOSITION (CLEAN)
     // ----------------------------
+
     return (
         <div style={{
             padding: "20px",
@@ -165,141 +147,57 @@ function App() {
             display: "flex",
             justifyContent: "center"
         }}>
-
-            <div style={{ width: "100%", maxWidth: "900px" }}>
+            <div style={{
+                width: "100%",
+                maxWidth: "900px",
+                display: "flex",
+                flexDirection: "column",
+                gap: "20px"
+            }}>
 
                 <h1 style={{
                     textAlign: "center",
                     color: "#111827",
-                    marginBottom: "25px",
                     fontSize: "2.2rem",
                     fontWeight: "800"
                 }}>
                     Inventory Shop System
                 </h1>
 
-                {loading && <p>Loading game world...</p>}
-
-                {/* LOGIN */}
-                <div style={cardStyle}>
-                    <h2>Login</h2>
-
-                    {!token ? (
-                        <>
-                            <input
-                                placeholder="Player ID"
-                                value={inputPlayerId}
-                                onChange={(e) => setInputPlayerId(e.target.value)}
-                                style={{
-                                    padding: "8px",
-                                    borderRadius: "8px",
-                                    border: "1px solid #ddd",
-                                    marginRight: "10px"
-                                }}
-                            />
-
-                            <button
-                                onClick={() => handleLogin(inputPlayerId)}
-                                style={{
-                                    ...buttonStyle,
-                                    background: "#4f46e5",
-                                    color: "white"
-                                }}
-                            >
-                                Login
-                            </button>
-                        </>
-                    ) : (
-                        <>
-                            <p>Logged in ✔</p>
-
-                            <button
-                                onClick={handleLogout}
-                                style={{
-                                    ...buttonStyle,
-                                    background: "#ef4444",
-                                    color: "white"
-                                }}
-                            >
-                                Logout
-                            </button>
-                        </>
-                    )}
-
-                    {error && (
-                        <p style={{ color: "red", marginTop: "10px" }}>
-                            {error}
-                        </p>
-                    )}
-
-                    {playerStats && (
-                        <div>
-                            <p>Gold: {playerStats.gold}</p>
-                            <p>HP: {playerStats.hp}</p>
-                            <p>Level: {playerStats.level}</p>
-                        </div>
-                    )}
-                </div>
-
-                {/* SHOP */}
-                <div style={cardStyle}>
-                    <h2>Shop</h2>
-
-                    {items.length === 0 && <p>No items available</p>}
-
-                    {items.map((item, i) => (
-                        <div key={i} style={{
-                            display: "flex",
-                            justifyContent: "space-between",
-                            padding: "8px 0"
-                        }}>
-                            <span>{item.itemName} - {item.stock}</span>
-
-                            {token && (
-                                <button
-                                    onClick={() => handleBuy(item.itemName)}
-                                    style={{
-                                        ...buttonStyle,
-                                        background: "#4f46e5",
-                                        color: "white"
-                                    }}
-                                >
-                                    Buy
-                                </button>
-                            )}
-                        </div>
-                    ))}
-                </div>
-
-                {/* INVENTORY */}
-                {token && (
-                    <div style={cardStyle}>
-                        <h2>Inventory</h2>
-
-                        {inventory.length === 0 && <p>No items in inventory</p>}
-
-                        {inventory.map((item, i) => (
-                            <div key={i} style={{
-                                display: "flex",
-                                justifyContent: "space-between",
-                                padding: "8px 0"
-                            }}>
-                                <span>{item.itemName} x {item.quantity}</span>
-
-                                <button
-                                    onClick={() => handleSell(item.itemName)}
-                                    style={{
-                                        ...buttonStyle,
-                                        background: "#ef4444",
-                                        color: "white"
-                                    }}
-                                >
-                                    Sell
-                                </button>
-                            </div>
-                        ))}
-                    </div>
+                {loading && (
+                    <p style={{ textAlign: "center" }}>
+                        Loading game world...
+                    </p>
                 )}
+
+                {error && (
+                    <p style={{ color: "red", textAlign: "center" }}>
+                        {error}
+                    </p>
+                )}
+
+                {/* COMPONENTS */}
+                <Login
+                    token={token}
+                    onLogin={handleLogin}
+                    onLogout={handleLogout}
+                    error={error}
+                    playerStats={playerStats}
+                />
+
+                <Shop
+                    items={items}
+                    token={token}
+                    onBuy={handleBuy}
+                />
+
+                <PlayerStats playerStats={playerStats} />
+
+                <Inventory
+                    inventory={inventory}
+                    token={token}
+                    onSell={handleSell}
+                />
 
             </div>
         </div>

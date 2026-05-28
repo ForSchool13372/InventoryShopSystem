@@ -1,132 +1,136 @@
-﻿🎮 Inventory Shop System API
+﻿🎮 Inventory Shop System (Full-Stack)
 
-A backend RPG simulation engine built with FastAPI, designed to demonstrate clean system architecture, service orchestration, and stateful domain modeling.
+A full-stack RPG-style simulation system built with FastAPI (backend) and React (frontend), designed to demonstrate real-world full-stack architecture, authentication flow, and state-driven application design.
 
-This project simulates a game backend where players can:
+This project simulates a lightweight game economy where players can:
 
-progress through levels
-manage inventory
-interact with a transactional shop
-engage in combat and quests
-all through a structured, layered backend system.
+log in and manage a persistent player profile
+buy and sell items in a shop system
+manage an inventory system
+track stats like gold, HP, and level
+interact with a live backend API
 
 🧠 Core Design Philosophy
 
-This project is intentionally built to mirror real-world backend architecture patterns:
+This project focuses on real full-stack architecture, not just isolated features.
 
-Separation of concerns across layers
-Controller as orchestration layer (no business logic)
-Service layer for domain behavior
-Repository layer for persistence abstraction
-Dependency injection for testability and modularity
+Key principles:
 
-The goal is not just functionality — but maintainable system design under evolving features.
+Clear separation between frontend and backend
+Stateless API design with token-based authentication
+Centralized game state management on the backend
+Component-based UI architecture on the frontend
+Clean data flow between systems
+
+The goal is to simulate how real production applications are structured.
 
 🏗 System Architecture
-
-FastAPI (API Layer)
-        ↓
-Controller (Orchestration Layer)
-        ↓
-Service Layer (Business Logic)
-        ↓
-Repository Layer (Data Access)
-        ↓
-SQLite Database
-Key Architectural Properties:
-Stateless API layer
-Centralized player state management
-Explicit dependency injection
-Modular service boundaries
-Clear separation between domain logic and persistence
+React Frontend
+    ↓ (API calls)
+FastAPI Backend
+    ↓
+Game Factory (Domain Logic Layer)
+    ↓
+Database (SQLite / SQLAlchemy)
+Key Properties:
+Stateless REST API layer
+Token-based authentication (JWT)
+Server-controlled game state
+Modular domain logic via GameFactory
+Separation between UI, API, and business logic
 
 ⚙️ Core Features
 
 👤 Player System
-Persistent player state (HP, gold, XP, level)
-Progression system with XP tracking
-Player lifecycle management (revive, stats)
-
+Persistent player profile (gold, HP, level)
+Authentication via player ID login
+Server-side state management
 🛒 Shop System
-Item purchase & sale mechanics
-Stock-controlled transactions
-Service-driven pricing logic
-
+Dynamic item listings
+Buy transactions with validation
+Stock-aware item handling
 🎒 Inventory System
-Per-player persistent inventory
-Dynamic item tracking
-Repository-backed storage layer
-
-⚔️ Combat System
-Deterministic combat resolution engine
-Win/loss outcome handling
-XP reward system integrated with events
-
-🧾 Quest System
-Quest tracking per player
-State-aware progression structure
-
+Player-specific inventory
+Real-time updates after transactions
+Server-synced state
+📊 Stats System
+Live player stats display
+Updates after every action
+Backend-driven truth source
 🔐 Authentication & Security
-
-JWT-based authentication system
-Token generated via /login/{playerId}
-Route-level authorization enforcement
-Player-scoped access control (no cross-player data leakage)
+JWT-based authentication
+Login via /login/{playerId}
+Route-level authorization
+Player-scoped access control
+Prevents cross-player data access
 
 📡 API Overview
 
 Authentication
-POST /login/{playerId} → Generate JWT token
+POST /login/{playerId} → returns JWT token
 Player
-GET /player/{playerId} → Retrieve player stats
+GET /player/{playerId} → player stats
 Shop
-GET /shop → List available items
-POST /buy/{playerId} → Purchase items
+GET /shop → list items
+POST /buy/{playerId} → purchase item
 Inventory
-GET /inventory/{playerId} → View inventory
+GET /inventory/{playerId} → view inventory
+Selling
+POST /sell/{playerId} → sell item
 
-🧱 Architecture Highlights
+🎨 Frontend (React)
 
-🎯 Controller Layer
+The frontend is built with a component-based architecture:
 
-Acts purely as an orchestrator:
+Structure:
+App.jsx → state + API orchestration layer
+Login.jsx → authentication UI
+Shop.jsx → item purchasing interface
+Inventory.jsx → item management
+PlayerStats.jsx → live stats display
+Frontend Features:
+Component separation for scalability
+API-driven state updates
+Loading states for UX feedback
+Per-action UI feedback (buy/sell/login)
+Clean data flow via props
 
-coordinates services
-manages flow of actions
-contains no business logic
-⚙️ Service Layer
+🧱 Backend Architecture
 
-Encapsulates all domain behavior:
-
-combat resolution
-shop transaction logic
-event handling system
-
-🗄 Repository Layer
-
-Handles persistence concerns:
-
-SQLite integration via SQLAlchemy
-player + inventory storage abstraction
+FastAPI Layer
+Handles routing and request validation
+Stateless API design
+Authentication enforcement
+Game Factory (Domain Layer)
+Encapsulates game logic
+Handles transactions (buy/sell)
+Manages player state transitions
+Database Layer
+SQLite with SQLAlchemy
+Persistent player + inventory storage
+Simple relational structure
 
 💡 What This Project Demonstrates
 
-This project showcases:
+This project shows the ability to:
 
-Backend system design beyond CRUD APIs
-Service-oriented architecture (SOA principles)
-Dependency injection patterns in Python
-State-driven application modeling
-Separation of domain logic vs orchestration
-Real-world backend structuring habits
-
+Build a working full-stack application
+Connect frontend and backend systems properly
+Design clean component-based architecture
+Implement authentication and authorization
+Manage server-driven state
+Structure code like a production application (not just a tutorial)
 🛠 Tech Stack
 FastAPI
 Python
-SQLite
+React (Vite)
+JavaScript (ES6+)
 SQLAlchemy
-JWT (python-jose)
+SQLite
+JWT Authentication
 
 🚀 Summary
 
-This project is a modular backend game engine, designed to demonstrate how complex stateful systems can be structured cleanly using layered architecture principles.
+This project is a full-stack game simulation system that demonstrates practical software engineering principles, including API design, authentication, state management, and component-based frontend architecture.
+
+It is designed to reflect how real-world applications are structured across frontend and backend systems.
