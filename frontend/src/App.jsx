@@ -1,5 +1,7 @@
 ﻿import { useEffect, useState, useCallback } from "react";
 import { useAuth } from "./useAuth";
+import { motion, AnimatePresence } from "framer-motion";
+import soundSystem from "./utils/soundSystem";
 
 import {
     getShop,
@@ -10,7 +12,6 @@ import {
     loginPlayer
 } from "./apiClient";
 
-// Components
 import Login from "./components/Login";
 import Shop from "./components/Shop";
 import Inventory from "./components/Inventory";
@@ -22,13 +23,42 @@ function App() {
     const [items, setItems] = useState([]);
     const [inventory, setInventory] = useState([]);
     const [playerStats, setPlayerStats] = useState(null);
-    const [error, setError] = useState("");
     const [loading, setLoading] = useState(true);
 
-    // ----------------------------
-    // API LOADERS
-    // ----------------------------
+    const [toasts, setToasts] = useState([]);
+    const [darkMode, setDarkMode] = useState(false);
 
+    const [buyingItem, setBuyingItem] = useState(null);
+    const [sellingItem, setSellingItem] = useState(null);
+
+    // ----------------------------
+    // THEME
+    // ----------------------------
+    const theme = {
+        background: darkMode ? "#0b1220" : "#f4f7ff",
+        cardBg: darkMode ? "#111a2e" : "#ffffff",
+        text: darkMode ? "#e5e7eb" : "#111827",
+        subText: darkMode ? "#94a3b8" : "#6b7280"
+    };
+
+    const toggleDarkMode = () => setDarkMode(prev => !prev);
+
+    // ----------------------------
+    // TOASTS
+    // ----------------------------
+    const addToast = (message, type = "info") => {
+        const id = Date.now();
+
+        setToasts(prev => [...prev, { id, message, type }]);
+
+        setTimeout(() => {
+            setToasts(prev => prev.filter(t => t.id !== id));
+        }, 2200);
+    };
+
+    // ----------------------------
+    // LOADERS
+    // ----------------------------
     const loadShop = useCallback(async () => {
         const data = await getShop();
         setItems(data.data);
@@ -36,35 +66,29 @@ function App() {
 
     const loadInventory = useCallback(async () => {
         if (!token || !playerId) return;
-
         const data = await getInventory(playerId, token);
         setInventory(data.data.items);
     }, [token, playerId]);
 
     const loadPlayerStats = useCallback(async () => {
         if (!token || !playerId) return;
-
         const data = await getPlayer(playerId, token);
         setPlayerStats(data.data);
     }, [token, playerId]);
 
     const refreshAll = useCallback(async () => {
-        await loadShop();
-        await loadInventory();
-        await loadPlayerStats();
+        await Promise.all([
+            loadShop(),
+            loadInventory(),
+            loadPlayerStats()
+        ]);
     }, [loadShop, loadInventory, loadPlayerStats]);
-
-    // ----------------------------
-    // INIT
-    // ----------------------------
 
     useEffect(() => {
         const init = async () => {
+            setLoading(true);
             try {
-                setLoading(true);
                 await refreshAll();
-            } catch (err) {
-                setError(err.message);
             } finally {
                 setLoading(false);
             }
@@ -74,133 +98,249 @@ function App() {
     }, [refreshAll]);
 
     // ----------------------------
-    // AUTO CLEAR ERROR
-    // ----------------------------
-
-    useEffect(() => {
-        if (!error) return;
-        const timer = setTimeout(() => setError(""), 1500);
-        return () => clearTimeout(timer);
-    }, [error]);
-
-    // ----------------------------
     // AUTH
     // ----------------------------
-
     const handleLogin = async (id) => {
-        if (!id) return;
+        if (!id) throw new Error("Missing ID");
 
-        try {
-            setError("");
+        const data = await loginPlayer(id);
 
-            const data = await loginPlayer(id);
-            const jwt = data.data.token;
+        login(data.data.token, id);
 
-            login(jwt, id);
+        soundSystem.play("success");
+        await refreshAll();
 
-            await refreshAll();
-        } catch (err) {
-            setError(err.message);
-        }
+        addToast("Welcome back", "success");
+
+        return true;
     };
 
     const handleLogout = () => {
         logout();
+
         setItems([]);
         setInventory([]);
         setPlayerStats(null);
-        setError("");
+
+        soundSystem.play("click");
+        addToast("Logged out", "info");
     };
 
     // ----------------------------
     // GAME ACTIONS
     // ----------------------------
-
     const handleBuy = async (itemName) => {
+        setBuyingItem(itemName);
+
         try {
             await buyItem(playerId, token, itemName, 1);
             await refreshAll();
+
+            soundSystem.play("buy");
+            addToast(`Bought ${itemName}`, "success");
+
         } catch (err) {
-            setError(err.message);
+            soundSystem.play("error");
+            addToast(err.message, "error");
+
+        } finally {
+            setTimeout(() => setBuyingItem(null), 150);
         }
     };
 
     const handleSell = async (itemName) => {
+        setSellingItem(itemName);
+
         try {
             await sellItem(playerId, token, itemName, 1);
             await refreshAll();
+
+            soundSystem.play("sell");
+            addToast(`Sold ${itemName}`, "success");
+
         } catch (err) {
-            setError(err.message);
+            soundSystem.play("error");
+            addToast(err.message, "error");
+
+        } finally {
+            setTimeout(() => setSellingItem(null), 150);
         }
     };
 
     // ----------------------------
-    // UI COMPOSITION (CLEAN)
+    // ANIMATIONS
     // ----------------------------
+    const page = {
+        hidden: { opacity: 0, y: 12 },
+        show: { opacity: 1, y: 0, transition: { duration: 0.35 } }
+    };
+
+    const fadeUp = (delay = 0) => ({
+        hidden: { opacity: 0, y: 10 },
+        show: { opacity: 1, y: 0, transition: { delay, duration: 0.3 } }
+    });
 
     return (
-        <div style={{
-            padding: "20px",
-            minHeight: "100vh",
-            background: "linear-gradient(180deg, #f5f7fb, #e9eef7)",
-            fontFamily: "Arial",
-            display: "flex",
-            justifyContent: "center"
-        }}>
-            <div style={{
-                width: "100%",
-                maxWidth: "900px",
+        <motion.div
+            variants={page}
+            initial="hidden"
+            animate="show"
+            style={{
+                minHeight: "100vh",
+                padding: "32px",
                 display: "flex",
-                flexDirection: "column",
-                gap: "20px"
-            }}>
+                justifyContent: "center",
+                fontFamily: "Arial",
+                background: theme.background,
+                color: theme.text,
+                position: "relative",
+                overflow: "hidden"
+            }}
+        >
+            {/* glow */}
+            <div style={{
+                position: "absolute",
+                width: "700px",
+                height: "700px",
+                background: "rgba(99,102,241,0.12)",
+                filter: "blur(140px)",
+                top: "-250px",
+                left: "-250px",
+                borderRadius: "50%"
+            }} />
 
-                <h1 style={{
-                    textAlign: "center",
-                    color: "#111827",
-                    fontSize: "2.2rem",
-                    fontWeight: "800"
-                }}>
-                    Inventory Shop System
-                </h1>
+            <div style={{ width: "100%", maxWidth: "1100px", zIndex: 2 }}>
+
+                {/* HEADER */}
+                <motion.div
+                    variants={fadeUp(0)}
+                    initial="hidden"
+                    animate="show"
+                    style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        marginBottom: "24px"
+                    }}
+                >
+                    <div>
+                        <h1 style={{ fontSize: "2rem", fontWeight: "800", margin: 0 }}>
+                            Inventory Shop System
+                        </h1>
+
+                        <p style={{ margin: "4px 0 0 0", fontSize: "0.9rem", color: theme.subText }}>
+                            {token ? `Logged in as ${playerId}` : "Start your journey today!"}
+                        </p>
+                    </div>
+
+                    <motion.button
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={toggleDarkMode}
+                        style={{
+                            padding: "8px 12px",
+                            borderRadius: "10px",
+                            border: "none",
+                            cursor: "pointer",
+                            background: darkMode ? "#e5e7eb" : "#111827",
+                            color: darkMode ? "#111827" : "#fff",
+                            fontWeight: "600"
+                        }}
+                    >
+                        {darkMode ? "Light ☀️" : "Dark 🌙"}
+                    </motion.button>
+                </motion.div>
 
                 {loading && (
-                    <p style={{ textAlign: "center" }}>
-                        Loading game world...
-                    </p>
+                    <motion.p style={{ color: theme.subText }}>
+                        Loading world...
+                    </motion.p>
                 )}
 
-                {error && (
-                    <p style={{ color: "red", textAlign: "center" }}>
-                        {error}
-                    </p>
-                )}
+                {/* LOGIN */}
+                <motion.div variants={fadeUp(0.05)} initial="hidden" animate="show">
+                    <Login
+                        token={token}
+                        onLogin={handleLogin}
+                        onLogout={handleLogout}
+                        theme={theme}
+                    />
+                </motion.div>
 
-                {/* COMPONENTS */}
-                <Login
-                    token={token}
-                    onLogin={handleLogin}
-                    onLogout={handleLogout}
-                    error={error}
-                    playerStats={playerStats}
-                />
+                {/* GRID */}
+                <div style={{
+                    display: "grid",
+                    gridTemplateColumns: "2fr 1fr",
+                    gap: "20px",
+                    marginTop: "18px",
+                    marginBottom: "20px"
+                }}>
+                    <motion.div variants={fadeUp(0.1)} initial="hidden" animate="show">
+                        <Shop
+                            items={items}
+                            token={token}
+                            onBuy={handleBuy}
+                            theme={theme}
+                            buyingItem={buyingItem}
+                        />
+                    </motion.div>
 
-                <Shop
-                    items={items}
-                    token={token}
-                    onBuy={handleBuy}
-                />
+                    <motion.div variants={fadeUp(0.15)} initial="hidden" animate="show">
+                        <PlayerStats
+                            playerStats={playerStats}
+                            theme={theme}
+                        />
+                    </motion.div>
+                </div>
 
-                <PlayerStats playerStats={playerStats} />
-
-                <Inventory
-                    inventory={inventory}
-                    token={token}
-                    onSell={handleSell}
-                />
-
+                <motion.div variants={fadeUp(0.2)} initial="hidden" animate="show">
+                    <Inventory
+                        inventory={inventory}
+                        token={token}
+                        onSell={handleSell}
+                        theme={theme}
+                        sellingItem={sellingItem}
+                    />
+                </motion.div>
             </div>
-        </div>
+
+            {/* TOASTS */}
+            <div style={{
+                position: "fixed",
+                top: "20px",
+                right: "20px",
+                display: "flex",
+                flexDirection: "column",
+                gap: "10px",
+                zIndex: 9999
+            }}>
+                <AnimatePresence>
+                    {toasts.map((toast) => (
+                        <motion.div
+                            key={toast.id}
+                            initial={{ opacity: 0, x: 20, scale: 0.95 }}
+                            animate={{ opacity: 1, x: 0, scale: 1 }}
+                            exit={{ opacity: 0, x: 20, scale: 0.95 }}
+                            style={{
+                                padding: "10px 14px",
+                                borderRadius: "12px",
+                                color: "white",
+                                fontWeight: "600",
+                                background:
+                                    toast.type === "success"
+                                        ? "#22c55e"
+                                        : toast.type === "error"
+                                            ? "#ef4444"
+                                            : "#4f46e5",
+                                boxShadow: "0 10px 25px rgba(0,0,0,0.25)"
+                            }}
+                        >
+                            {toast.message}
+                        </motion.div>
+                    ))}
+                </AnimatePresence>
+            </div>
+        </motion.div>
     );
 }
 

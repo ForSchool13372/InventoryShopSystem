@@ -1,4 +1,4 @@
-from auth import createAccessToken
+from app.core.auth import createAccessToken
 
 class Controller:
     def __init__(self, ctx):
@@ -6,7 +6,6 @@ class Controller:
         # CONTEXT
         # =========================================================
         self.ctx = ctx
-
         self.player = ctx.player
         self.playerId = ctx.playerId
 
@@ -18,24 +17,30 @@ class Controller:
         self.gameEventService = ctx.gameEventService
 
         # =========================================================
-        # SHORTCUTS (CLEAN ACCESS)
+        # SHORTCUTS
         # =========================================================
-        self.combatService = self.services.combat
-        self.shopService = self.services.shop
-        self.itemService = self.services.item
+        self.combat = self.services.combat
+        self.shop = self.services.shop
+        self.items = self.services.item
 
         self.shopRepo = self.repos.shop
         self.inventoryRepo = self.repos.inventory
         self.playerRepo = self.repos.player
 
     # =========================================================
-    # AUTH / LIFECYCLE
+    # LIFECYCLE
     # =========================================================
 
     def login(self):
+        print("PLAYER ID:", self.playerId)
+
+        token = createAccessToken({
+            "playerId": self.playerId
+        })
+
         return {
             "success": True,
-            "token": createAccessToken({"playerId": self.playerId})
+            "token": token
         }
 
     def revive(self):
@@ -45,7 +50,7 @@ class Controller:
         self.playerRepo.save(self.playerId, self.player)
 
     # =========================================================
-    # PLAYER INFO
+    # PLAYER
     # =========================================================
 
     def getPlayerStats(self):
@@ -61,23 +66,16 @@ class Controller:
     # =========================================================
 
     def fight(self):
-        result = self.combatService.handleFight(self.player, self.world.enemies)
+        result = self.combat.handleFight(self.player, self.world.enemies)
 
-        if result["result"] == "win":
-            self.emitEvent({
-                "type": "fightWin",
-                "xp": result["xp"],
-                "enemy": result["enemy"]
-            })
-        else:
-            self.emitEvent({"type": "fightLose"})
+        self._handle_fight_events(result)
 
         return result
 
     def buy(self, itemName, quantity):
-        item = self.itemService.getItem(itemName.lower())
+        item = self.items.getItem(itemName)
 
-        return self.shopService.buy(
+        return self.shop.buy(
             self.player,
             item,
             quantity,
@@ -86,9 +84,9 @@ class Controller:
         )
 
     def sell(self, itemName, quantity):
-        item = self.itemService.getItem(itemName.lower())
+        item = self.items.getItem(itemName)
 
-        return self.shopService.sell(
+        return self.shop.sell(
             self.player,
             item,
             quantity,
@@ -110,8 +108,17 @@ class Controller:
         return self.world.quests
 
     # =========================================================
-    # INTERNAL EVENTS
+    # INTERNAL HELPERS
     # =========================================================
 
-    def emitEvent(self, event):
-        self.gameEventService.handleEvent(event)
+    def _handle_fight_events(self, result):
+        if result["result"] == "win":
+            self.gameEventService.handleEvent({
+                "type": "fightWin",
+                "xp": result.get("xp"),
+                "enemy": result.get("enemy")
+            })
+        else:
+            self.gameEventService.handleEvent({
+                "type": "fightLose"
+            })

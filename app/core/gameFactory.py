@@ -1,64 +1,46 @@
-from shopService import ShopService
-from shopRepository import ShopRepository
-from inventoryRepository import InventoryRepository
-from itemService import ItemService
-from combatService import CombatService
-from gameData import createEnemies, createQuests
-from playerRepository import PlayerRepository
+from app.services.shopService import ShopService
+from app.repositories.shopRepository import ShopRepository
+from app.repositories.inventoryRepository import InventoryRepository
+from app.services.itemService import ItemService
+from app.services.combatService import CombatService
+from app.core.gameData import createEnemies, createQuests
+from app.repositories.playerRepository import PlayerRepository
 
-from controller import Controller
-from gameContext import GameContext
-
+from app.core.gameContext import GameContext
 
 # =========================================================
-# DEPENDENCY GROUPS
+# CORE GROUPS
 # =========================================================
 
 class Services:
-    def __init__(self, shopService, combatService, itemService):
-        self.shop = shopService
-        self.combat = combatService
-        self.item = itemService
+    def __init__(self):
+        self.shop = ShopService()
+        self.combat = CombatService()
+        self.item = ItemService()
 
 
 class Repos:
-    def __init__(self, shopRepo, inventoryRepo, playerRepo):
-        self.shop = shopRepo
-        self.inventory = inventoryRepo
-        self.player = playerRepo
+    def __init__(self):
+        self.shop = ShopRepository()
+        self.inventory = InventoryRepository()
+        self.player = PlayerRepository()
 
 
 class World:
-    def __init__(self, enemies, quests):
-        self.enemies = enemies
-        self.quests = quests
+    def __init__(self):
+        self.enemies = createEnemies()
+        self.quests = createQuests()
 
 
 # =========================================================
-# GAME FACTORY
+# GAME FACTORY (COMPOSITION ROOT)
 # =========================================================
 
 class GameFactory:
     def __init__(self):
-        # SERVICES
-        self.services = Services(
-            shopService=ShopService(),
-            combatService=CombatService(),
-            itemService=ItemService()
-        )
-
-        # REPOS
-        self.repos = Repos(
-            shopRepo=ShopRepository(),
-            inventoryRepo=InventoryRepository(),
-            playerRepo=PlayerRepository()
-        )
-
-        # WORLD (static game data)
-        self.world = World(
-            enemies=createEnemies(),
-            quests=createQuests()
-        )
+        self.services = Services()
+        self.repos = Repos()
+        self.world = World()
 
     def create(self, playerId):
 
@@ -69,9 +51,10 @@ class GameFactory:
         if not data:
             raise ValueError("Player not found")
 
-        from player import Player
-        from questManager import QuestManager
-        from gameEventService import GameEventService
+        from app.models.player import Player
+        from app.core.questManager import QuestManager
+        from app.services.gameEventService import GameEventService
+        from app.core.controller import Controller
 
         player = Player(data["gold"])
         player.hp = data["hp"]
@@ -79,13 +62,13 @@ class GameFactory:
         player.xp = data["xp"]
 
         # =====================================================
-        # BUILD DOMAIN SYSTEMS
+        # DOMAIN SYSTEMS (NOT FACTORY RESPONSIBILITY LONG TERM)
         # =====================================================
         questManager = QuestManager(self.world.quests, player)
         gameEventService = GameEventService(player, questManager)
 
         # =====================================================
-        # BUILD CONTEXT
+        # CONTEXT
         # =====================================================
         ctx = GameContext(
             player=player,
@@ -98,6 +81,6 @@ class GameFactory:
         )
 
         # =====================================================
-        # RETURN CONTROLLER
+        # CONTROLLER
         # =====================================================
         return Controller(ctx)

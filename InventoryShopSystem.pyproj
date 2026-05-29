@@ -4,7 +4,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>bcbd5d31-dfb1-4f67-9fbf-dc4f028f5a91</ProjectGuid>
     <ProjectHome>.</ProjectHome>
-    <StartupFile>cli.py</StartupFile>
+    <StartupFile>app\cli\cli.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
@@ -22,34 +22,36 @@
     <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="itemService.py" />
-    <Compile Include="controller.py" />
-    <Compile Include="inventory.py" />
-    <Compile Include="item.py" />
-    <Compile Include="enemy.py" />
-    <Compile Include="combat.py" />
-    <Compile Include="inputHandler.py" />
-    <Compile Include="combatService.py" />
-    <Compile Include="gameData.py" />
-    <Compile Include="gameEventService.py" />
-    <Compile Include="gameEvents.py" />
-    <Compile Include="menuService.py" />
-    <Compile Include="api.py" />
-    <Compile Include="database.py" />
-    <Compile Include="characterSelectService.py" />
-    <Compile Include="inventoryRepository.py" />
-    <Compile Include="commands.py" />
-    <Compile Include="cli.py" />
-    <Compile Include="auth.py" />
-    <Compile Include="gameFactory.py" />
-    <Compile Include="gameContext.py" />
-    <Compile Include="playerRepository.py" />
-    <Compile Include="shopRepository.py" />
-    <Compile Include="shopService.py" />
-    <Compile Include="questManager.py" />
-    <Compile Include="quest.py" />
-    <Compile Include="shop.py" />
-    <Compile Include="player.py" />
+    <Compile Include="app\services\itemService.py" />
+    <Compile Include="app\core\controller.py" />
+    <Compile Include="app\models\inventory.py" />
+    <Compile Include="app\models\item.py" />
+    <Compile Include="app\models\enemy.py" />
+    <Compile Include="app\services\combat.py" />
+    <Compile Include="app\core\inputHandler.py" />
+    <Compile Include="app\services\combatService.py" />
+    <Compile Include="app\core\gameData.py" />
+    <Compile Include="app\services\gameEventService.py" />
+    <Compile Include="app\core\gameEvents.py" />
+    <Compile Include="app\services\menuService.py" />
+    <Compile Include="app\api\api.py" />
+    <Compile Include="app\core\database.py" />
+    <Compile Include="app\services\characterSelectService.py" />
+    <Compile Include="app\repositories\inventoryRepository.py" />
+    <Compile Include="app\core\commands.py" />
+    <Compile Include="app\cli\cli.py" />
+    <Compile Include="app\core\auth.py" />
+    <Compile Include="app\core\gameFactory.py" />
+    <Compile Include="app\core\gameContext.py" />
+    <Compile Include="app\core\deps.py" />
+    <Compile Include="app\repositories\playerRepository.py" />
+    <Compile Include="app\repositories\shopRepository.py" />
+    <Compile Include="app\services\shopService.py" />
+    <Compile Include="app\core\questManager.py" />
+    <Compile Include="app\models\quest.py" />
+    <Compile Include="app\services\shop.py" />
+    <Compile Include="app\models\player.py" />
+    <Compile Include="run.py" />
   </ItemGroup>
   <ItemGroup>
     <Interpreter Include="env1\">
@@ -74,6 +76,15 @@
   <ItemGroup>
     <Content Include="README.md" />
     <Content Include="requirements.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="app\" />
+    <Folder Include="app\core\" />
+    <Folder Include="app\api\" />
+    <Folder Include="app\cli\" />
+    <Folder Include="app\models\" />
+    <Folder Include="app\repositories\" />
+    <Folder Include="app\services\" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />
   <!-- Uncomment the CoreCompile target to enable the Build command in

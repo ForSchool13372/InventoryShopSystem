@@ -1,4 +1,4 @@
-from item import Item
+from app.models.item import Item
 
 class Shop:
     def __init__(self):

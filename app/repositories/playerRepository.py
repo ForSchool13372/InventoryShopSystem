@@ -1,4 +1,4 @@
-from database import engine, loadPlayer, savePlayer
+from app.core.database import engine, loadPlayer, savePlayer
 
 class PlayerRepository:
     def load(self, playerId):

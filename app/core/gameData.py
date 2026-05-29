@@ -1,6 +1,6 @@
-from enemy import Enemy
-from quest import Quest
-from item import Item
+from app.models.enemy import Enemy
+from app.models.quest import Quest
+from app.models.item import Item
 
 def createItems():
     #Dictionary

@@ -1,5 +1,5 @@
 from sqlalchemy import text
-from database import engine
+from app.core.database import engine
 
 class InventoryRepository:
 

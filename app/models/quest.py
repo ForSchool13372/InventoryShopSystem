@@ -1,4 +1,4 @@
-from player import Player
+from app.models.player import Player
 
 class Quest:
     def __init__(self, name, targetEnemy, target, rewardXP):

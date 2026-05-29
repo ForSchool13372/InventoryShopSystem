@@ -5,10 +5,21 @@ const API = import.meta.env.VITE_API_URL;
 // ----------------------------
 export const apiRequest = async (url, options = {}) => {
     const res = await fetch(url, options);
-    const data = await res.json();
+
+    let data;
+    try {
+        data = await res.json();
+    } catch {
+        data = {};
+    }
 
     if (!res.ok) {
-        throw new Error(data.detail || "Request Failed");
+        throw new Error(
+            data.detail ||
+            data.message ||
+            JSON.stringify(data) ||
+            "Request Failed"
+        );
     }
 
     return data;
@@ -28,7 +39,9 @@ export const loginPlayer = (playerId) => {
 // ----------------------------
 export const getPlayer = (playerId, token) => {
     return apiRequest(`${API}/player/${playerId}`, {
-        headers: { token }
+        headers: {
+            Authorization: token
+        }
     });
 };
 
@@ -37,7 +50,9 @@ export const getPlayer = (playerId, token) => {
 // ----------------------------
 export const getInventory = (playerId, token) => {
     return apiRequest(`${API}/inventory/${playerId}`, {
-        headers: { token }
+        headers: {
+            Authorization: token
+        }
     });
 };
 
@@ -49,14 +64,14 @@ export const getShop = () => {
 };
 
 // ----------------------------
-// BUY / SELL
+// BUY
 // ----------------------------
 export const buyItem = (playerId, token, itemName, quantity = 1) => {
     return apiRequest(`${API}/buy/${playerId}`, {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
-            token
+            Authorization: token
         },
         body: JSON.stringify({
             itemName,
@@ -65,12 +80,15 @@ export const buyItem = (playerId, token, itemName, quantity = 1) => {
     });
 };
 
+// ----------------------------
+// SELL
+// ----------------------------
 export const sellItem = (playerId, token, itemName, quantity = 1) => {
     return apiRequest(`${API}/sell/${playerId}`, {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
-            token
+            Authorization: token
         },
         body: JSON.stringify({
             itemName,

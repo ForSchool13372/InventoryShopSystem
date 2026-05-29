@@ -1,5 +1,5 @@
 import random
-from enemy import Enemy
+from app.models.enemy import Enemy
 
 def dealPlayerDamage():
     return random.randint(5, 15)
