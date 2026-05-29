@@ -140,3 +140,7 @@ def login(playerId: int):
     game = getGame(playerId)
 
     return ok(game.login())
+
+@app.get("/health")
+def health():
+    return {"status": "healthy"}
