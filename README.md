@@ -11,7 +11,9 @@ A full-stack RPG simulation backend + frontend system with authentication, shop 
 
 ## 🎮 Live Demo
 
-👉 Watch the application in action: [Demo Video](assets/demo.mp4)
+![Demo](assets/demo.gif)
+
+👉 Full video: [Watch MP4](assets/demo.mp4)
 
 ---
 
