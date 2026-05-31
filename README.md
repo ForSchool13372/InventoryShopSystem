@@ -1,4 +1,4 @@
-﻿# 🎮 Inventory Shop System (Full-Stack)
+﻿# Inventory Shop System (Full-Stack)
 
 [![Codecov](https://codecov.io/gh/ForSchool13372/InventoryShopSystem/branch/main/graph/badge.svg)](https://codecov.io/gh/ForSchool13372/InventoryShopSystem)
 [![Tests](https://img.shields.io/badge/tests-pytest-green)]()
@@ -9,9 +9,9 @@ A full-stack RPG simulation backend + frontend system with authentication, shop 
 
 ---
 
-## 🎮 Demo
+## 🎮 Live Demo
 
-![Gameplay Demo](assets/Shop.mp4)
+👉 Watch the application in action: [Demo Video](assets/demo.mp4)
 
 ---
 
