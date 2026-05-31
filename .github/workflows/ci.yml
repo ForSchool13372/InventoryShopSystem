@@ -19,9 +19,13 @@ jobs:
       - name: Install dependencies
         run: |
           pip install -r requirements.txt
+          pip install pytest-cov
 
-      - name: Set PYTHONPATH
-        run: echo "PYTHONPATH=." >> $GITHUB_ENV
+      - name: Run tests with coverage
+        run: pytest --cov=app --cov-report=xml -v
 
-      - name: Run tests
-        run: pytest -v
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          files: coverage.xml
+          fail_ci_if_error: true

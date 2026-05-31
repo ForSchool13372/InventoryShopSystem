@@ -1,4 +1,8 @@
-﻿🎮 Inventory Shop System (Full-Stack)
+﻿[![codecov](https://codecov.io/gh/ForSchool13372/InventoryShopSystem/branch/main/graph/badge.svg)](https://codecov.io/gh/ForSchool13372/InventoryShopSystem)
+
+🎮 Inventory Shop System (Full-Stack)
+
+🎮 Inventory Shop System (Full-Stack)
 
 A full-stack RPG-style simulation system built with FastAPI (backend) and React (frontend), designed to demonstrate real-world full-stack architecture, authentication flow, and state-driven application design.
 
@@ -120,7 +124,7 @@ Design clean component-based architecture
 Implement authentication and authorization
 Manage server-driven state
 Structure code like a production application (not just a tutorial)
-Built a comprehensive automated test suite using Pytest to validate business logic and edge cases across services and APIs
+Implemented a comprehensive automated test suite using Pytest to validate core business logic, API endpoints, and edge cases, ensuring system reliability and regression safety
 
 🛠 Tech Stack
 FastAPI
