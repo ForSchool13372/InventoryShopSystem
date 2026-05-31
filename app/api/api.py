@@ -1,10 +1,22 @@
 from fastapi import FastAPI, Header
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, field_validator
+import logging
 
 from app.core.deps import getAuthorizedGame, validatePlayer, getGame
 from app.core.database import engine
 from sqlalchemy import text
+
+# =========================================================
+# LOGGING
+# =========================================================
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s"
+)
+
+logger = logging.getLogger(__name__)
 
 # =========================================================
 # APP
@@ -74,18 +86,26 @@ class ItemRequest(BaseModel):
 
 @app.get("/player/{playerId}")
 def getPlayer(playerId: int, authorization: str = Header(default=None, alias="Authorization")):
+    logger.info(f"GET /player/{playerId}")
+
     game = getAuthorizedGame(playerId, authorization)
 
-    return ok({
+    data = {
         "gold": game.player.gold,
         "hp": game.player.hp,
         "level": game.player.level,
         "xp": game.player.xp
-    })
+    }
+
+    logger.info(f"PLAYER DATA SENT playerId={playerId}")
+
+    return ok(data)
 
 
 @app.post("/buy/{playerId}")
 def buy(playerId: int, data: ItemRequest, authorization: str = Header(default=None, alias="Authorization")):
+    logger.info(f"POST /buy/{playerId} item={data.itemName} qty={data.quantity}")
+
     game = getAuthorizedGame(playerId, authorization)
 
     result = game.buy(
@@ -95,11 +115,15 @@ def buy(playerId: int, data: ItemRequest, authorization: str = Header(default=No
 
     game.persist()
 
+    logger.info(f"BUY RESULT playerId={playerId} result={result}")
+
     return ok(unwrap(result))
 
 
 @app.post("/sell/{playerId}")
 def sell(playerId: int, data: ItemRequest, authorization: str = Header(default=None, alias="Authorization")):
+    logger.info(f"POST /sell/{playerId} item={data.itemName} qty={data.quantity}")
+
     game = getAuthorizedGame(playerId, authorization)
 
     result = game.sell(
@@ -109,38 +133,54 @@ def sell(playerId: int, data: ItemRequest, authorization: str = Header(default=N
 
     game.persist()
 
+    logger.info(f"SELL RESULT playerId={playerId} result={result}")
+
     return ok(unwrap(result))
 
 
 @app.get("/inventory/{playerId}")
 def getInventory(playerId: int, authorization: str = Header(default=None, alias="Authorization")):
+    logger.info(f"GET /inventory/{playerId}")
+
     game = getAuthorizedGame(playerId, authorization)
 
-    return ok({
-        "items": game.getInventory()
-    })
+    data = game.getInventory()
+
+    return ok({"items": data})
 
 
 @app.get("/shop")
 def getShop():
+    logger.info("GET /shop")
+
     with engine.begin() as conn:
         rows = conn.execute(
             text("SELECT itemName, stock FROM shop")
         ).fetchall()
 
-    return ok([
+    data = [
         {"itemName": r[0], "stock": r[1]}
         for r in rows
-    ])
+    ]
+
+    return ok(data)
 
 
 @app.post("/login/{playerId}")
 def login(playerId: int):
+    logger.info(f"POST /login/{playerId}")
+
     validatePlayer(playerId)
     game = getGame(playerId)
 
-    return ok(game.login())
+    result = game.login()
+
+    logger.info(f"LOGIN SUCCESS playerId={playerId}")
+
+    return ok(result)
+
 
 @app.get("/health")
 def health():
+    logger.info("GET /health")
     return {"status": "healthy"}
