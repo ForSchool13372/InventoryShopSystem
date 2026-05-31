@@ -4,3 +4,4 @@ gunicorn
 pydantic
 sqlalchemy
 python-jose
+pytest
