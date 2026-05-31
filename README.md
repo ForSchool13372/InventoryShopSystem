@@ -11,6 +11,8 @@ A full-stack RPG simulation backend + frontend system with authentication, shop 
 
 ## 🎮 Live Demo
 
+Demonstrates real-time shop transactions, inventory updates, and player progression.
+
 ![Demo](assets/demo.gif)
 
 ---
