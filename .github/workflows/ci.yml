@@ -23,9 +23,5 @@ jobs:
       - name: Set PYTHONPATH
         run: echo "PYTHONPATH=." >> $GITHUB_ENV
 
-      - name: Install project
-        run: |
-          pip install -e .
-
       - name: Run tests
         run: pytest -v
