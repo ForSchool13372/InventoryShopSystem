@@ -1,142 +1,180 @@
-﻿[![codecov](https://codecov.io/gh/ForSchool13372/InventoryShopSystem/branch/main/graph/badge.svg)](https://codecov.io/gh/ForSchool13372/InventoryShopSystem)
+﻿# 🎮 Inventory Shop System (Full-Stack)
 
-🎮 Inventory Shop System (Full-Stack)
+[![Codecov](https://codecov.io/gh/ForSchool13372/InventoryShopSystem/branch/main/graph/badge.svg)](https://codecov.io/gh/ForSchool13372/InventoryShopSystem)
+[![Tests](https://img.shields.io/badge/tests-pytest-green)]()
+[![Backend](https://img.shields.io/badge/backend-FastAPI-009688)]()
+[![Frontend](https://img.shields.io/badge/frontend-React-61DAFB)]()
 
-🎮 Inventory Shop System (Full-Stack)
+A full-stack RPG simulation backend + frontend system with authentication, shop economy, combat logic, and automated testing + CI/CD.
 
-A full-stack RPG-style simulation system built with FastAPI (backend) and React (frontend), designed to demonstrate real-world full-stack architecture, authentication flow, and state-driven application design.
+---
 
-This project simulates a lightweight game economy where players can:
-
-log in and manage a persistent player profile
-buy and sell items in a shop system
-manage an inventory system
-track stats like gold, HP, and level
-interact with a live backend API
-
-🧠 Core Design Philosophy
+## 🧠 Core Design Philosophy
 
 This project focuses on real full-stack architecture, not just isolated features.
 
 Key principles:
+- Clear separation between frontend and backend
+- Stateless REST API design with JWT authentication
+- Centralized server-side game state management
+- Modular service-layer architecture
+- Clean and predictable data flow between systems
 
-Clear separation between frontend and backend
-Stateless API design with token-based authentication
-Centralized game state management on the backend
-Component-based UI architecture on the frontend
-Clean data flow between systems
+The goal is to simulate real production-style backend structure.
 
-The goal is to simulate how real production applications are structured.
+---
 
-🏗 System Architecture
-React Frontend
-    ↓ (API calls)
-FastAPI Backend
-    ↓
-Game Factory (Domain Logic Layer)
-    ↓
-Database (SQLite / SQLAlchemy)
-Key Properties:
-Stateless REST API layer
-Token-based authentication (JWT)
-Server-controlled game state
-Modular domain logic via GameFactory
-Separation between UI, API, and business logic
+## 🏗 System Architecture
 
-⚙️ Core Features
+React Frontend → FastAPI Backend → Game Logic Layer → SQLite Database
 
-👤 Player System
-Persistent player profile (gold, HP, level)
-Authentication via player ID login
-Server-side state management
-🛒 Shop System
-Dynamic item listings
-Buy transactions with validation
-Stock-aware item handling
-🎒 Inventory System
-Player-specific inventory
-Real-time updates after transactions
-Server-synced state
-📊 Stats System
-Live player stats display
-Updates after every action
-Backend-driven truth source
-🔐 Authentication & Security
-JWT-based authentication
-Login via /login/{playerId}
-Route-level authorization
-Player-scoped access control
-Prevents cross-player data access
+- Stateless REST API design
+- Token-based authentication (JWT)
+- Centralized game state management
+- Modular service-based architecture
 
-📡 API Overview
+---
 
-Authentication
-POST /login/{playerId} → returns JWT token
-Player
-GET /player/{playerId} → player stats
-Shop
-GET /shop → list items
-POST /buy/{playerId} → purchase item
-Inventory
-GET /inventory/{playerId} → view inventory
-Selling
-POST /sell/{playerId} → sell item
+## ⚙️ Core Features
 
-🎨 Frontend (React)
+### 👤 Player System
+- Persistent player profiles (gold, HP, level, XP)
+- JWT-based authentication
+- Server-controlled state management
 
-The frontend is built with a component-based architecture:
+### 🛒 Shop System
+- Dynamic item listings
+- Buy/sell transactions with validation
+- Stock-aware item handling
 
-Structure:
-App.jsx → state + API orchestration layer
-Login.jsx → authentication UI
-Shop.jsx → item purchasing interface
-Inventory.jsx → item management
-PlayerStats.jsx → live stats display
-Frontend Features:
-Component separation for scalability
-API-driven state updates
-Loading states for UX feedback
-Per-action UI feedback (buy/sell/login)
-Clean data flow via props
+### 🎒 Inventory System
+- Player-specific inventory
+- Real-time updates after transactions
+- Server-synced state
 
-🧱 Backend Architecture
+### ⚔️ Combat System
+- Fight simulation system
+- Win/lose outcomes
+- XP reward handling
+- Event-based updates
 
-FastAPI Layer
-Handles routing and request validation
-Stateless API design
-Authentication enforcement
-Game Factory (Domain Layer)
-Encapsulates game logic
-Handles transactions (buy/sell)
-Manages player state transitions
-Database Layer
-SQLite with SQLAlchemy
-Persistent player + inventory storage
-Simple relational structure
+### 📊 Stats System
+- Live player stats updates
+- Backend-driven state source
 
-💡 What This Project Demonstrates
+---
 
-This project shows the ability to:
+## 🔐 Authentication & Security
 
-Build a working full-stack application
-Connect frontend and backend systems properly
-Design clean component-based architecture
-Implement authentication and authorization
-Manage server-driven state
-Structure code like a production application (not just a tutorial)
-Implemented a comprehensive automated test suite using Pytest to validate core business logic, API endpoints, and edge cases, ensuring system reliability and regression safety
+- JWT-based authentication
+- Login via `/login/{playerId}`
+- Route-level authorization
+- Player-scoped data access control
 
-🛠 Tech Stack
-FastAPI
-Python
-React (Vite)
-JavaScript (ES6+)
-SQLAlchemy
-SQLite
-JWT Authentication
+---
 
-🚀 Summary
+## 📡 API Overview
 
-This project is a full-stack game simulation system that demonstrates practical software engineering principles, including API design, authentication, state management, and component-based frontend architecture.
+### Authentication
+- `POST /login/{playerId}` → returns JWT token
 
-It is designed to reflect how real-world applications are structured across frontend and backend systems.
+### Player
+- `GET /player/{playerId}` → player stats
+
+### Shop
+- `GET /shop` → list items
+- `POST /buy/{playerId}` → purchase item
+- `POST /sell/{playerId}` → sell item
+
+### Inventory
+- `GET /inventory/{playerId}` → view inventory
+
+---
+
+## 🎨 Frontend (React)
+
+### Structure
+- `App.jsx` → state + API orchestration
+- `Login.jsx` → authentication UI
+- `Shop.jsx` → item purchasing
+- `Inventory.jsx` → inventory management
+- `PlayerStats.jsx` → live stats display
+
+### Features
+- Component-based architecture
+- API-driven state updates
+- Loading states for UX feedback
+- Toast notifications for actions
+- Dark/light mode support
+
+---
+
+## 🧱 Backend Architecture
+
+### FastAPI Layer
+- Request handling & validation
+- Authentication enforcement
+- REST API design
+
+### Game Logic Layer
+- Handles buy/sell logic
+- Player state updates
+- Combat system logic
+
+### Database Layer
+- SQLite + SQLAlchemy
+- Persistent player and inventory storage
+- Simple relational structure
+
+---
+
+## 🧪 Testing & Quality
+
+- Built comprehensive test suite using **Pytest**
+- Unit tests for services
+- Integration tests for API routes
+- Edge case validation (invalid quantity, insufficient stock, etc.)
+- CI pipeline ensures tests run on every push
+
+---
+
+## 💡 What This Project Demonstrates
+
+- Full-stack system design (frontend + backend integration)
+- Clean layered architecture (controller → service → data layer)
+- REST API design with authentication & validation
+- Test-driven development using Pytest
+- CI/CD pipeline using GitHub Actions
+- Code coverage tracking with Codecov
+
+---
+
+## 🛠 Tech Stack
+
+- FastAPI
+- Python
+- React (Vite)
+- JavaScript (ES6+)
+- SQLAlchemy
+- SQLite
+- JWT Authentication
+- Pytest
+- GitHub Actions
+- Codecov
+
+---
+
+## 🚀 CI/CD & Quality
+
+- Automated testing via GitHub Actions
+- Pytest suite covering services and API routes
+- Code coverage reporting via Codecov
+- CI prevents broken code from being merged
+
+---
+
+## 📈 Summary
+
+This is a full-stack RPG-style simulation system designed to demonstrate real-world software engineering practices including API design, authentication, state management, testing, and CI/CD workflows.
+
+It reflects how production applications are structured across frontend and backend systems.
