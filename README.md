@@ -13,8 +13,6 @@ A full-stack RPG simulation backend + frontend system with authentication, shop 
 
 ![Demo](assets/demo.gif)
 
-👉 Full video: [Watch MP4](assets/demo.gif)
-
 ---
 
 ## 🧠 Core Design Philosophy
