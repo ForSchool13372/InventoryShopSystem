@@ -5,13 +5,13 @@
 [![Backend](https://img.shields.io/badge/backend-FastAPI-009688)]()
 [![Frontend](https://img.shields.io/badge/frontend-React-61DAFB)]()
 
-A full-stack RPG simulation backend + frontend system with authentication, shop economy, combat logic, and automated testing + CI/CD.
+A full-stack RPG simulation system featuring authentication, shop economy, combat logic, and a **service-layer backend architecture with CI/CD, testing, and production-style design patterns**.
 
 ---
 
 ## 🎮 Live Demo
 
-Demonstrates real-time shop transactions, inventory updates, and player progression.
+Real-time gameplay simulation with shop transactions, inventory updates, and player progression.
 
 ![Demo](assets/demo.gif)
 
@@ -19,28 +19,30 @@ Demonstrates real-time shop transactions, inventory updates, and player progress
 
 ## 🧠 Core Design Philosophy
 
-This project focuses on real full-stack architecture, not just isolated features.
+This project is designed to reflect **production-style backend engineering practices**, not just feature implementation.
 
 Key principles:
-- Clear separation between frontend and backend
-- Stateless REST API design with JWT authentication
-- Centralized server-side game state management
-- Modular service-layer architecture
-- Clean and predictable data flow between systems
+- Clear separation between frontend and backend systems
+- Stateless REST API design with token-based authentication
+- Server-authoritative game state (no client-side trust)
+- Modular service-layer architecture for business logic isolation
+- Dependency injection for authentication and validation
+- Fully testable and deterministic backend logic
 
-The goal is to simulate real production-style backend structure.
+The goal is to simulate real-world backend system design patterns used in production applications.
 
 ---
 
 ## 🏗 System Architecture
 
-React Frontend → FastAPI Backend → Game Logic Layer → SQLite Database
+React Frontend → FastAPI Routes → Service Layer (Game Logic) → SQLite Database
 
 Key properties:
+- Thin controller layer (FastAPI routes handle request/response only)
+- Centralized business logic in service layer (`Game` domain object)
+- Dependency injection for authentication and player validation
+- Transaction-safe database operations via SQLAlchemy
 - Stateless REST API design
-- Token-based authentication (JWT)
-- Centralized game state management
-- Modular service-based architecture
 
 ---
 
@@ -48,71 +50,76 @@ Key properties:
 
 ### 👤 Player System
 - Persistent player profiles (gold, HP, level, XP)
-- JWT-based authentication
-- Server-controlled state management
+- Server-authoritative state management
+- Secure authorization via dependency layer
+- Real-time stat updates from backend source of truth
 
 ### 🛒 Shop System
-- Dynamic item listings
-- Buy/sell transactions with validation
-- Stock-aware item handling
+- Dynamic item listings with stock tracking
+- Buy/sell transactions with full server-side validation
+- Enforced pricing and inventory rules
 
 ### 🎒 Inventory System
-- Player-specific inventory
-- Real-time updates after transactions
-- Server-synced state
+- Player-specific persistent inventory
+- Fully backend-synced state after transactions
 
 ### ⚔️ Combat System
-- Fight simulation system
-- Win/lose outcomes
-- XP reward handling
-- Event-based updates
+- Server-side combat simulation
+- Deterministic outcomes (win/lose)
+- XP rewards and progression system
+- Event-driven state updates via service layer
 
 ### 📊 Stats System
-- Live player stats updates
-- Backend-driven state source
+- Live player stats from backend state
+- No client-side state authority
 
 ---
 
 ## 🔐 Authentication & Security
 
-- JWT-based authentication
-- Login via `/login/{playerId}`
-- Route-level authorization
+- Token-based authentication via request headers
+- Route-level authorization enforcement
 - Player-scoped data access control
+- Dependency injection-based validation (`getAuthorizedGame`)
+- Pydantic request validation
+- Rate limiting for abuse prevention
 
 ---
 
 ## 📡 API Overview
 
 ### Authentication
-- `POST /login/{playerId}` → returns JWT token
+- `POST /login/{playerId}` → returns session token
 
 ### Player
-- `GET /player/{playerId}` → player stats
+- `GET /player/{playerId}` → get player stats
 
 ### Shop
 - `GET /shop` → list items
-- `POST /buy/{playerId}` → purchase item
-- `POST /sell/{playerId}` → sell item
+- `POST /buy/{playerId}` → purchase item (validated)
+- `POST /sell/{playerId}` → sell item (validated)
 
 ### Inventory
 - `GET /inventory/{playerId}` → view inventory
+
+### System
+- `GET /health` → health check
 
 ---
 
 ## 🎨 Frontend (React)
 
 ### Structure
-- `App.jsx` → state + API orchestration layer
+- `App.jsx` → API orchestration layer + global state
 - `Login.jsx` → authentication UI
-- `Shop.jsx` → item purchasing interface
+- `Shop.jsx` → shop interface
 - `Inventory.jsx` → inventory management
 - `PlayerStats.jsx` → live stats display
 
 ### Features
 - Component-based architecture
 - API-driven state updates
-- Loading states for UX feedback
+- Loading and error states
 - Toast notifications for actions
 - Dark/light mode support
 
@@ -120,41 +127,48 @@ Key properties:
 
 ## 🧱 Backend Architecture
 
-### FastAPI Layer
-- Request handling & validation
-- Authentication enforcement
-- REST API design
+### FastAPI Layer (Controllers)
+- Handles routing + request validation
+- Delegates all logic to service layer
+- Keeps endpoints thin and maintainable
 
-### Game Logic Layer
-- Handles buy/sell logic
+### Service Layer (Game Logic)
+- Core business logic (buy/sell/combat)
 - Player state updates
-- Combat system logic
+- Encapsulated domain rules
+
+### Dependency Layer
+- Authentication + authorization
+- Player validation
+- Game session resolution (`getAuthorizedGame`, `getGame`)
 
 ### Database Layer
 - SQLite + SQLAlchemy
-- Persistent player and inventory storage
-- Simple relational structure
+- Transaction-safe persistence
+- Simple relational schema (players, inventory, shop)
 
 ---
 
 ## 🧪 Testing & Quality
 
-- Built comprehensive test suite using **Pytest**
-- Unit tests for services
+- Pytest-based test suite
+- Unit tests for service logic
 - Integration tests for API routes
-- Edge case validation (invalid quantity, insufficient stock, etc.)
-- CI pipeline ensures tests run on every push
+- Edge case coverage (invalid input, insufficient stock, unauthorized access)
+- CI pipeline runs tests on every commit
 
 ---
 
 ## 💡 What This Project Demonstrates
 
-- Full-stack system design (frontend + backend integration)
-- Clean layered architecture (controller → service → data layer)
-- REST API design with authentication & validation
+- Production-style full-stack system design
+- Service-layer backend architecture (controller → domain → persistence)
+- Secure REST API design with authentication & authorization
+- Dependency injection patterns for scalable backend design
 - Test-driven development using Pytest
-- CI/CD pipeline using GitHub Actions
-- Code coverage tracking with Codecov
+- CI/CD pipeline with GitHub Actions
+- Real-world state management across frontend/backend
+- Backend observability through structured logging
 
 ---
 
@@ -166,7 +180,7 @@ Key properties:
 - JavaScript (ES6+)
 - SQLAlchemy
 - SQLite
-- JWT Authentication
+- Token-based authentication
 - Pytest
 - GitHub Actions
 - Codecov
@@ -176,14 +190,16 @@ Key properties:
 ## 🚀 CI/CD & Quality
 
 - Automated testing via GitHub Actions
-- Pytest suite covering services and API routes
-- Code coverage reporting via Codecov
-- CI prevents broken code from being merged
+- Full test suite runs on every push
+- Code coverage tracking via Codecov
+- CI prevents broken builds from merging
+- Structured logging for debugging and observability
+- Rate limiting for API protection
 
 ---
 
 ## 📈 Summary
 
-This project demonstrates a full-stack RPG-style simulation system built with production-style software engineering practices including API design, authentication, state management, testing, and CI/CD workflows.
+This project demonstrates a full-stack RPG simulation system built with **production-grade backend engineering principles**, including service-layer architecture, authentication and authorization design, transactional state management, automated testing, and CI/CD workflows.
 
-It reflects how real-world applications are structured across frontend and backend systems.
+It reflects real-world backend system design patterns used in scalable web applications.
