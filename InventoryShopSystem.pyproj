@@ -12,6 +12,7 @@
     <Name>InventoryShopSystem</Name>
     <RootNamespace>InventoryShopSystem</RootNamespace>
     <InterpreterId>MSBuild|env|$(MSBuildProjectFullPath)</InterpreterId>
+    <TestFramework>Pytest</TestFramework>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
     <DebugSymbols>true</DebugSymbols>
@@ -51,6 +52,7 @@
     <Compile Include="app\models\quest.py" />
     <Compile Include="app\services\shop.py" />
     <Compile Include="app\models\player.py" />
+    <Compile Include=".github\workflows\ci.yml" />
     <Compile Include="run.py" />
     <Compile Include="tests\api\test_api.py" />
     <Compile Include="tests\conftest.py" />
@@ -89,6 +91,9 @@
     <Folder Include="app\models\" />
     <Folder Include="app\repositories\" />
     <Folder Include="app\services\" />
+    <Folder Include=".github\" />
+    <Folder Include=".github\workflows\" />
+    <Folder Include="assets\" />
     <Folder Include="tests\" />
     <Folder Include="tests\api\" />
     <Folder Include="tests\utils\" />

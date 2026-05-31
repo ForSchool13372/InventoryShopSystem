@@ -1,5 +1,6 @@
 from app.core.auth import createAccessToken
 
+
 class Controller:
     def __init__(self, ctx):
         # =========================================================
@@ -32,8 +33,6 @@ class Controller:
     # =========================================================
 
     def login(self):
-        print("PLAYER ID:", self.playerId)
-
         token = createAccessToken({
             "playerId": self.playerId
         })
@@ -45,9 +44,11 @@ class Controller:
 
     def revive(self):
         self.player.revive()
+        return {"success": True}
 
     def persist(self):
         self.playerRepo.save(self.playerId, self.player)
+        return {"success": True}
 
     # =========================================================
     # PLAYER
@@ -67,32 +68,18 @@ class Controller:
 
     def fight(self):
         result = self.combat.handleFight(self.player, self.world.enemies)
-
         self._handle_fight_events(result)
-
         return result
 
     def buy(self, itemName, quantity):
         item = self.items.getItem(itemName)
-
-        return self.shop.buy(
-            self.player,
-            item,
-            quantity,
-            self.playerId,
-            self.shopRepo
-        )
+        ctx = self._buildShopCtx(item, quantity)
+        return self.shop.buy(ctx)
 
     def sell(self, itemName, quantity):
         item = self.items.getItem(itemName)
-
-        return self.shop.sell(
-            self.player,
-            item,
-            quantity,
-            self.playerId,
-            self.shopRepo
-        )
+        ctx = self._buildShopCtx(item, quantity)
+        return self.shop.sell(ctx)
 
     # =========================================================
     # DATA ACCESS
@@ -111,14 +98,22 @@ class Controller:
     # INTERNAL HELPERS
     # =========================================================
 
+    def _buildShopCtx(self, item, quantity):
+        ctx = type("Ctx", (), {})()
+        ctx.player = self.player
+        ctx.playerId = self.playerId
+        ctx.item = item
+        ctx.quantity = quantity
+        ctx.shopRepo = self.shopRepo
+        return ctx
+
     def _handle_fight_events(self, result):
-        if result["result"] == "win":
-            self.gameEventService.handleEvent({
-                "type": "fightWin",
-                "xp": result.get("xp"),
-                "enemy": result.get("enemy")
-            })
-        else:
-            self.gameEventService.handleEvent({
-                "type": "fightLose"
-            })
+        event_type = "fightWin" if result.get("result") == "win" else "fightLose"
+
+        payload = {"type": event_type}
+
+        if event_type == "fightWin":
+            payload["xp"] = result.get("xp")
+            payload["enemy"] = result.get("enemy")
+
+        self.gameEventService.handleEvent(payload)

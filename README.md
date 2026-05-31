@@ -9,6 +9,12 @@ A full-stack RPG simulation backend + frontend system with authentication, shop 
 
 ---
 
+## 🎮 Demo
+
+![Gameplay Demo](assets/Shop.mp4)
+
+---
+
 ## 🧠 Core Design Philosophy
 
 This project focuses on real full-stack architecture, not just isolated features.
