@@ -28,6 +28,7 @@ The goal is to simulate real production-style backend structure.
 
 React Frontend → FastAPI Backend → Game Logic Layer → SQLite Database
 
+Key properties:
 - Stateless REST API design
 - Token-based authentication (JWT)
 - Centralized game state management
@@ -94,9 +95,9 @@ React Frontend → FastAPI Backend → Game Logic Layer → SQLite Database
 ## 🎨 Frontend (React)
 
 ### Structure
-- `App.jsx` → state + API orchestration
+- `App.jsx` → state + API orchestration layer
 - `Login.jsx` → authentication UI
-- `Shop.jsx` → item purchasing
+- `Shop.jsx` → item purchasing interface
 - `Inventory.jsx` → inventory management
 - `PlayerStats.jsx` → live stats display
 
@@ -175,6 +176,6 @@ React Frontend → FastAPI Backend → Game Logic Layer → SQLite Database
 
 ## 📈 Summary
 
-This is a full-stack RPG-style simulation system designed to demonstrate real-world software engineering practices including API design, authentication, state management, testing, and CI/CD workflows.
+This project demonstrates a full-stack RPG-style simulation system built with production-style software engineering practices including API design, authentication, state management, testing, and CI/CD workflows.
 
-It reflects how production applications are structured across frontend and backend systems.
+It reflects how real-world applications are structured across frontend and backend systems.
