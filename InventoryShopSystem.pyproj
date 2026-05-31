@@ -53,7 +53,9 @@
     <Compile Include="app\models\player.py" />
     <Compile Include="run.py" />
     <Compile Include="tests\api\test_api.py" />
-    <Compile Include="tests\services\test_item_service.py" />
+    <Compile Include="tests\conftest.py" />
+    <Compile Include="tests\services\test_services.py" />
+    <Compile Include="tests\utils\test_ctx.py" />
   </ItemGroup>
   <ItemGroup>
     <Interpreter Include="env1\">
@@ -89,6 +91,7 @@
     <Folder Include="app\services\" />
     <Folder Include="tests\" />
     <Folder Include="tests\api\" />
+    <Folder Include="tests\utils\" />
     <Folder Include="tests\services\" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />

@@ -1,71 +1,59 @@
 class ShopService:
 
     # =========================================================
-    # BUY
+    # PUBLIC API
     # =========================================================
 
-    def buy(self, player, item, quantity, playerId, shopRepo):
+    def buy(self, ctx):
+        self._validate_item(ctx.item)
+        self._validate_quantity(ctx.quantity)
 
-        self._validate_item(item)
-        self._validate_quantity(quantity)
+        total_cost = ctx.item.price * ctx.quantity
 
-        totalCost = item.price * quantity
+        if ctx.player.gold < total_cost:
+            return self._fail("Not enough gold")
 
-        if player.gold < totalCost:
-            return {
-                "success": False,
-                "message": "Not enough gold"
-            }
+        if not ctx.shopRepo.hasStock(ctx.item.name, ctx.quantity):
+            return self._fail("Not enough stock")
 
-        if not shopRepo.hasStock(item.name, quantity):
-            return {
-                "success": False,
-                "message": "Not enough stock"
-            }
+        ctx.shopRepo.decreaseStock(ctx.item.name, ctx.quantity)
+        ctx.shopRepo.addOrUpdatePlayerItem(
+            ctx.playerId,
+            ctx.item.name,
+            ctx.quantity
+        )
 
-        shopRepo.decreaseStock(item.name, quantity)
-        shopRepo.addOrUpdatePlayerItem(playerId, item.name, quantity)
+        ctx.player.gold -= total_cost
 
-        player.gold -= totalCost
+        return self._success("Purchase Successful")
 
-        return {
-            "success": True,
-            "message": "Purchase Successful"
-        }
+    def sell(self, ctx):
+        self._validate_item(ctx.item)
+        self._validate_quantity(ctx.quantity)
 
-    # =========================================================
-    # SELL
-    # =========================================================
+        if ctx.shopRepo.getPlayerItemQuantity(ctx.playerId, ctx.item.name) < ctx.quantity:
+            return self._fail("Not enough items")
 
-    def sell(self, player, item, quantity, playerId, shopRepo):
+        total_gain = ctx.item.price * ctx.quantity
 
-        self._validate_item(item)
-        self._validate_quantity(quantity)
+        ctx.shopRepo.removePlayerItem(
+            ctx.playerId,
+            ctx.item.name,
+            ctx.quantity
+        )
 
-        if shopRepo.getPlayerItemQuantity(playerId, item.name) < quantity:
-            return {
-                "success": False,
-                "message": "Not enough items"
-            }
+        ctx.shopRepo.increaseStock(ctx.item.name, ctx.quantity)
 
-        totalGain = item.price * quantity
+        ctx.player.gold += total_gain
 
-        shopRepo.removePlayerItem(playerId, item.name, quantity)
-        shopRepo.increaseStock(item.name, quantity)
-
-        player.gold += totalGain
-
-        return {
-            "success": True,
-            "message": "Sale Successful"
-        }
+        return self._success("Sale Successful")
 
     # =========================================================
-    # VALIDATION (INTERNAL)
+    # VALIDATION
     # =========================================================
 
     def _validate_item(self, item):
-        if not item:
+        if item is None:
             raise ValueError("Item does not exist")
 
         if not hasattr(item, "price"):
@@ -74,3 +62,19 @@ class ShopService:
     def _validate_quantity(self, quantity):
         if quantity <= 0:
             raise ValueError("Invalid quantity")
+
+    # =========================================================
+    # RESPONSE HELPERS
+    # =========================================================
+
+    def _success(self, message):
+        return {
+            "success": True,
+            "message": message
+        }
+
+    def _fail(self, message):
+        return {
+            "success": False,
+            "message": message
+        }

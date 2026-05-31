@@ -5,7 +5,8 @@ class Shop:
         self.stock = {}
 
     def addItemToStock(self, item, quantity):
-        self.stock[item.name] = self.stock.get(item.name, 0) + quantity
+        name = getattr(item, "name", item)
+        self.stock[name] = self.stock.get(name, 0) + quantity
 
     def showStock(self):
         for name, qty in self.stock.items():

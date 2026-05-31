@@ -120,6 +120,8 @@ Design clean component-based architecture
 Implement authentication and authorization
 Manage server-driven state
 Structure code like a production application (not just a tutorial)
+Built a comprehensive automated test suite using Pytest to validate business logic and edge cases across services and APIs
+
 🛠 Tech Stack
 FastAPI
 Python
