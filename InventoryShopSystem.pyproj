@@ -23,6 +23,9 @@
     <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="app\api\devRoutes.py" />
+    <Compile Include="app\api\routes.py" />
+    <Compile Include="app\core\logger.py" />
     <Compile Include="app\services\itemService.py" />
     <Compile Include="app\core\controller.py" />
     <Compile Include="app\models\inventory.py" />

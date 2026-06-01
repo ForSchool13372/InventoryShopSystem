@@ -1,66 +1,39 @@
-from fastapi import Header, HTTPException
+﻿from fastapi import HTTPException, Depends
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
 from app.core.auth import verifyToken
 from app.core.gameFactory import GameFactory
-from app.core.database import engine
-
-from sqlalchemy import text
 
 gameFactory = GameFactory()
+
+authScheme = HTTPBearer()
 
 # =========================================================
 # AUTH
 # =========================================================
 
-def getCurrentPlayer(
-    authorization: str = Header(default=None, alias="Authorization")
+def getCurrentPlayerId(
+    credentials: HTTPAuthorizationCredentials = Depends(authScheme)
 ):
-    if not authorization:
-        raise HTTPException(status_code=401, detail="Missing token")
+    token = credentials.credentials
 
-    payload = verifyToken(authorization)
+    payload = verifyToken(token)
+
+    # ❌ invalid token
     if not payload:
         raise HTTPException(status_code=401, detail="Invalid token")
 
+    # ❌ malformed payload (IMPORTANT FIX)
+    if "playerId" not in payload:
+        raise HTTPException(status_code=401, detail="Token missing playerId")
+
     return payload["playerId"]
 
-
 # =========================================================
-# VALIDATION
-# =========================================================
-
-def validatePlayer(playerId: int):
-    with engine.begin() as conn:
-        result = conn.execute(
-            text("SELECT 1 FROM player WHERE id = :id"),
-            {"id": playerId}
-        ).fetchone()
-
-    if not result:
-        raise HTTPException(status_code=404, detail="Player does not exist")
-
-
-# =========================================================
-# GAME
+# GAME (AUTO-BINDED TO JWT USER)
 # =========================================================
 
-def getGame(playerId: int):
-    return gameFactory.create(playerId)
-
-
-# =========================================================
-# AUTHORIZED GAME
-# =========================================================
-
-def getAuthorizedGame(
-    playerId: int,
-    authorization: str = Header(default=None, alias="Authorization")
+def getCurrentGame(
+    playerId: int = Depends(getCurrentPlayerId)
 ):
-    validatePlayer(playerId)
-
-    authPlayerId = getCurrentPlayer(authorization)
-
-    if authPlayerId != playerId:
-        raise HTTPException(status_code=403, detail="Not your player")
-
-    return getGame(playerId)
+    return gameFactory.create(playerId)

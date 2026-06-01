@@ -29,6 +29,22 @@ class Controller:
         self.playerRepo = self.repos.player
 
     # =========================================================
+    # EVENT SYSTEM (HIGH ROI ADDITION)
+    # =========================================================
+
+    def _emitEvent(self, eventType, data=None):
+        """
+        Centralized event logging system
+        """
+        payload = {
+            "type": eventType,
+            "playerId": self.playerId,
+            "data": data or {}
+        }
+
+        self.gameEventService.handleEvent(payload)
+
+    # =========================================================
     # LIFECYCLE
     # =========================================================
 
@@ -37,6 +53,8 @@ class Controller:
             "playerId": self.playerId
         })
 
+        self._emitEvent("LOGIN")
+
         return {
             "success": True,
             "token": token
@@ -44,6 +62,9 @@ class Controller:
 
     def revive(self):
         self.player.revive()
+
+        self._emitEvent("REVIVE")
+
         return {"success": True}
 
     def persist(self):
@@ -68,18 +89,41 @@ class Controller:
 
     def fight(self):
         result = self.combat.handleFight(self.player, self.world.enemies)
-        self._handle_fight_events(result)
+
+        eventType = "FIGHT_WIN" if result.get("result") == "win" else "FIGHT_LOSE"
+
+        self._emitEvent(eventType, {
+            "xp": result.get("xp"),
+            "enemy": result.get("enemy")
+        })
+
         return result
 
     def buy(self, itemName, quantity):
         item = self.items.getItem(itemName)
         ctx = self._buildShopCtx(item, quantity)
-        return self.shop.buy(ctx)
+
+        result = self.shop.buy(ctx)
+
+        self._emitEvent("BUY", {
+            "item": itemName,
+            "quantity": quantity
+        })
+
+        return result
 
     def sell(self, itemName, quantity):
         item = self.items.getItem(itemName)
         ctx = self._buildShopCtx(item, quantity)
-        return self.shop.sell(ctx)
+
+        result = self.shop.sell(ctx)
+
+        self._emitEvent("SELL", {
+            "item": itemName,
+            "quantity": quantity
+        })
+
+        return result
 
     # =========================================================
     # DATA ACCESS
@@ -106,14 +150,3 @@ class Controller:
         ctx.quantity = quantity
         ctx.shopRepo = self.shopRepo
         return ctx
-
-    def _handle_fight_events(self, result):
-        event_type = "fightWin" if result.get("result") == "win" else "fightLose"
-
-        payload = {"type": event_type}
-
-        if event_type == "fightWin":
-            payload["xp"] = result.get("xp")
-            payload["enemy"] = result.get("enemy")
-
-        self.gameEventService.handleEvent(payload)

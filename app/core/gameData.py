@@ -29,5 +29,5 @@ def createQuests():
 def seedShop(shop):
     items = createItems()
     shop.addItemToStock(items["sword"], 5)
-    shop.addItemToStock(items["potion"], 10)
+    shop.addItemToStock(items["potion"], 15)
     shop.addItemToStock(items["garbage"], 10)

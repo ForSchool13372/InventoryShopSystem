@@ -1,15 +1,16 @@
-﻿import { useEffect, useState, useCallback } from "react";
+﻿import { useEffect, useState } from "react";
 import { useAuth } from "./useAuth";
 import { motion, AnimatePresence } from "framer-motion";
 import soundSystem from "./utils/soundSystem";
 
 import {
-    getShop,
-    buyItem,
-    sellItem,
+    setAuthToken,
+    loginPlayer,
     getInventory,
     getPlayer,
-    loginPlayer
+    buyItem,
+    sellItem,
+    getShop
 } from "./apiClient";
 
 import Login from "./components/Login";
@@ -57,45 +58,67 @@ function App() {
     };
 
     // ----------------------------
-    // LOADERS
+    // LOADERS (CLEAN)
     // ----------------------------
-    const loadShop = useCallback(async () => {
+
+    const loadShop = async () => {
         const data = await getShop();
         setItems(data.data);
-    }, []);
+    };
 
-    const loadInventory = useCallback(async () => {
+    const loadInventory = async () => {
         if (!token || !playerId) return;
-        const data = await getInventory(playerId, token);
+
+        const data = await getInventory();
         setInventory(data.data.items);
-    }, [token, playerId]);
+    };
 
-    const loadPlayerStats = useCallback(async () => {
+    const loadPlayerStats = async () => {
         if (!token || !playerId) return;
-        const data = await getPlayer(playerId, token);
-        setPlayerStats(data.data);
-    }, [token, playerId]);
 
-    const refreshAll = useCallback(async () => {
+        const data = await getPlayer();
+        setPlayerStats(data.data);
+    };
+
+    // ----------------------------
+    // REFRESH ALL (CLEAN)
+    // ----------------------------
+
+    const refreshAll = async () => {
+        if (!token || !playerId) return;
+
         await Promise.all([
             loadShop(),
             loadInventory(),
             loadPlayerStats()
         ]);
-    }, [loadShop, loadInventory, loadPlayerStats]);
+    };
 
+    // ----------------------------
+    // INIT EFFECT (FIXED)
+    // ----------------------------
     useEffect(() => {
-        const init = async () => {
+        if (!token) return;
+
+        const syncData = async () => {
             setLoading(true);
             try {
-                await refreshAll();
+                const [shop, inventory, player] = await Promise.all([
+                    getShop(),
+                    getInventory(),
+                    getPlayer()
+                ]);
+
+                setItems(shop.data);
+                setInventory(inventory.data.items);
+                setPlayerStats(player.data);
             } finally {
                 setLoading(false);
             }
         };
 
-        init();
-    }, [refreshAll]);
+        syncData();
+    }, [token]);
 
     // ----------------------------
     // AUTH
@@ -105,10 +128,13 @@ function App() {
 
         const data = await loginPlayer(id);
 
-        login(data.data.token, id);
+        const newToken = data.data.token;
+
+        setAuthToken(newToken);
+
+        login(newToken, id);
 
         soundSystem.play("success");
-        await refreshAll();
 
         addToast("Welcome back", "success");
 
@@ -133,7 +159,7 @@ function App() {
         setBuyingItem(itemName);
 
         try {
-            await buyItem(playerId, token, itemName, 1);
+            await buyItem(itemName, 1);
             await refreshAll();
 
             soundSystem.play("buy");
@@ -152,7 +178,7 @@ function App() {
         setSellingItem(itemName);
 
         try {
-            await sellItem(playerId, token, itemName, 1);
+            await sellItem(itemName, 1);
             await refreshAll();
 
             soundSystem.play("sell");
