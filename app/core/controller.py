@@ -29,25 +29,22 @@ class Controller:
         self.playerRepo = self.repos.player
 
     # =========================================================
-    # EVENT SYSTEM (HIGH ROI ADDITION)
+    # EVENT SYSTEM
     # =========================================================
-
     def _emitEvent(self, eventType, data=None):
-        """
-        Centralized event logging system
-        """
-        payload = {
-            "type": eventType,
-            "playerId": self.playerId,
-            "data": data or {}
-        }
-
-        self.gameEventService.handleEvent(payload)
+        try:
+            self.gameEventService.handleEvent({
+                "type": eventType,
+                "playerId": self.playerId,
+                "data": data or {}
+            })
+        except Exception:
+            # don’t crash game logic if logging fails
+            pass
 
     # =========================================================
     # LIFECYCLE
     # =========================================================
-
     def login(self):
         token = createAccessToken({
             "playerId": self.playerId
@@ -62,9 +59,7 @@ class Controller:
 
     def revive(self):
         self.player.revive()
-
         self._emitEvent("REVIVE")
-
         return {"success": True}
 
     def persist(self):
@@ -74,7 +69,6 @@ class Controller:
     # =========================================================
     # PLAYER
     # =========================================================
-
     def getPlayerStats(self):
         return {
             "gold": self.player.gold,
@@ -86,23 +80,29 @@ class Controller:
     # =========================================================
     # GAME ACTIONS
     # =========================================================
-
     def fight(self):
         result = self.combat.handleFight(self.player, self.world.enemies)
 
-        eventType = "FIGHT_WIN" if result.get("result") == "win" else "FIGHT_LOSE"
+        eventType = (
+            "FIGHT_WIN"
+            if result and result.get("result") == "win"
+            else "FIGHT_LOSE"
+        )
 
         self._emitEvent(eventType, {
-            "xp": result.get("xp"),
-            "enemy": result.get("enemy")
+            "xp": result.get("xp") if result else None,
+            "enemy": result.get("enemy") if result else None
         })
 
         return result
 
     def buy(self, itemName, quantity):
         item = self.items.getItem(itemName)
-        ctx = self._buildShopCtx(item, quantity)
 
+        if not item:
+            return {"success": False, "message": "Item not found"}
+
+        ctx = self._buildShopCtx(item, quantity)
         result = self.shop.buy(ctx)
 
         self._emitEvent("BUY", {
@@ -114,8 +114,11 @@ class Controller:
 
     def sell(self, itemName, quantity):
         item = self.items.getItem(itemName)
-        ctx = self._buildShopCtx(item, quantity)
 
+        if not item:
+            return {"success": False, "message": "Item not found"}
+
+        ctx = self._buildShopCtx(item, quantity)
         result = self.shop.sell(ctx)
 
         self._emitEvent("SELL", {
@@ -128,7 +131,6 @@ class Controller:
     # =========================================================
     # DATA ACCESS
     # =========================================================
-
     def getShop(self):
         return self.shopRepo.getShopItems()
 
@@ -141,12 +143,15 @@ class Controller:
     # =========================================================
     # INTERNAL HELPERS
     # =========================================================
-
     def _buildShopCtx(self, item, quantity):
-        ctx = type("Ctx", (), {})()
+        class ShopCtx:
+            pass
+
+        ctx = ShopCtx()
         ctx.player = self.player
         ctx.playerId = self.playerId
         ctx.item = item
         ctx.quantity = quantity
         ctx.shopRepo = self.shopRepo
+
         return ctx

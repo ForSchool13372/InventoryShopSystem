@@ -1,12 +1,23 @@
-﻿from fastapi import HTTPException, Depends
+﻿from functools import lru_cache
+from fastapi import HTTPException, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
 from app.core.auth import verifyToken
 from app.core.gameFactory import GameFactory
 
-gameFactory = GameFactory()
-
 authScheme = HTTPBearer()
+
+# =========================================================
+# FACTORY (SAFE SINGLETON VIA CACHE)
+# =========================================================
+
+@lru_cache
+def getGameFactory():
+    """
+    Create GameFactory once and reuse it.
+    Prevents re-initialization per request and avoids import-time issues.
+    """
+    return GameFactory()
 
 # =========================================================
 # AUTH
@@ -19,21 +30,27 @@ def getCurrentPlayerId(
 
     payload = verifyToken(token)
 
-    # ❌ invalid token
     if not payload:
         raise HTTPException(status_code=401, detail="Invalid token")
 
-    # ❌ malformed payload (IMPORTANT FIX)
     if "playerId" not in payload:
         raise HTTPException(status_code=401, detail="Token missing playerId")
 
     return payload["playerId"]
 
 # =========================================================
-# GAME (AUTO-BINDED TO JWT USER)
+# GAME (PER REQUEST CONTEXT)
 # =========================================================
 
 def getCurrentGame(
-    playerId: int = Depends(getCurrentPlayerId)
+    playerId: int = Depends(getCurrentPlayerId),
+    factory: GameFactory = Depends(getGameFactory)
 ):
-    return gameFactory.create(playerId)
+    """
+    Build game instance safely per request using cached factory.
+    """
+    try:
+        return factory.create(playerId)
+    except Exception as e:
+        # prevents silent 500 + CORS confusion
+        raise HTTPException(status_code=500, detail=str(e))

@@ -91,16 +91,55 @@ Key properties:
 ### Authentication
 - `POST /login/{playerId}` → returns session token
 
+Response:
+{
+  "success": true,
+  "data": {
+    "token": "abc123"
+  }
+}
+
+---
+
 ### Player
 - `GET /player/{playerId}` → get player stats
+
+Response:
+{
+  "success": true,
+  "data": {
+    "gold": 100,
+    "hp": 100,
+    "level": 1,
+    "xp": 0
+  }
+}
+
+---
 
 ### Shop
 - `GET /shop` → list items
 - `POST /buy/{playerId}` → purchase item (validated)
 - `POST /sell/{playerId}` → sell item (validated)
 
+Response:
+{
+  "success": true,
+  "data": [
+    {
+      "itemName": "sword",
+      "stock": 5,
+      "price": 20
+    }
+  ]
+}
+
+---
+
 ### Inventory
 - `GET /inventory/{playerId}` → view inventory
+
+---
 
 ### System
 - `GET /health` → health check

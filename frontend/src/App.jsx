@@ -124,21 +124,26 @@ function App() {
     // AUTH
     // ----------------------------
     const handleLogin = async (id) => {
-        if (!id) throw new Error("Missing ID");
+        try {
+            if (!id) throw new Error("Missing ID");
 
-        const data = await loginPlayer(id);
+            const data = await loginPlayer(id);
 
-        const newToken = data.data.token;
+            const newToken = data.data.token;
 
-        setAuthToken(newToken);
+            setAuthToken(newToken);
+            login(newToken, id);
 
-        login(newToken, id);
+            soundSystem.play("success");
+            addToast("Welcome back", "success");
 
-        soundSystem.play("success");
+            return true;
 
-        addToast("Welcome back", "success");
-
-        return true;
+        } catch {
+            soundSystem.play("error");
+            addToast("Invalid ID", "error");
+            return false;
+        }
     };
 
     const handleLogout = () => {

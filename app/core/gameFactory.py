@@ -8,8 +8,9 @@ from app.repositories.playerRepository import PlayerRepository
 
 from app.core.gameContext import GameContext
 
+
 # =========================================================
-# CORE GROUPS
+# COMPOSITION ROOT
 # =========================================================
 
 class Services:
@@ -33,7 +34,7 @@ class World:
 
 
 # =========================================================
-# GAME FACTORY (COMPOSITION ROOT)
+# GAME FACTORY
 # =========================================================
 
 class GameFactory:
@@ -42,33 +43,38 @@ class GameFactory:
         self.repos = Repos()
         self.world = World()
 
-    def create(self, playerId):
+    def create(self, playerId: int):
 
-        # =====================================================
-        # LOAD PLAYER
-        # =====================================================
-        data = self.repos.player.load(playerId)
-        if not data:
-            raise ValueError("Player not found")
-
+        # lazy imports (avoid circular imports)
         from app.models.player import Player
         from app.core.questManager import QuestManager
         from app.services.gameEventService import GameEventService
         from app.core.controller import Controller
 
-        player = Player(data["gold"])
-        player.hp = data["hp"]
-        player.level = data["level"]
-        player.xp = data["xp"]
+        # =====================================================
+        # LOAD PLAYER (SAFE GUARD)
+        # =====================================================
+        data = self.repos.player.load(playerId)
+
+        if not data:
+            raise ValueError(f"Player not found: {playerId}")
 
         # =====================================================
-        # DOMAIN SYSTEMS (NOT FACTORY RESPONSIBILITY LONG TERM)
+        # BUILD DOMAIN PLAYER
+        # =====================================================
+        player = Player(data.get("gold", 0))
+        player.hp = data.get("hp", 100)
+        player.level = data.get("level", 1)
+        player.xp = data.get("xp", 0)
+
+        # =====================================================
+        # REQUEST-SCOPED SYSTEMS
         # =====================================================
         questManager = QuestManager(self.world.quests, player)
         gameEventService = GameEventService(player, questManager)
 
         # =====================================================
-        # CONTEXT
+        # CONTEXT (SOURCE OF TRUTH)
         # =====================================================
         ctx = GameContext(
             player=player,

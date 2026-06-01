@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+﻿from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, field_validator
 import logging
 import time
@@ -19,28 +19,32 @@ gameFactory = GameFactory()
 SLOW_REQUEST_MS = 100
 
 # =========================================================
-# RESPONSE HELPERS (UNCHANGED = frontend safe)
+# RESPONSE HELPERS
 # =========================================================
 def ok(data):
     return {"success": True, "data": data}
 
-def error(message: str):
+def fail(message: str):
     return {"success": False, "message": message}
-
-def unwrap(result):
-    if isinstance(result, str):
-        return error(result)
-
-    if not result.get("success"):
-        return error(result.get("message", "Bad request"))
-
-    return {"success": True, "message": result.get("message", "OK")}
 
 def normalize(name: str):
     return name.strip().lower()
 
+def handle_result(result):
+    """
+    Normalizes service layer responses into API responses.
+    Keeps routes clean and consistent.
+    """
+    if isinstance(result, str):
+        return fail(result)
+
+    if isinstance(result, dict) and result.get("success") is False:
+        return fail(result.get("message", "Error"))
+
+    return ok(result)
+
 # =========================================================
-# OBSERVABILITY (clean + safe)
+# OBSERVABILITY
 # =========================================================
 def monitor(routeName: str):
     def decorator(func):
@@ -52,17 +56,16 @@ def monitor(routeName: str):
             try:
                 return func(*args, **kwargs)
 
-            except Exception as e:
+            except Exception:
                 success = False
-                logger.exception(f"{routeName} FAILED: {e}")
+                logger.exception(f"{routeName} FAILED")
                 raise
 
             finally:
                 duration = round((time.time() - start) * 1000, 2)
-
                 status = "OK" if success else "ERROR"
-                msg = f"{routeName} | {status} | {duration}ms"
 
+                msg = f"{routeName} | {status} | {duration}ms"
                 if duration > SLOW_REQUEST_MS:
                     msg += " | SLOW_REQUEST"
 
@@ -97,14 +100,23 @@ class LoginRequest(BaseModel):
     playerId: int
 
 # =========================================================
-# ROUTE LAYER (thin controllers only)
+# ROUTES
 # =========================================================
-
 @router.post("/login")
 @monitor("POST /login")
 def login(data: LoginRequest):
-    game = gameFactory.create(data.playerId)
-    return ok(game.login())
+    try:
+        game = gameFactory.create(data.playerId)
+        result = game.login()
+        return ok(result)
+
+    except ValueError as e:
+        logger.warning(f"LOGIN FAILED | playerId={data.playerId} | {e}")
+        raise HTTPException(status_code=400, detail=str(e))
+
+    except Exception:
+        logger.exception(f"LOGIN CRASHED | playerId={data.playerId}")
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 @router.get("/player")
@@ -121,35 +133,63 @@ def getPlayer(game=Depends(getCurrentGame)):
 @router.post("/buy")
 @monitor("POST /buy")
 def buy(data: ItemRequest, game=Depends(getCurrentGame)):
-    result = game.buy(normalize(data.itemName), data.quantity)
-    game.persist()
-    return ok(unwrap(result))
+    try:
+        result = game.buy(
+            normalize(data.itemName),
+            data.quantity
+        )
+
+        game.persist()
+        return handle_result(result)
+
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+    except Exception:
+        logger.exception(f"BUY CRASHED | item={data.itemName}")
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 @router.post("/sell")
 @monitor("POST /sell")
 def sell(data: ItemRequest, game=Depends(getCurrentGame)):
-    result = game.sell(normalize(data.itemName), data.quantity)
-    game.persist()
-    return ok(unwrap(result))
+    try:
+        result = game.sell(
+            normalize(data.itemName),
+            data.quantity
+        )
+
+        game.persist()
+        return handle_result(result)
+
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+    except Exception:
+        logger.exception(f"SELL CRASHED | item={data.itemName}")
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 @router.get("/inventory")
 @monitor("GET /inventory")
 def getInventory(game=Depends(getCurrentGame)):
-    return ok({
-        "items": game.getInventory()
-    })
+    return ok({"items": game.getInventory()})
 
 
 @router.get("/shop")
 @monitor("GET /shop")
 def getShop():
     with engine.begin() as conn:
-        rows = conn.execute(text("SELECT itemName, stock FROM shop")).fetchall()
+        rows = conn.execute(
+            text("SELECT itemName, stock, price FROM shop")
+        ).fetchall()
 
     return ok([
-        {"itemName": r[0], "stock": r[1]}
+        {
+            "itemName": r[0],
+            "stock": r[1],
+            "price": r[2]
+        }
         for r in rows
     ])
 
@@ -157,9 +197,7 @@ def getShop():
 @router.get("/events")
 @monitor("GET /events")
 def getEvents(game=Depends(getCurrentGame)):
-    return ok({
-        "events": game.eventService.getEvents()
-    })
+    return ok({"events": game.eventService.getEvents()})
 
 
 @router.get("/health")
