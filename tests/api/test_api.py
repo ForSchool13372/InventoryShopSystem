@@ -1,14 +1,10 @@
 from fastapi.testclient import TestClient
-
 from app.api.api import app
-
 
 # =========================================================
 # SETUP
 # =========================================================
-
 client = TestClient(app)
-
 
 # =========================================================
 # API TESTS
@@ -33,7 +29,7 @@ def test_getShop():
 
 
 def test_login():
-    response = client.post("/login/1")
+    response = client.post("/login", json={"playerId": 1})
 
     assert response.status_code == 200
 
@@ -41,14 +37,15 @@ def test_login():
 
     assert body["success"] is True
     assert "data" in body
+    assert "token" in body["data"]
 
 
 def test_getPlayer():
-    loginResponse = client.post("/login/1")
+    loginResponse = client.post("/login", json={"playerId": 1})
     token = loginResponse.json()["data"]["token"]
 
     response = client.get(
-        "/player/1",
+        "/player",
         headers={"Authorization": f"Bearer {token}"}
     )
 
@@ -64,11 +61,11 @@ def test_getPlayer():
 
 
 def test_getInventory():
-    loginResponse = client.post("/login/1")
+    loginResponse = client.post("/login", json={"playerId": 1})
     token = loginResponse.json()["data"]["token"]
 
     response = client.get(
-        "/inventory/1",
+        "/inventory",
         headers={"Authorization": f"Bearer {token}"}
     )
 
@@ -81,11 +78,11 @@ def test_getInventory():
 
 
 def test_buy_invalid_quantity():
-    loginResponse = client.post("/login/1")
+    loginResponse = client.post("/login", json={"playerId": 1})
     token = loginResponse.json()["data"]["token"]
 
     response = client.post(
-        "/buy/1",
+        "/buy",
         headers={"Authorization": f"Bearer {token}"},
         json={
             "itemName": "Potion",
