@@ -9,6 +9,6 @@ if __name__ == "__main__":
     os.environ["ENV"] = "dev"
 
     uvicorn.run(
-        "app.api.api:app",
+        "app.main:app",
         reload=True
     )

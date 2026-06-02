@@ -3,11 +3,10 @@ const API = import.meta.env.VITE_API_URL;
 const TOKEN_KEY = "auth_token";
 
 // =========================================================
-// TOKEN STORAGE (single source of truth)
+// TOKEN STORAGE
 // =========================================================
 export const setAuthToken = (token) => {
     if (!token) return;
-
     localStorage.setItem(TOKEN_KEY, token);
 };
 
@@ -33,7 +32,7 @@ const getAuthHeaders = () => {
 };
 
 // =========================================================
-// CORE REQUEST WRAPPER (FIXED)
+// CORE REQUEST WRAPPER
 // =========================================================
 export const apiRequest = async (url, options = {}) => {
     const res = await fetch(url, {
@@ -45,7 +44,6 @@ export const apiRequest = async (url, options = {}) => {
         }
     });
 
-    // safe JSON parsing (prevents crashes)
     let data = null;
     const contentType = res.headers.get("content-type");
 
@@ -57,16 +55,12 @@ export const apiRequest = async (url, options = {}) => {
         }
     }
 
-    // =====================================================
-    // GLOBAL ERROR HANDLING
-    // =====================================================
     if (!res.ok) {
         const message =
             data?.detail ||
             data?.message ||
             `Request failed (${res.status})`;
 
-        // IMPORTANT: handle expired/invalid token properly
         if (res.status === 401) {
             clearAuthToken();
         }
@@ -81,7 +75,7 @@ export const apiRequest = async (url, options = {}) => {
 // AUTH
 // =========================================================
 export const loginPlayer = (playerId) => {
-    return apiRequest(`${API}/login`, {
+    return apiRequest(`${API}/api/login`, {
         method: "POST",
         body: JSON.stringify({ playerId })
     });
@@ -91,28 +85,28 @@ export const loginPlayer = (playerId) => {
 // PLAYER
 // =========================================================
 export const getPlayer = () => {
-    return apiRequest(`${API}/player`);
+    return apiRequest(`${API}/api/player`);
 };
 
 // =========================================================
 // INVENTORY
 // =========================================================
 export const getInventory = () => {
-    return apiRequest(`${API}/inventory`);
+    return apiRequest(`${API}/api/inventory`);
 };
 
 // =========================================================
 // SHOP
 // =========================================================
 export const getShop = () => {
-    return apiRequest(`${API}/shop`);
+    return apiRequest(`${API}/api/shop`);
 };
 
 // =========================================================
 // BUY
 // =========================================================
 export const buyItem = (itemName, quantity = 1) => {
-    return apiRequest(`${API}/buy`, {
+    return apiRequest(`${API}/api/buy`, {
         method: "POST",
         body: JSON.stringify({ itemName, quantity })
     });
@@ -122,7 +116,7 @@ export const buyItem = (itemName, quantity = 1) => {
 // SELL
 // =========================================================
 export const sellItem = (itemName, quantity = 1) => {
-    return apiRequest(`${API}/sell`, {
+    return apiRequest(`${API}/api/sell`, {
         method: "POST",
         body: JSON.stringify({ itemName, quantity })
     });

@@ -26,11 +26,18 @@ class TokenPayload(TypedDict):
 # =========================================================
 
 def createAccessToken(data: Dict[str, Any]) -> str:
+    """
+    Create a JWT token with proper expiry handling.
+    """
+
     toEncode = data.copy()
 
-    # safer + standard JWT expiry (no manual timestamp casting)
-    expire = datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-    toEncode["exp"] = expire
+    expire = datetime.now(timezone.utc) + timedelta(
+        minutes=ACCESS_TOKEN_EXPIRE_MINUTES
+    )
+
+    # IMPORTANT: JWT expects numeric timestamp, not datetime object
+    toEncode["exp"] = int(expire.timestamp())
 
     return jwt.encode(toEncode, SECRET_KEY, algorithm=ALGORITHM)
 
@@ -40,17 +47,30 @@ def createAccessToken(data: Dict[str, Any]) -> str:
 # =========================================================
 
 def verifyToken(token: str) -> Optional[TokenPayload]:
-    try:
-        # handle "Bearer <token>" case safely
-        if token.startswith("Bearer "):
-            token = token.replace("Bearer ", "")
+    """
+    Decode and validate JWT token.
+    Returns payload or None if invalid.
+    """
 
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+    if not token:
+        return None
+
+    try:
+        # FastAPI HTTPBearer already strips "Bearer"
+        payload = jwt.decode(
+            token,
+            SECRET_KEY,
+            algorithms=[ALGORITHM]
+        )
 
         playerId = payload.get("playerId")
         exp = payload.get("exp")
 
         if playerId is None or exp is None:
+            return None
+
+        # Optional: explicit expiry check (extra safety)
+        if datetime.now(timezone.utc).timestamp() > int(exp):
             return None
 
         return {
@@ -61,5 +81,4 @@ def verifyToken(token: str) -> Optional[TokenPayload]:
     except JWTError:
         return None
     except Exception:
-        # prevents random crashes from breaking CORS / FastAPI
         return None

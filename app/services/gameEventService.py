@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 
 
 class GameEventService:
@@ -65,7 +65,7 @@ class GameEventService:
 
         return {
             "type": event["type"],
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "playerId": getattr(self.player, "id", None),
             **event
         }

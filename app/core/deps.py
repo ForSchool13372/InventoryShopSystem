@@ -1,5 +1,5 @@
 ﻿from functools import lru_cache
-from fastapi import HTTPException, Depends
+from fastapi import HTTPException, Depends, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
 from app.core.auth import verifyToken
@@ -13,11 +13,8 @@ authScheme = HTTPBearer()
 
 @lru_cache
 def getGameFactory():
-    """
-    Create GameFactory once and reuse it.
-    Prevents re-initialization per request and avoids import-time issues.
-    """
     return GameFactory()
+
 
 # =========================================================
 # AUTH
@@ -26,17 +23,37 @@ def getGameFactory():
 def getCurrentPlayerId(
     credentials: HTTPAuthorizationCredentials = Depends(authScheme)
 ):
+    """
+    Extract and validate playerId from JWT token.
+    """
+
+    if not credentials or not credentials.credentials:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Missing auth token"
+        )
+
     token = credentials.credentials
 
     payload = verifyToken(token)
 
-    if not payload:
-        raise HTTPException(status_code=401, detail="Invalid token")
+    # clearer failure reason (not just "Invalid token")
+    if payload is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired token"
+        )
 
-    if "playerId" not in payload:
-        raise HTTPException(status_code=401, detail="Token missing playerId")
+    playerId = payload.get("playerId")
 
-    return payload["playerId"]
+    if playerId is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token missing playerId"
+        )
+
+    return playerId
+
 
 # =========================================================
 # GAME (PER REQUEST CONTEXT)
@@ -49,8 +66,12 @@ def getCurrentGame(
     """
     Build game instance safely per request using cached factory.
     """
+
     try:
         return factory.create(playerId)
+
     except Exception as e:
-        # prevents silent 500 + CORS confusion
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Game creation failed: {str(e)}"
+        )

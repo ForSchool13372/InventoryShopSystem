@@ -3,7 +3,11 @@ import logging
 
 from app.core.gameFactory import GameFactory
 
-router = APIRouter(prefix="/dev")
+router = APIRouter(
+    prefix="/dev",
+    tags=["Dev API"]
+)
+
 logger = logging.getLogger(__name__)
 gameFactory = GameFactory()
 

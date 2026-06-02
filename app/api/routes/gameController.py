@@ -12,7 +12,11 @@ from sqlalchemy import text
 # =========================================================
 # INIT
 # =========================================================
-router = APIRouter()
+router = APIRouter(
+    prefix="/api",
+    tags=["Game API"]
+)
+
 logger = logging.getLogger(__name__)
 gameFactory = GameFactory()
 
@@ -31,10 +35,6 @@ def normalize(name: str):
     return name.strip().lower()
 
 def handle_result(result):
-    """
-    Normalizes service layer responses into API responses.
-    Keeps routes clean and consistent.
-    """
     if isinstance(result, str):
         return fail(result)
 

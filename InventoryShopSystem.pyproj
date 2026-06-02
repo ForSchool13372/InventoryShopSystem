@@ -23,8 +23,11 @@
     <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="app\api\devRoutes.py" />
-    <Compile Include="app\api\routes.py" />
+    <Compile Include="app\api\routes\devRoutes.py" />
+    <Compile Include="app\api\routes\cacheRoutes.py" />
+    <Compile Include="app\core\cacheService.py" />
+    <Compile Include="app\core\redisClient.py" />
+    <Compile Include="app\api\routes\gameController.py" />
     <Compile Include="app\core\logger.py" />
     <Compile Include="app\services\itemService.py" />
     <Compile Include="app\core\controller.py" />
@@ -38,7 +41,7 @@
     <Compile Include="app\services\gameEventService.py" />
     <Compile Include="app\core\gameEvents.py" />
     <Compile Include="app\services\menuService.py" />
-    <Compile Include="app\api\api.py" />
+    <Compile Include="app\main.py" />
     <Compile Include="app\core\database.py" />
     <Compile Include="app\services\characterSelectService.py" />
     <Compile Include="app\repositories\inventoryRepository.py" />
@@ -88,6 +91,7 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="app\" />
+    <Folder Include="app\api\routes\" />
     <Folder Include="app\core\" />
     <Folder Include="app\api\" />
     <Folder Include="app\cli\" />

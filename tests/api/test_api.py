@@ -1,9 +1,6 @@
 from fastapi.testclient import TestClient
-from app.api.api import app
+from app.main import app
 
-# =========================================================
-# SETUP
-# =========================================================
 client = TestClient(app)
 
 # =========================================================
@@ -11,14 +8,14 @@ client = TestClient(app)
 # =========================================================
 
 def test_health():
-    response = client.get("/health")
+    response = client.get("/api/health")
 
     assert response.status_code == 200
     assert response.json() == {"status": "healthy"}
 
 
 def test_getShop():
-    response = client.get("/shop")
+    response = client.get("/api/shop")
 
     assert response.status_code == 200
 
@@ -29,7 +26,7 @@ def test_getShop():
 
 
 def test_login():
-    response = client.post("/login", json={"playerId": 1})
+    response = client.post("/api/login", json={"playerId": 1})
 
     assert response.status_code == 200
 
@@ -41,11 +38,11 @@ def test_login():
 
 
 def test_getPlayer():
-    loginResponse = client.post("/login", json={"playerId": 1})
+    loginResponse = client.post("/api/login", json={"playerId": 1})
     token = loginResponse.json()["data"]["token"]
 
     response = client.get(
-        "/player",
+        "/api/player",
         headers={"Authorization": f"Bearer {token}"}
     )
 
@@ -61,11 +58,11 @@ def test_getPlayer():
 
 
 def test_getInventory():
-    loginResponse = client.post("/login", json={"playerId": 1})
+    loginResponse = client.post("/api/login", json={"playerId": 1})
     token = loginResponse.json()["data"]["token"]
 
     response = client.get(
-        "/inventory",
+        "/api/inventory",
         headers={"Authorization": f"Bearer {token}"}
     )
 
@@ -78,11 +75,11 @@ def test_getInventory():
 
 
 def test_buy_invalid_quantity():
-    loginResponse = client.post("/login", json={"playerId": 1})
+    loginResponse = client.post("/api/login", json={"playerId": 1})
     token = loginResponse.json()["data"]["token"]
 
     response = client.post(
-        "/buy",
+        "/api/buy",
         headers={"Authorization": f"Bearer {token}"},
         json={
             "itemName": "Potion",

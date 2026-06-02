@@ -27,6 +27,7 @@ Key principles:
 - Server-authoritative game state (no client-side trust)
 - Modular service-layer architecture for business logic isolation
 - Dependency injection for authentication and validation
+- Redis caching layer for optimizing frequently accessed data (e.g., shop items, player state) and reducing database load
 - Fully testable and deterministic backend logic
 
 The goal is to simulate real-world backend system design patterns used in production applications.
@@ -35,11 +36,12 @@ The goal is to simulate real-world backend system design patterns used in produc
 
 ## 🏗 System Architecture
 
-React Frontend → FastAPI Routes → Service Layer (Game Logic) → SQLite Database
+React Frontend → FastAPI Routes → Service Layer (Game Logic) → Redis Cache → SQLite Database
 
 Key properties:
 - Thin controller layer (FastAPI routes handle request/response only)
 - Centralized business logic in service layer (`Game` domain object)
+- Redis caching layer for high-frequency data access (shop, player state)
 - Dependency injection for authentication and player validation
 - Transaction-safe database operations via SQLAlchemy
 - Stateless REST API design
@@ -219,6 +221,7 @@ Response:
 - JavaScript (ES6+)
 - SQLAlchemy
 - SQLite
+- Redis (Caching layer)
 - Token-based authentication
 - Pytest
 - GitHub Actions
@@ -234,6 +237,14 @@ Response:
 - CI prevents broken builds from merging
 - Structured logging for debugging and observability
 - Rate limiting for API protection
+
+---
+
+## ⚡ Performance Optimization
+
+- Redis caching reduces database queries for frequently accessed game data
+- Improves response times for shop and player endpoints
+- Enables scalable architecture for future multiplayer expansion
 
 ---
 
