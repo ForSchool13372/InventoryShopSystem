@@ -39,7 +39,7 @@ class Controller:
                 "data": data or {}
             })
         except Exception:
-            # don’t crash game logic if logging fails
+            # don't crash game logic if logging fails
             pass
 
     # =========================================================
