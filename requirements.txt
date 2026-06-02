@@ -8,3 +8,4 @@ pytest
 pytest-cov
 httpx
 redis
+psycopg2-binary

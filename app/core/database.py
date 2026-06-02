@@ -1,9 +1,10 @@
+import os
 from sqlalchemy import create_engine, text
 
 # =========================================================
 # DB ENGINE
 # =========================================================
-engine = create_engine("sqlite:///game.db", echo=False)
+engine = create_engine(os.getenv("DATABASE_URL"), echo=False)
 
 # =========================================================
 # SEED DATA
@@ -18,8 +19,9 @@ def seedShop(conn):
     for name, stock, price in items:
         conn.execute(
             text("""
-                INSERT OR IGNORE INTO shop (itemName, stock, price)
+                INSERT INTO shop (itemName, stock, price)
                 VALUES (:name, :stock, :price)
+                ON CONFLICT (itemName) DO NOTHING
             """),
             {"name": name, "stock": stock, "price": price}
         )
@@ -91,8 +93,9 @@ with engine.begin() as conn:
     for playerId in [1, 2, 3]:
         conn.execute(
             text("""
-                INSERT OR IGNORE INTO player (id, gold, hp, level, xp)
+                INSERT INTO player (id, gold, hp, level, xp)
                 VALUES (:id, 100, 100, 1, 0)
+                ON CONFLICT (id) DO NOTHING
             """),
             {"id": playerId}
         )
@@ -102,7 +105,7 @@ with engine.begin() as conn:
     # -----------------------------------------------------
     conn.execute(text("""
         CREATE TABLE IF NOT EXISTS shop (
-            id INTEGER PRIMARY KEY,
+            id SERIAL PRIMARY KEY,
             itemName TEXT UNIQUE NOT NULL,
             stock INTEGER NOT NULL,
             price INTEGER NOT NULL
@@ -114,7 +117,7 @@ with engine.begin() as conn:
     # -----------------------------------------------------
     conn.execute(text("""
         CREATE TABLE IF NOT EXISTS playerItems (
-            id INTEGER PRIMARY KEY,
+            id SERIAL PRIMARY KEY,
             playerID INTEGER NOT NULL,
             itemName TEXT NOT NULL,
             quantity INTEGER NOT NULL,
