@@ -227,6 +227,24 @@ Response:
 - GitHub Actions
 - Codecov
 
+--- 
+
+## 🚀 How to Run
+
+### Backend
+pip install -r requirements.txt
+uvicorn app.main:app --reload
+
+### Frontend
+cd frontend
+npm install
+npm run dev
+
+🌐 Links
+API Docs: https://inventoryshopsystem.onrender.com/docs
+Live Demo: https://inventoryshopsystem.vercel.app/
+
+
 ---
 
 ## 🚀 CI/CD & Quality
