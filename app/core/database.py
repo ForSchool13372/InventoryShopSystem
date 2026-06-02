@@ -2,9 +2,11 @@ import os
 from sqlalchemy import create_engine, text
 
 # =========================================================
-# DB ENGINE
+# DB ENGINE (HYBRID: SQLITE LOCAL + POSTGRES PROD)
 # =========================================================
-engine = create_engine(os.getenv("DATABASE_URL"), echo=False)
+DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///game.db")
+
+engine = create_engine(DATABASE_URL, echo=False)
 
 # =========================================================
 # SEED DATA
@@ -21,7 +23,10 @@ def seedShop(conn):
             text("""
                 INSERT INTO shop (itemName, stock, price)
                 VALUES (:name, :stock, :price)
-                ON CONFLICT (itemName) DO NOTHING
+                ON CONFLICT (itemName)
+                DO UPDATE SET
+                    stock = EXCLUDED.stock,
+                    price = EXCLUDED.price
             """),
             {"name": name, "stock": stock, "price": price}
         )
