@@ -7,3 +7,4 @@ python-jose
 pytest
 pytest-cov
 httpx
+redis
