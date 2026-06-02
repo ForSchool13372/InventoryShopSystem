@@ -116,7 +116,7 @@ def login(data: LoginRequest):
 
     except Exception:
         logger.exception(f"LOGIN CRASHED | playerId={data.playerId}")
-        raise HTTPException(status_code=500, detail="Internal server error")
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.get("/player")
