@@ -15,11 +15,7 @@ DATABASE_URL = os.getenv(
 # =========================================================
 # DB ENGINE (NEON / POSTGRES READY)
 # =========================================================
-engine = create_engine(
-    DATABASE_URL,
-    echo=False,
-    pool_pre_ping=True
-)
+engine = create_engine(os.getenv("DATABASE_URL"), pool_pre_ping=True)
 
 # =========================================================
 # SEED DATA
