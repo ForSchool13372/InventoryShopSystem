@@ -12,22 +12,28 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '345e3fdb7bdb'
+revision: str = "345e3fdb7bdb"
 down_revision: Union[str, Sequence[str], None] = None
-branch_labels: Union[str, Sequence[str], None] = None
-depends_on: Union[str, Sequence[str], None] = None
+branch_labels = None
+depends_on = None
 
 
 def upgrade() -> None:
+    # =========================
+    # PLAYER TABLE
+    # =========================
     op.create_table(
         "player",
         sa.Column("id", sa.Integer, primary_key=True),
-        sa.Column("gold", sa.Integer, nullable=False, server_default="100"),
-        sa.Column("hp", sa.Integer, nullable=False, server_default="100"),
-        sa.Column("level", sa.Integer, nullable=False, server_default="1"),
-        sa.Column("xp", sa.Integer, nullable=False, server_default="0"),
+        sa.Column("gold", sa.Integer, nullable=False, server_default=sa.text("100")),
+        sa.Column("hp", sa.Integer, nullable=False, server_default=sa.text("100")),
+        sa.Column("level", sa.Integer, nullable=False, server_default=sa.text("1")),
+        sa.Column("xp", sa.Integer, nullable=False, server_default=sa.text("0")),
     )
 
+    # =========================
+    # SHOP TABLE
+    # =========================
     op.create_table(
         "shop",
         sa.Column("id", sa.Integer, primary_key=True),
@@ -36,13 +42,16 @@ def upgrade() -> None:
         sa.Column("price", sa.Integer, nullable=False),
     )
 
+    # =========================
+    # PLAYER ITEMS TABLE
+    # =========================
     op.create_table(
         "playerItems",
         sa.Column("id", sa.Integer, primary_key=True),
-        sa.Column("playerID", sa.Integer, nullable=False),
-        sa.Column("itemName", sa.Text, nullable=False),
+        sa.Column("playerID", sa.Integer, sa.ForeignKey("player.id"), nullable=False),
+        sa.Column("itemName", sa.Text, sa.ForeignKey("shop.itemName"), nullable=False),
         sa.Column("quantity", sa.Integer, nullable=False),
-        sa.UniqueConstraint("playerID", "itemName"),
+        sa.UniqueConstraint("playerID", "itemName", name="uq_player_item"),
     )
 
 

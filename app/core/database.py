@@ -10,11 +10,12 @@ load_dotenv()
 
 DATABASE_URL = os.getenv("DATABASE_URL")
 
+# fallback for local dev only
 if not DATABASE_URL:
     DATABASE_URL = "sqlite:///game.db"
 
 # =========================================================
-# ENGINE (PRODUCTION SAFE)
+# ENGINE
 # =========================================================
 engine: Engine = create_engine(
     DATABASE_URL,
@@ -24,16 +25,13 @@ engine: Engine = create_engine(
 )
 
 # =========================================================
-# DB ACCESS LAYER
+# CONNECTION HELPER
 # =========================================================
 def getConnection():
-    """
-    Context manager for DB access
-    """
     return engine.begin()
 
 # =========================================================
-# SEED DATA (IDEMPOTENT = SAFE TO RUN MULTIPLE TIMES)
+# SEED DATA (SAFE / IDEMPOTENT)
 # =========================================================
 def seedShop(conn):
     items = [
@@ -51,13 +49,13 @@ def seedShop(conn):
             price = EXCLUDED.price
     """)
 
-    conn.execute(stmt, [
-        {"name": name, "stock": stock, "price": price}
-        for name, stock, price in items
-    ])
+    conn.execute(
+        stmt,
+        [{"name": n, "stock": s, "price": p} for n, s, p in items]
+    )
 
 # =========================================================
-# PLAYER REPOSITORY (DATA ACCESS ONLY)
+# PLAYER REPOSITORY
 # =========================================================
 def loadPlayer(conn, playerId: int):
     result = conn.execute(
@@ -102,12 +100,12 @@ def savePlayer(conn, player, playerId: int):
     )
 
 # =========================================================
-# SEED RUNNER (DEV TOOL ONLY)
+# DEV SEED RUNNER (OPTIONAL)
 # =========================================================
 def runSeed():
     with getConnection() as conn:
         seedShop(conn)
 
-# ONLY run manually (NOT production import side-effect)
+
 if __name__ == "__main__":
     runSeed()
