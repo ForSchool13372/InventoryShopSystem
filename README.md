@@ -184,9 +184,11 @@ Response:
 - Game session resolution (`getAuthorizedGame`, `getGame`)
 
 ### Database Layer
-- SQLite + SQLAlchemy
+- PostgreSQL (Neon hosted production database)
+- SQLAlchemy ORM for database interaction
+- Alembic for version-controlled database migrations
 - Transaction-safe persistence
-- Simple relational schema (players, inventory, shop)
+- Schema evolution managed via migrations instead of manual SQL
 
 ---
 
@@ -220,7 +222,8 @@ Response:
 - React (Vite)
 - JavaScript (ES6+)
 - SQLAlchemy
-- SQLite
+- PostgreSQL (Neon)
+- Alembic (Database Migrations)
 - Redis (Caching layer)
 - Token-based authentication
 - Pytest
@@ -263,6 +266,16 @@ Response:
 - Redis caching reduces database queries for frequently accessed game data
 - Improves response times for shop and player endpoints
 - Enables scalable architecture for future multiplayer expansion
+
+---
+
+## ☁️ Production Infrastructure
+
+- Database hosted on Neon (serverless PostgreSQL)
+- Schema migrations managed via Alembic
+- Backend deployed on Render
+- Frontend deployed on Vercel
+- Environment-based configuration using `.env`
 
 ---
 
