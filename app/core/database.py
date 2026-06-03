@@ -7,10 +7,9 @@ from dotenv import load_dotenv
 # =========================================================
 load_dotenv()
 
-DATABASE_URL = os.getenv(
-    "DATABASE_URL",
-    "sqlite:///game.db"  # fallback for local dev only
-)
+DATABASE_URL = os.getenv("DATABASE_URL")
+if not DATABASE_URL:
+    DATABASE_URL = "sqlite:///game.db"
 
 # =========================================================
 # DB ENGINE (NEON / POSTGRES READY)
