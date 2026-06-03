@@ -1,12 +1,25 @@
 import os
 from sqlalchemy import create_engine, text
+from dotenv import load_dotenv
 
 # =========================================================
-# DB ENGINE (HYBRID: SQLITE LOCAL + POSTGRES PROD)
+# LOAD ENV
 # =========================================================
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///game.db")
+load_dotenv()
 
-engine = create_engine(DATABASE_URL, echo=False)
+DATABASE_URL = os.getenv(
+    "DATABASE_URL",
+    "sqlite:///game.db"  # fallback for local dev only
+)
+
+# =========================================================
+# DB ENGINE (NEON / POSTGRES READY)
+# =========================================================
+engine = create_engine(
+    DATABASE_URL,
+    echo=False,
+    pool_pre_ping=True
+)
 
 # =========================================================
 # SEED DATA
@@ -79,62 +92,68 @@ def savePlayer(conn, player, playerId):
 # =========================================================
 # DB INITIALIZATION
 # =========================================================
-with engine.begin() as conn:
+def initDb():
+    with engine.begin() as conn:
 
-    # -----------------------------------------------------
-    # PLAYER TABLE
-    # -----------------------------------------------------
-    conn.execute(text("""
-        CREATE TABLE IF NOT EXISTS player (
-            id INTEGER PRIMARY KEY,
-            gold INTEGER NOT NULL DEFAULT 100,
-            hp INTEGER NOT NULL DEFAULT 100,
-            level INTEGER NOT NULL DEFAULT 1,
-            xp INTEGER NOT NULL DEFAULT 0
-        )
-    """))
+        # -----------------------------------------------------
+        # PLAYER TABLE
+        # -----------------------------------------------------
+        conn.execute(text("""
+            CREATE TABLE IF NOT EXISTS player (
+                id INTEGER PRIMARY KEY,
+                gold INTEGER NOT NULL DEFAULT 100,
+                hp INTEGER NOT NULL DEFAULT 100,
+                level INTEGER NOT NULL DEFAULT 1,
+                xp INTEGER NOT NULL DEFAULT 0
+            )
+        """))
 
-    # Seed players
-    for playerId in [1, 2, 3]:
-        conn.execute(
-            text("""
-                INSERT INTO player (id, gold, hp, level, xp)
-                VALUES (:id, 100, 100, 1, 0)
-                ON CONFLICT (id) DO NOTHING
-            """),
-            {"id": playerId}
-        )
+        # Seed players
+        for playerId in [1, 2, 3]:
+            conn.execute(
+                text("""
+                    INSERT INTO player (id, gold, hp, level, xp)
+                    VALUES (:id, 100, 100, 1, 0)
+                    ON CONFLICT (id) DO NOTHING
+                """),
+                {"id": playerId}
+            )
 
-    # -----------------------------------------------------
-    # SHOP TABLE
-    # -----------------------------------------------------
-    conn.execute(text("""
-        CREATE TABLE IF NOT EXISTS shop (
-            id SERIAL PRIMARY KEY,
-            itemName TEXT UNIQUE NOT NULL,
-            stock INTEGER NOT NULL,
-            price INTEGER NOT NULL
-        )
-    """))
+        # -----------------------------------------------------
+        # SHOP TABLE (POSTGRES ONLY FEATURE USED: SERIAL OK)
+        # -----------------------------------------------------
+        conn.execute(text("""
+            CREATE TABLE IF NOT EXISTS shop (
+                id SERIAL PRIMARY KEY,
+                itemName TEXT UNIQUE NOT NULL,
+                stock INTEGER NOT NULL,
+                price INTEGER NOT NULL
+            )
+        """))
 
-    # -----------------------------------------------------
-    # PLAYER ITEMS TABLE (INVENTORY)
-    # -----------------------------------------------------
-    conn.execute(text("""
-        CREATE TABLE IF NOT EXISTS playerItems (
-            id SERIAL PRIMARY KEY,
-            playerID INTEGER NOT NULL,
-            itemName TEXT NOT NULL,
-            quantity INTEGER NOT NULL,
+        # -----------------------------------------------------
+        # PLAYER ITEMS TABLE (INVENTORY)
+        # -----------------------------------------------------
+        conn.execute(text("""
+            CREATE TABLE IF NOT EXISTS playerItems (
+                id SERIAL PRIMARY KEY,
+                playerID INTEGER NOT NULL,
+                itemName TEXT NOT NULL,
+                quantity INTEGER NOT NULL,
 
-            UNIQUE(playerID, itemName),
+                UNIQUE(playerID, itemName),
 
-            FOREIGN KEY(playerID) REFERENCES player(id),
-            FOREIGN KEY(itemName) REFERENCES shop(itemName)
-        )
-    """))
+                FOREIGN KEY(playerID) REFERENCES player(id),
+                FOREIGN KEY(itemName) REFERENCES shop(itemName)
+            )
+        """))
 
-    # -----------------------------------------------------
-    # SEED SHOP DATA
-    # -----------------------------------------------------
-    seedShop(conn)
+        # -----------------------------------------------------
+        # SEED SHOP DATA
+        # -----------------------------------------------------
+        seedShop(conn)
+
+
+# Run init only if file executed directly
+if __name__ == "__main__":
+    initDb()
