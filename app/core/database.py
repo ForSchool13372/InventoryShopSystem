@@ -15,7 +15,7 @@ DATABASE_URL = os.getenv(
 # =========================================================
 # DB ENGINE (NEON / POSTGRES READY)
 # =========================================================
-engine = create_engine(os.getenv("DATABASE_URL"), pool_pre_ping=True)
+engine = create_engine(DATABASE_URL, pool_pre_ping=True)
 
 # =========================================================
 # SEED DATA
@@ -91,9 +91,6 @@ def savePlayer(conn, player, playerId):
 def initDb():
     with engine.begin() as conn:
 
-        # -----------------------------------------------------
-        # PLAYER TABLE
-        # -----------------------------------------------------
         conn.execute(text("""
             CREATE TABLE IF NOT EXISTS player (
                 id INTEGER PRIMARY KEY,
@@ -104,7 +101,6 @@ def initDb():
             )
         """))
 
-        # Seed players
         for playerId in [1, 2, 3]:
             conn.execute(
                 text("""
@@ -115,9 +111,6 @@ def initDb():
                 {"id": playerId}
             )
 
-        # -----------------------------------------------------
-        # SHOP TABLE (POSTGRES ONLY FEATURE USED: SERIAL OK)
-        # -----------------------------------------------------
         conn.execute(text("""
             CREATE TABLE IF NOT EXISTS shop (
                 id SERIAL PRIMARY KEY,
@@ -127,9 +120,6 @@ def initDb():
             )
         """))
 
-        # -----------------------------------------------------
-        # PLAYER ITEMS TABLE (INVENTORY)
-        # -----------------------------------------------------
         conn.execute(text("""
             CREATE TABLE IF NOT EXISTS playerItems (
                 id SERIAL PRIMARY KEY,
@@ -144,12 +134,8 @@ def initDb():
             )
         """))
 
-        # -----------------------------------------------------
-        # SEED SHOP DATA
-        # -----------------------------------------------------
         seedShop(conn)
 
 
-# Run init only if file executed directly
 if __name__ == "__main__":
     initDb()
