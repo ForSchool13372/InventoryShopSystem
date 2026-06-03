@@ -54,3 +54,9 @@ app.include_router(cacheRouter)
 if DEBUG:
     from app.api.routes.devRoutes import router as devRouter
     app.include_router(devRouter)
+
+from app.core.database import initDb
+
+@app.on_event("startup")
+async def startup():
+    initDb()
