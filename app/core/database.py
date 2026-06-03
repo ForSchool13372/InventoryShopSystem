@@ -8,6 +8,8 @@ from dotenv import load_dotenv
 load_dotenv()
 
 DATABASE_URL = os.getenv("DATABASE_URL")
+
+# fallback for local dev only
 if not DATABASE_URL:
     DATABASE_URL = "sqlite:///game.db"
 
