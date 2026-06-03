@@ -59,6 +59,7 @@
     <Compile Include="app\services\shop.py" />
     <Compile Include="app\models\player.py" />
     <Compile Include=".github\workflows\ci.yml" />
+    <Compile Include="pytest.ini" />
     <Compile Include="run.py" />
     <Compile Include="tests\api\test_api.py" />
     <Compile Include="tests\conftest.py" />

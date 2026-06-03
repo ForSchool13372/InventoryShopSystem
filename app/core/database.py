@@ -1,25 +1,39 @@
-import os
+﻿import os
 from sqlalchemy import create_engine, text
+from sqlalchemy.engine import Engine
 from dotenv import load_dotenv
 
 # =========================================================
-# LOAD ENV
+# ENV
 # =========================================================
 load_dotenv()
 
 DATABASE_URL = os.getenv("DATABASE_URL")
 
-# fallback for local dev only
 if not DATABASE_URL:
     DATABASE_URL = "sqlite:///game.db"
 
 # =========================================================
-# DB ENGINE (NEON / POSTGRES READY)
+# ENGINE (PRODUCTION SAFE)
 # =========================================================
-engine = create_engine(DATABASE_URL, pool_pre_ping=True)
+engine: Engine = create_engine(
+    DATABASE_URL,
+    pool_pre_ping=True,
+    pool_size=5,
+    max_overflow=10
+)
 
 # =========================================================
-# SEED DATA
+# DB ACCESS LAYER
+# =========================================================
+def getConnection():
+    """
+    Context manager for DB access
+    """
+    return engine.begin()
+
+# =========================================================
+# SEED DATA (IDEMPOTENT = SAFE TO RUN MULTIPLE TIMES)
 # =========================================================
 def seedShop(conn):
     items = [
@@ -28,23 +42,24 @@ def seedShop(conn):
         ("garbage", 5, 5)
     ]
 
-    for name, stock, price in items:
-        conn.execute(
-            text("""
-                INSERT INTO shop (itemName, stock, price)
-                VALUES (:name, :stock, :price)
-                ON CONFLICT (itemName)
-                DO UPDATE SET
-                    stock = EXCLUDED.stock,
-                    price = EXCLUDED.price
-            """),
-            {"name": name, "stock": stock, "price": price}
-        )
+    stmt = text("""
+        INSERT INTO shop (itemName, stock, price)
+        VALUES (:name, :stock, :price)
+        ON CONFLICT (itemName)
+        DO UPDATE SET
+            stock = EXCLUDED.stock,
+            price = EXCLUDED.price
+    """)
+
+    conn.execute(stmt, [
+        {"name": name, "stock": stock, "price": price}
+        for name, stock, price in items
+    ])
 
 # =========================================================
-# PLAYER FUNCTIONS
+# PLAYER REPOSITORY (DATA ACCESS ONLY)
 # =========================================================
-def loadPlayer(conn, playerId):
+def loadPlayer(conn, playerId: int):
     result = conn.execute(
         text("""
             SELECT gold, hp, level, xp
@@ -67,7 +82,7 @@ def loadPlayer(conn, playerId):
     }
 
 
-def savePlayer(conn, player, playerId):
+def savePlayer(conn, player, playerId: int):
     conn.execute(
         text("""
             UPDATE player
@@ -87,56 +102,12 @@ def savePlayer(conn, player, playerId):
     )
 
 # =========================================================
-# DB INITIALIZATION
+# SEED RUNNER (DEV TOOL ONLY)
 # =========================================================
-def initDb():
-    with engine.begin() as conn:
-
-        conn.execute(text("""
-            CREATE TABLE IF NOT EXISTS player (
-                id INTEGER PRIMARY KEY,
-                gold INTEGER NOT NULL DEFAULT 100,
-                hp INTEGER NOT NULL DEFAULT 100,
-                level INTEGER NOT NULL DEFAULT 1,
-                xp INTEGER NOT NULL DEFAULT 0
-            )
-        """))
-
-        for playerId in [1, 2, 3]:
-            conn.execute(
-                text("""
-                    INSERT INTO player (id, gold, hp, level, xp)
-                    VALUES (:id, 100, 100, 1, 0)
-                    ON CONFLICT (id) DO NOTHING
-                """),
-                {"id": playerId}
-            )
-
-        conn.execute(text("""
-            CREATE TABLE IF NOT EXISTS shop (
-                id SERIAL PRIMARY KEY,
-                itemName TEXT UNIQUE NOT NULL,
-                stock INTEGER NOT NULL,
-                price INTEGER NOT NULL
-            )
-        """))
-
-        conn.execute(text("""
-            CREATE TABLE IF NOT EXISTS playerItems (
-                id SERIAL PRIMARY KEY,
-                playerID INTEGER NOT NULL,
-                itemName TEXT NOT NULL,
-                quantity INTEGER NOT NULL,
-
-                UNIQUE(playerID, itemName),
-
-                FOREIGN KEY(playerID) REFERENCES player(id),
-                FOREIGN KEY(itemName) REFERENCES shop(itemName)
-            )
-        """))
-
+def runSeed():
+    with getConnection() as conn:
         seedShop(conn)
 
-
+# ONLY run manually (NOT production import side-effect)
 if __name__ == "__main__":
-    initDb()
+    runSeed()
