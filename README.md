@@ -66,10 +66,11 @@ Key properties:
 - Fully backend-synced state after transactions
 
 ### ⚔️ Combat System
-- Server-side combat simulation
-- Deterministic outcomes (win/lose)
-- XP rewards and progression system
-- Event-driven state updates via service layer
+- Server-side combat simulation implemented in backend service layer
+- Deterministic outcome system (win/lose based on defined game rules)
+- XP rewards and player progression integration
+- Event-driven state updates handled through service layer architecture
+- Currently accessible via backend/CLI (not yet integrated into frontend UI)
 
 ### 📊 Stats System
 - Live player stats from backend state
@@ -189,6 +190,16 @@ Response:
 - Alembic for version-controlled database migrations
 - Transaction-safe persistence
 - Schema evolution managed via migrations instead of manual SQL
+
+### Asynchronous Task Layer (Celery + Redis)
+- Background task processing system using Celery with Redis as a message broker
+- Designed to offload non-critical or heavy operations from the request/response cycle
+- Supports scalable architecture for future high-load workloads
+
+Planned use cases:
+- Asynchronous player state persistence
+- Background event generation (combat events, loot drops, economy updates)
+- Analytics and gameplay telemetry logging
 
 ---
 
