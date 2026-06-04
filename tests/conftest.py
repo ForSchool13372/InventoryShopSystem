@@ -55,35 +55,50 @@ class FakeQuestManager:
     def update(self, enemy):
         self.updated_enemy = enemy
 
+
+# =========================================================
+# FAKE SHOP REPO (UPDATED FOR NEW SERVICE DESIGN)
+# =========================================================
+
 class FakeShopRepo:
     def __init__(self):
         self.stock = {"sword": 10, "potion": 10}
         self.playerItems = {}
 
-    def hasStock(self, itemName, quantity):
-        return self.stock.get(itemName, 0) >= quantity
+    # =========================================================
+    # STOCK (MATCH REAL INTERFACE)
+    # =========================================================
 
-    def decreaseStock(self, itemName, quantity):
+    def getStock(self, conn, itemName):
+        if itemName not in self.stock:
+            return None
+        return (self.stock[itemName],)
+
+    def decreaseStock(self, conn, itemName, quantity):
         self.stock[itemName] -= quantity
 
-    def increaseStock(self, itemName, quantity):
+    def increaseStock(self, conn, itemName, quantity):
         self.stock[itemName] = self.stock.get(itemName, 0) + quantity
 
-    def addOrUpdatePlayerItem(self, playerId, itemName, quantity):
+    # =========================================================
+    # PLAYER ITEMS (MATCH REAL INTERFACE)
+    # =========================================================
+
+    def addOrUpdatePlayerItem(self, conn, playerId, itemName, quantity):
         self.playerItems[itemName] = self.playerItems.get(itemName, 0) + quantity
 
-    def getPlayerItemQuantity(self, playerId, itemName):
-        return self.playerItems.get(itemName, 0)
-
-    def removePlayerItem(self, playerId, itemName, quantity):
+    def removePlayerItem(self, conn, playerId, itemName, quantity):
         if itemName in self.playerItems:
             self.playerItems[itemName] -= quantity
             if self.playerItems[itemName] <= 0:
                 del self.playerItems[itemName]
 
+    def getPlayerItemQuantity(self, conn, playerId, itemName):
+        return self.playerItems.get(itemName, 0)
+
 
 # =========================================================
-# FIXTURES (FAKES EXPOSED TO TESTS)
+# FIXTURES (EXPOSE FAKES TO TESTS)
 # =========================================================
 
 @pytest.fixture
@@ -94,6 +109,7 @@ def fake_rng():
 @pytest.fixture
 def fake_quest_manager():
     return FakeQuestManager()
+
 
 @pytest.fixture
 def fake_shop_repo():

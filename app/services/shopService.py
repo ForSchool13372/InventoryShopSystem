@@ -1,29 +1,50 @@
-class ShopService:
+from sqlalchemy import text
+from app.core.database import engine
 
-    # =========================================================
-    # PUBLIC API
-    # =========================================================
+
+class ShopService:
 
     def buy(self, ctx):
         self._validate_item(ctx.item)
         self._validate_quantity(ctx.quantity)
 
-        total_cost = ctx.item.price * ctx.quantity
+        itemName = ctx.item.name
+        quantity = ctx.quantity
+        playerId = ctx.playerId
 
-        if ctx.player.gold < total_cost:
+        totalCost = ctx.item.price * quantity
+
+        if ctx.player.gold < totalCost:
             return self._fail("Not enough gold")
 
-        if not ctx.shopRepo.hasStock(ctx.item.name, ctx.quantity):
-            return self._fail("Not enough stock")
+        with engine.begin() as conn:
 
-        ctx.shopRepo.decreaseStock(ctx.item.name, ctx.quantity)
-        ctx.shopRepo.addOrUpdatePlayerItem(
-            ctx.playerId,
-            ctx.item.name,
-            ctx.quantity
-        )
+            stockRow = ctx.shopRepo.getStock(conn, itemName)
+            if not stockRow or stockRow[0] < quantity:
+                return self._fail("Not enough stock")
 
-        ctx.player.gold -= total_cost
+            # update shop + inventory
+            ctx.shopRepo.decreaseStock(conn, itemName, quantity)
+
+            ctx.shopRepo.addOrUpdatePlayerItem(
+                conn,
+                playerId,
+                itemName,
+                quantity
+            )
+
+            #  DB update
+            conn.execute(text("""
+                UPDATE player
+                SET gold = gold - :cost
+                WHERE id = :id
+            """), {
+                "cost": totalCost,
+                "id": playerId
+            })
+
+        #  IMPORTANT: keep in-memory player in sync (fixes tests)
+        ctx.player.gold -= totalCost
 
         return self._success("Purchase Successful")
 
@@ -31,20 +52,39 @@ class ShopService:
         self._validate_item(ctx.item)
         self._validate_quantity(ctx.quantity)
 
-        if ctx.shopRepo.getPlayerItemQuantity(ctx.playerId, ctx.item.name) < ctx.quantity:
-            return self._fail("Not enough items")
+        itemName = ctx.item.name
+        quantity = ctx.quantity
+        playerId = ctx.playerId
 
-        total_gain = ctx.item.price * ctx.quantity
+        totalGain = ctx.item.price * quantity
 
-        ctx.shopRepo.removePlayerItem(
-            ctx.playerId,
-            ctx.item.name,
-            ctx.quantity
-        )
+        with engine.begin() as conn:
 
-        ctx.shopRepo.increaseStock(ctx.item.name, ctx.quantity)
+            ownedQty = ctx.shopRepo.getPlayerItemQuantity(conn, playerId, itemName)
 
-        ctx.player.gold += total_gain
+            if ownedQty < quantity:
+                return self._fail("Not enough items")
+
+            ctx.shopRepo.removePlayerItem(
+                conn,
+                playerId,
+                itemName,
+                quantity
+            )
+
+            ctx.shopRepo.increaseStock(conn, itemName, quantity)
+
+            conn.execute(text("""
+                UPDATE player
+                SET gold = gold + :gain
+                WHERE id = :id
+            """), {
+                "gain": totalGain,
+                "id": playerId
+            })
+
+        #  sync memory state for tests
+        ctx.player.gold += totalGain
 
         return self._success("Sale Successful")
 
@@ -68,13 +108,7 @@ class ShopService:
     # =========================================================
 
     def _success(self, message):
-        return {
-            "success": True,
-            "message": message
-        }
+        return {"success": True, "message": message}
 
     def _fail(self, message):
-        return {
-            "success": False,
-            "message": message
-        }
+        return {"success": False, "message": message}

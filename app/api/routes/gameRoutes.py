@@ -42,15 +42,17 @@ def getPlayer(game=Depends(getCurrentGame)):
         "xp": game.player.xp
     })
 
+import time
 
 @router.post("/buy")
 def buy(data: ItemRequest, game=Depends(getCurrentGame)):
+
     def action():
         result = game.buy(
             normalize(data.itemName),
             data.quantity
         )
-        game.persist()
+
         return result
 
     return safeExecute(lambda: ok(action()))
@@ -58,12 +60,13 @@ def buy(data: ItemRequest, game=Depends(getCurrentGame)):
 
 @router.post("/sell")
 def sell(data: ItemRequest, game=Depends(getCurrentGame)):
+
     def action():
         result = game.sell(
             normalize(data.itemName),
             data.quantity
         )
-        game.persist()
+
         return result
 
     return safeExecute(lambda: ok(action()))

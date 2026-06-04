@@ -25,10 +25,13 @@
   <ItemGroup>
     <Compile Include="app\api\routes\devRoutes.py" />
     <Compile Include="app\api\routes\cacheRoutes.py" />
+    <Compile Include="app\api\routes\gameRoutes.py" />
+    <Compile Include="app\api\routes\schemas\gameSchemas.py" />
     <Compile Include="app\core\cacheService.py" />
+    <Compile Include="app\core\celeryApp.py" />
     <Compile Include="app\core\redisClient.py" />
-    <Compile Include="app\api\routes\gameController.py" />
     <Compile Include="app\core\logger.py" />
+    <Compile Include="app\core\utils\apiUtils.py" />
     <Compile Include="app\services\itemService.py" />
     <Compile Include="app\core\controller.py" />
     <Compile Include="app\models\inventory.py" />
@@ -59,6 +62,7 @@
     <Compile Include="app\services\shop.py" />
     <Compile Include="app\models\player.py" />
     <Compile Include=".github\workflows\ci.yml" />
+    <Compile Include="app\services\tasks.py" />
     <Compile Include="pytest.ini" />
     <Compile Include="run.py" />
     <Compile Include="tests\api\test_api.py" />
@@ -67,15 +71,6 @@
     <Compile Include="tests\utils\test_ctx.py" />
   </ItemGroup>
   <ItemGroup>
-    <Interpreter Include="env1\">
-      <Id>env1</Id>
-      <Version>3.9</Version>
-      <Description>env1 (Python 3.9 (64-bit))</Description>
-      <InterpreterPath>Scripts\python.exe</InterpreterPath>
-      <WindowsInterpreterPath>Scripts\pythonw.exe</WindowsInterpreterPath>
-      <PathEnvironmentVariable>PYTHONPATH</PathEnvironmentVariable>
-      <Architecture>X64</Architecture>
-    </Interpreter>
     <Interpreter Include="env\">
       <Id>env</Id>
       <Version>3.13</Version>
@@ -93,9 +88,11 @@
   <ItemGroup>
     <Folder Include="app\" />
     <Folder Include="app\api\routes\" />
+    <Folder Include="app\api\routes\schemas\" />
     <Folder Include="app\core\" />
     <Folder Include="app\api\" />
     <Folder Include="app\cli\" />
+    <Folder Include="app\core\utils\" />
     <Folder Include="app\models\" />
     <Folder Include="app\repositories\" />
     <Folder Include="app\services\" />
