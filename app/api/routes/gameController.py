@@ -1,4 +1,4 @@
-﻿from fastapi import APIRouter, Depends, HTTPException
+﻿from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, field_validator
 import logging
 import time
@@ -8,6 +8,7 @@ from app.core.deps import getCurrentGame
 from app.core.gameFactory import GameFactory
 from app.core.database import engine
 from sqlalchemy import text
+from app.services.tasks import persistGame
 
 # =========================================================
 # INIT
@@ -28,20 +29,14 @@ SLOW_REQUEST_MS = 100
 def ok(data):
     return {"success": True, "data": data}
 
+
 def fail(message: str):
     return {"success": False, "message": message}
+
 
 def normalize(name: str):
     return name.strip().lower()
 
-def handle_result(result):
-    if isinstance(result, str):
-        return fail(result)
-
-    if isinstance(result, dict) and result.get("success") is False:
-        return fail(result.get("message", "Error"))
-
-    return ok(result)
 
 # =========================================================
 # OBSERVABILITY
@@ -74,6 +69,7 @@ def monitor(routeName: str):
         return wrapper
     return decorator
 
+
 # =========================================================
 # REQUEST MODELS
 # =========================================================
@@ -99,24 +95,29 @@ class ItemRequest(BaseModel):
 class LoginRequest(BaseModel):
     playerId: int
 
+
+# =========================================================
+# GLOBAL ERROR HANDLER STYLE (simplifies routes)
+# =========================================================
+def safeExecute(func):
+    try:
+        return func()
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception:
+        logger.exception("Unhandled error")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+
 # =========================================================
 # ROUTES
 # =========================================================
 @router.post("/login")
 @monitor("POST /login")
 def login(data: LoginRequest):
-    try:
-        game = gameFactory.create(data.playerId)
-        result = game.login()
-        return ok(result)
-
-    except ValueError as e:
-        logger.warning(f"LOGIN FAILED | playerId={data.playerId} | {e}")
-        raise HTTPException(status_code=400, detail=str(e))
-
-    except Exception:
-        logger.exception(f"LOGIN CRASHED | playerId={data.playerId}")
-        raise HTTPException(status_code=500, detail="Internal server error")
+    return safeExecute(lambda: ok(
+        gameFactory.create(data.playerId).login()
+    ))
 
 
 @router.get("/player")
@@ -133,41 +134,41 @@ def getPlayer(game=Depends(getCurrentGame)):
 @router.post("/buy")
 @monitor("POST /buy")
 def buy(data: ItemRequest, game=Depends(getCurrentGame)):
-    try:
+    def action():
         result = game.buy(
             normalize(data.itemName),
             data.quantity
         )
 
+        # CURRENT: sync save (keeps game stable)
         game.persist()
-        return handle_result(result)
 
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        # READY FOR CELERY (commented for now)
+        # persistGame.delay(game.player.id, game.toDict())
 
-    except Exception:
-        logger.exception(f"BUY CRASHED | item={data.itemName}")
-        raise HTTPException(status_code=500, detail="Internal server error")
+        return result
+
+    return safeExecute(lambda: ok(action()))
 
 
 @router.post("/sell")
 @monitor("POST /sell")
 def sell(data: ItemRequest, game=Depends(getCurrentGame)):
-    try:
+    def action():
         result = game.sell(
             normalize(data.itemName),
             data.quantity
         )
 
+        # CURRENT: sync save (safe)
         game.persist()
-        return handle_result(result)
 
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        # READY FOR CELERY (commented for now)
+        # persistGame.delay(game.player.id, game.toDict())
 
-    except Exception:
-        logger.exception(f"SELL CRASHED | item={data.itemName}")
-        raise HTTPException(status_code=500, detail="Internal server error")
+        return result
+
+    return safeExecute(lambda: ok(action()))
 
 
 @router.get("/inventory")
