@@ -19,11 +19,12 @@ class ShopService:
 
         with engine.begin() as conn:
 
-            stockRow = ctx.shopRepo.getStock(conn, itemName)
-            if not stockRow or stockRow[0] < quantity:
+            stock = ctx.shopRepo.getStock(conn, itemName)
+
+            # FIX: now returns {"stock": x}
+            if stock is None or stock["stock"] < quantity:
                 return self._fail("Not enough stock")
 
-            # update shop + inventory
             ctx.shopRepo.decreaseStock(conn, itemName, quantity)
 
             ctx.shopRepo.addOrUpdatePlayerItem(
@@ -33,7 +34,6 @@ class ShopService:
                 quantity
             )
 
-            #  DB update
             conn.execute(text("""
                 UPDATE player
                 SET gold = gold - :cost
@@ -43,7 +43,6 @@ class ShopService:
                 "id": playerId
             })
 
-        #  IMPORTANT: keep in-memory player in sync (fixes tests)
         ctx.player.gold -= totalCost
 
         return self._success("Purchase Successful")
@@ -60,9 +59,10 @@ class ShopService:
 
         with engine.begin() as conn:
 
-            ownedQty = ctx.shopRepo.getPlayerItemQuantity(conn, playerId, itemName)
+            owned = ctx.shopRepo.getPlayerItemQuantity(conn, playerId, itemName)
 
-            if ownedQty < quantity:
+            # FIX: now returns {"quantity": x}
+            if owned["quantity"] < quantity:
                 return self._fail("Not enough items")
 
             ctx.shopRepo.removePlayerItem(
@@ -83,7 +83,6 @@ class ShopService:
                 "id": playerId
             })
 
-        #  sync memory state for tests
         ctx.player.gold += totalGain
 
         return self._success("Sale Successful")

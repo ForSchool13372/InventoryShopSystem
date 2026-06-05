@@ -1,0 +1,49 @@
+version: "3.9"
+
+services:
+  api:
+    build: .
+    container_name: inventory_api
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+      - redis
+    environment:
+      ENV: prod
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/inventory_db
+      REDIS_URL: redis://redis:6379/0
+
+  db:
+    image: postgres:15
+    container_name: inventory_db
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: inventory_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7
+    container_name: inventory_redis
+    ports:
+      - "6379:6379"
+
+  celery:
+    build: .
+    container_name: inventory_celery
+    command: celery -A app.core.celeryApp worker --loglevel=info
+    depends_on:
+      - redis
+      - db
+    environment:
+      ENV: prod
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/inventory_db
+      REDIS_URL: redis://redis:6379/0
+
+volumes:
+  pgdata:

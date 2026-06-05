@@ -19,6 +19,13 @@ const getAuthToken = () => {
 };
 
 // =========================================================
+// AUTH READY CHECK (NEW SAFE GUARD)
+// =========================================================
+export const isAuthenticated = () => {
+    return !!getAuthToken();
+};
+
+// =========================================================
 // HEADERS
 // =========================================================
 const getAuthHeaders = () => {
@@ -35,6 +42,13 @@ const getAuthHeaders = () => {
 // CORE REQUEST WRAPPER
 // =========================================================
 export const apiRequest = async (url, options = {}) => {
+    const token = getAuthToken();
+
+    //  BLOCK EARLY CALLS (prevents 401 spam on startup)
+    if (!token) {
+        throw new Error("Not authenticated");
+    }
+
     const res = await fetch(url, {
         ...options,
         headers: {

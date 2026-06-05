@@ -57,7 +57,7 @@ class FakeQuestManager:
 
 
 # =========================================================
-# FAKE SHOP REPO (UPDATED FOR NEW SERVICE DESIGN)
+# FAKE SHOP REPO (FIXED - MATCHES REAL CONTRACT)
 # =========================================================
 
 class FakeShopRepo:
@@ -66,13 +66,13 @@ class FakeShopRepo:
         self.playerItems = {}
 
     # =========================================================
-    # STOCK (MATCH REAL INTERFACE)
+    # STOCK (NOW RETURNS DICT)
     # =========================================================
 
     def getStock(self, conn, itemName):
         if itemName not in self.stock:
             return None
-        return (self.stock[itemName],)
+        return {"stock": self.stock[itemName]}
 
     def decreaseStock(self, conn, itemName, quantity):
         self.stock[itemName] -= quantity
@@ -81,7 +81,7 @@ class FakeShopRepo:
         self.stock[itemName] = self.stock.get(itemName, 0) + quantity
 
     # =========================================================
-    # PLAYER ITEMS (MATCH REAL INTERFACE)
+    # PLAYER ITEMS (NOW RETURNS DICT)
     # =========================================================
 
     def addOrUpdatePlayerItem(self, conn, playerId, itemName, quantity):
@@ -94,11 +94,13 @@ class FakeShopRepo:
                 del self.playerItems[itemName]
 
     def getPlayerItemQuantity(self, conn, playerId, itemName):
-        return self.playerItems.get(itemName, 0)
+        if itemName not in self.playerItems:
+            return {"quantity": 0}
+        return {"quantity": self.playerItems[itemName]}
 
 
 # =========================================================
-# FIXTURES (EXPOSE FAKES TO TESTS)
+# FIXTURES (EXPOSE FAKES)
 # =========================================================
 
 @pytest.fixture

@@ -1,22 +1,42 @@
+# =========================
+# WEB FRAMEWORK
+# =========================
 fastapi
 uvicorn[standard]
 gunicorn
 
+# =========================
+# DATA VALIDATION
+# =========================
 pydantic
 
+# =========================
+# DATABASE
+# =========================
 sqlalchemy
 alembic
+psycopg[binary]
+psycopg2-binary
 
+# =========================
+# AUTH / SECURITY
+# =========================
 python-jose
 
+# =========================
+# CACHING / BACKGROUND TASKS
+# =========================
+redis
+celery
+
+# =========================
+# CONFIG
+# =========================
+python-dotenv
+
+# =========================
+# TESTING
+# =========================
 pytest
 pytest-cov
 httpx
-
-redis
-
-celery
-
-python-dotenv
-
-psycopg[binary]

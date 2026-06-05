@@ -5,22 +5,25 @@ from sqlalchemy import create_engine, pool
 from alembic import context
 from dotenv import load_dotenv
 
+from app.core.database import Base
+
+# IMPORTANT: import models so SQLAlchemy registers metadata
+import app.core.models  # keep adding models here OR import a models package
+
 # =========================
 # LOAD .ENV
 # =========================
 load_dotenv()
 
-# this is the Alembic Config object
 config = context.config
 
-# setup logging
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
 # =========================
-# NO ORM MODE (manual migrations)
+# TARGET METADATA
 # =========================
-target_metadata = None
+target_metadata = Base.metadata
 
 
 def run_migrations_offline() -> None:

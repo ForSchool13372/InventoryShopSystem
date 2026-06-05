@@ -1,0 +1,15 @@
+env/
+env1/
+.venv/
+
+node_modules/
+
+__pycache__/
+.pytest_cache/
+
+.git/
+.github/
+
+.env
+
+*.db

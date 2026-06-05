@@ -29,6 +29,7 @@
     <Compile Include="app\api\routes\schemas\gameSchemas.py" />
     <Compile Include="app\core\cacheService.py" />
     <Compile Include="app\core\celeryApp.py" />
+    <Compile Include="app\core\models.py" />
     <Compile Include="app\core\redisClient.py" />
     <Compile Include="app\core\logger.py" />
     <Compile Include="app\core\utils\apiUtils.py" />
@@ -63,6 +64,7 @@
     <Compile Include="app\models\player.py" />
     <Compile Include=".github\workflows\ci.yml" />
     <Compile Include="app\services\tasks.py" />
+    <Compile Include="docker-compose.yml" />
     <Compile Include="pytest.ini" />
     <Compile Include="run.py" />
     <Compile Include="tests\api\test_api.py" />

@@ -113,6 +113,7 @@ def test_buy_fail_not_enough_gold(create_player, create_item, fake_shop_repo):
     assert result["success"] is False
     assert result["message"] == "Not enough gold"
 
+
 def test_buy_invalid_quantity(create_player, create_item, fake_shop_repo):
     player = create_player(gold=200)
     item = create_item("sword", 50)
@@ -174,6 +175,7 @@ def test_sell_success(create_player, create_item, fake_shop_repo):
     assert result["success"] is True
     assert player.gold == 100
     assert fake_shop_repo.stock["sword"] == 12
+
 
 def test_sell_fail_not_enough_items(create_player, create_item, fake_shop_repo):
     player = create_player(gold=0)
