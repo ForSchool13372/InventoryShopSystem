@@ -5,7 +5,7 @@
 [![Backend](https://img.shields.io/badge/backend-FastAPI-009688)]()
 [![Frontend](https://img.shields.io/badge/frontend-React-61DAFB)]()
 
-A full-stack RPG simulation system featuring authentication, shop economy, combat logic, and a **service-layer backend architecture with CI/CD, testing, and production-style design patterns**.
+A full-stack RPG simulation system with authentication, shop economy, inventory, and combat mechanics, built using a production-style FastAPI service-layer architecture and React frontend.
 
 ---
 
@@ -243,7 +243,9 @@ Planned use cases:
 
 --- 
 
-## 🚀 How to Run
+## 🚀 How to Run 
+
+- 🖥️ Local (No Docker)
 
 ### Backend
 - pip install -r requirements.txt
@@ -253,6 +255,13 @@ Planned use cases:
 - cd frontend
 - npm install
 - npm run dev
+
+### 🐳 Docker (Recommended)
+
+- Run full stack (frontend + backend + database):
+
+- docker compose up --build
+
 
 ### 🌐 Links
 - API Docs: https://inventoryshopsystem.onrender.com/docs
