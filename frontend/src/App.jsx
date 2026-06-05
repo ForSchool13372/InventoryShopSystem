@@ -127,9 +127,13 @@ function App() {
         try {
             if (!id) throw new Error("Missing ID");
 
-            const data = await loginPlayer(id);
+            const res = await loginPlayer(id);
 
-            const newToken = data.data.token;
+            const newToken = res.token || res.data?.token;
+
+            if (!newToken) {
+                throw new Error("No token returned from server");
+            }
 
             setAuthToken(newToken);
             login(newToken, id);
@@ -139,9 +143,9 @@ function App() {
 
             return true;
 
-        } catch {
+        } catch (err) {
             soundSystem.play("error");
-            addToast("Invalid ID", "error");
+            addToast(err.message || "Invalid ID", "error");
             return false;
         }
     };

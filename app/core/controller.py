@@ -54,6 +54,7 @@ class Controller:
 
         return {
             "success": True,
+            "id": self.playerId,
             "token": token
         }
 

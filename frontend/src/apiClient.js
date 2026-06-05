@@ -19,23 +19,21 @@ const getAuthToken = () => {
 };
 
 // =========================================================
-// AUTH READY CHECK (NEW SAFE GUARD)
+// AUTH STATE
 // =========================================================
 export const isAuthenticated = () => {
     return !!getAuthToken();
 };
 
 // =========================================================
-// HEADERS
+// REQUEST HEADERS
 // =========================================================
 const getAuthHeaders = () => {
     const token = getAuthToken();
 
-    if (!token) return {};
-
-    return {
-        Authorization: `Bearer ${token}`
-    };
+    return token
+        ? { Authorization: `Bearer ${token}` }
+        : {};
 };
 
 // =========================================================
@@ -44,8 +42,10 @@ const getAuthHeaders = () => {
 export const apiRequest = async (url, options = {}) => {
     const token = getAuthToken();
 
-    //  BLOCK EARLY CALLS (prevents 401 spam on startup)
-    if (!token) {
+    const isPublicRoute = url.includes("/login");
+
+    // allow login without token
+    if (!token && !isPublicRoute) {
         throw new Error("Not authenticated");
     }
 
@@ -59,8 +59,8 @@ export const apiRequest = async (url, options = {}) => {
     });
 
     let data = null;
-    const contentType = res.headers.get("content-type");
 
+    const contentType = res.headers.get("content-type");
     if (contentType?.includes("application/json")) {
         try {
             data = await res.json();
@@ -98,40 +98,23 @@ export const loginPlayer = (playerId) => {
 // =========================================================
 // PLAYER
 // =========================================================
-export const getPlayer = () => {
-    return apiRequest(`${API}/api/player`);
-};
+export const getPlayer = () => apiRequest(`${API}/api/player`);
+
+export const getInventory = () => apiRequest(`${API}/api/inventory`);
+
+export const getShop = () => apiRequest(`${API}/api/shop`);
 
 // =========================================================
-// INVENTORY
+// GAME ACTIONS
 // =========================================================
-export const getInventory = () => {
-    return apiRequest(`${API}/api/inventory`);
-};
-
-// =========================================================
-// SHOP
-// =========================================================
-export const getShop = () => {
-    return apiRequest(`${API}/api/shop`);
-};
-
-// =========================================================
-// BUY
-// =========================================================
-export const buyItem = (itemName, quantity = 1) => {
-    return apiRequest(`${API}/api/buy`, {
+export const buyItem = (itemName, quantity = 1) =>
+    apiRequest(`${API}/api/buy`, {
         method: "POST",
         body: JSON.stringify({ itemName, quantity })
     });
-};
 
-// =========================================================
-// SELL
-// =========================================================
-export const sellItem = (itemName, quantity = 1) => {
-    return apiRequest(`${API}/api/sell`, {
+export const sellItem = (itemName, quantity = 1) =>
+    apiRequest(`${API}/api/sell`, {
         method: "POST",
         body: JSON.stringify({ itemName, quantity })
     });
-};
