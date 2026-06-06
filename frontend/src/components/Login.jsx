@@ -105,7 +105,7 @@ function Login({ token, onLogin, onLogout, error, theme }) {
     // ----------------------------
     return (
         <div style={cardStyle}>
-            <h2 style={{ marginBottom: "10px", color: theme.text }}>
+            <h2 style={{ marginBottom: "10px", color: theme.text, fontWeight: "800" }}>
                 Login
             </h2>
 

@@ -222,7 +222,8 @@ function App() {
             animate="show"
             style={{
                 minHeight: "100vh",
-                padding: "32px",
+                width: "100%",
+                padding: "64px",
                 display: "flex",
                 justifyContent: "center",
                 fontFamily: "Arial",
@@ -233,19 +234,28 @@ function App() {
             }}
         >
             {/* glow */}
-            <div style={{
-                position: "absolute",
-                width: "700px",
-                height: "700px",
-                background: "rgba(99,102,241,0.12)",
-                filter: "blur(140px)",
-                top: "-250px",
-                left: "-250px",
-                borderRadius: "50%"
-            }} />
+            <div
+                style={{
+                    position: "absolute",
+                    width: "900px",
+                    height: "900px",
+                    background: "rgba(99,102,241,0.12)",
+                    filter: "blur(160px)",
+                    top: "-300px",
+                    left: "-300px",
+                    borderRadius: "50%"
+                }}
+            />
 
-            <div style={{ width: "100%", maxWidth: "1100px", zIndex: 2 }}>
-
+            {/* MAIN CONTAINER (FULL WIDTH CONTROL) */}
+            <div
+                style={{
+                    width: "100%",
+                    maxWidth: "1920px",
+                    margin: "0 auto",
+                    zIndex: 2
+                }}
+            >
                 {/* HEADER */}
                 <motion.div
                     variants={fadeUp(0)}
@@ -259,11 +269,23 @@ function App() {
                     }}
                 >
                     <div>
-                        <h1 style={{ fontSize: "2rem", fontWeight: "800", margin: 0 }}>
+                        <h1
+                            style={{
+                                fontSize: "2rem",
+                                fontWeight: "800",
+                                margin: 0,
+                                color: theme.text
+                            }}
+                        >
                             Inventory Shop System
                         </h1>
-
-                        <p style={{ margin: "4px 0 0 0", fontSize: "0.9rem", color: theme.subText }}>
+                        <p
+                            style={{
+                                margin: "4px 0 0 0",
+                                fontSize: "0.9rem",
+                                color: theme.subText
+                            }}
+                        >
                             {token ? `Logged in as ${playerId}` : "Start your journey today!"}
                         </p>
                     </div>
@@ -302,14 +324,17 @@ function App() {
                     />
                 </motion.div>
 
-                {/* GRID */}
-                <div style={{
-                    display: "grid",
-                    gridTemplateColumns: "2fr 1fr",
-                    gap: "20px",
-                    marginTop: "18px",
-                    marginBottom: "20px"
-                }}>
+                {/* GRID (WIDER + CLEAN DASHBOARD FEEL) */}
+                <div
+                    style={{
+                        display: "grid",
+                        gridTemplateColumns: "3fr 1.2fr",
+                        gap: "24px",
+                        marginTop: "20px",
+                        marginBottom: "20px",
+                        width: "100%"
+                    }}
+                >
                     <motion.div variants={fadeUp(0.1)} initial="hidden" animate="show">
                         <Shop
                             items={items}
@@ -321,10 +346,7 @@ function App() {
                     </motion.div>
 
                     <motion.div variants={fadeUp(0.15)} initial="hidden" animate="show">
-                        <PlayerStats
-                            playerStats={playerStats}
-                            theme={theme}
-                        />
+                        <PlayerStats playerStats={playerStats} theme={theme} />
                     </motion.div>
                 </div>
 
@@ -340,15 +362,17 @@ function App() {
             </div>
 
             {/* TOASTS */}
-            <div style={{
-                position: "fixed",
-                top: "20px",
-                right: "20px",
-                display: "flex",
-                flexDirection: "column",
-                gap: "10px",
-                zIndex: 9999
-            }}>
+            <div
+                style={{
+                    position: "fixed",
+                    top: "20px",
+                    right: "20px",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "10px",
+                    zIndex: 9999
+                }}
+            >
                 <AnimatePresence>
                     {toasts.map((toast) => (
                         <motion.div

@@ -31,6 +31,7 @@ function Shop({ items, token, onBuy, theme }) {
     };
 
     const titleStyle = {
+        color: theme.text,
         fontSize: "1.2rem",
         fontWeight: "800",
         marginBottom: "12px"

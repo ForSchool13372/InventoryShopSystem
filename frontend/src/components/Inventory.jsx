@@ -37,7 +37,8 @@ function Inventory({ inventory, token, onSell, theme }) {
     const titleStyle = {
         fontSize: "1.2rem",
         fontWeight: "800",
-        marginBottom: "12px"
+        marginBottom: "12px",
+        color: theme.text
     };
 
     const mutedText = {
