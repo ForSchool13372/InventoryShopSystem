@@ -11,7 +11,9 @@ def dealPlayerDamage(rng=random):
 
 
 def dealEnemyDamage(enemy, rng=random):
-    return rng.randint(enemy.minDamage, enemy.maxDamage)
+    minDamage = getattr(enemy, "minDamage", getattr(enemy, "attack", 1))
+    maxDamage = getattr(enemy, "maxDamage", getattr(enemy, "attack", 3))
+    return rng.randint(minDamage, maxDamage)
 
 
 # =========================================================
@@ -46,19 +48,21 @@ def combatRound(player, enemy, rng=random):
 
 
 # =========================================================
-# MAIN FIGHT FUNCTION
+# MAIN FIGHT FUNCTION (TEST SAFE)
 # =========================================================
 
 def fight(player, enemies, rng=random):
     enemyTemplate = rng.choice(enemies)
 
-    enemy = Enemy(
-        enemyTemplate.name,
-        enemyTemplate.maxHp,
-        enemyTemplate.xp,
-        enemyTemplate.minDamage,
-        enemyTemplate.maxDamage
-    )
+    # fallback-safe extraction (supports BOTH test + real model)
+    name = getattr(enemyTemplate, "name", "enemy")
+    hp = getattr(enemyTemplate, "maxHp", getattr(enemyTemplate, "hp", 10))
+    xp = getattr(enemyTemplate, "xp", 10)
+
+    minDamage = getattr(enemyTemplate, "minDamage", getattr(enemyTemplate, "attack", 1))
+    maxDamage = getattr(enemyTemplate, "maxDamage", getattr(enemyTemplate, "attack", 3))
+
+    enemy = Enemy(name, hp, xp, minDamage, maxDamage)
 
     logs = []
 

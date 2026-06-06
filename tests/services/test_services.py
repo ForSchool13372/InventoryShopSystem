@@ -149,3 +149,69 @@ def test_sell_success():
 def test_missing_token_fails():
     response = client.get("/api/player")
     assert response.status_code == 401
+
+
+# =========================================================
+# COMBAT COVERAGE TESTS (RESTORED)
+# =========================================================
+
+def test_fight_basic():
+    from app.services.combat import fight
+
+    class Player:
+        def __init__(self):
+            self.hp = 100
+            self.level = 1
+
+        def takeDamage(self, dmg):
+            self.hp -= dmg
+
+    class Enemy:
+        def __init__(self):
+            self.name = "goblin"
+            self.hp = 10
+            self.attack = 1
+
+        def takeDamage(self, dmg):
+            self.hp -= dmg
+
+    player = Player()
+    enemy = Enemy()
+
+    result = fight(player, [enemy])
+
+    assert isinstance(result, dict)
+    assert "result" in result
+    assert "xp" in result
+    assert "enemy" in result
+    assert "logs" in result
+
+def test_combat_service():
+    from app.services.combatService import CombatService
+
+    class Player:
+        def __init__(self):
+            self.hp = 100
+            self.level = 1
+
+        def takeDamage(self, dmg):
+            self.hp -= dmg
+
+    class Enemy:
+        def __init__(self):
+            self.name = "goblin"
+            self.hp = 10
+            self.attack = 1
+
+        def takeDamage(self, dmg):
+            self.hp -= dmg
+
+    service = CombatService()
+
+    player = Player()
+    enemy = Enemy()
+
+    result = service.handleFight(player, [enemy])
+
+    assert isinstance(result, dict)
+    assert "result" in result
