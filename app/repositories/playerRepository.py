@@ -37,10 +37,10 @@ class PlayerRepository:
                     WHERE id = :id
                 """),
                 {
-                    "gold": player["gold"],
-                    "hp": player["hp"],
-                    "level": player["level"],
-                    "xp": player["xp"],
+                    "gold": getattr(player, "gold", player["gold"]),
+                    "hp": getattr(player, "hp", player["hp"]),
+                    "level": getattr(player, "level", player["level"]),
+                    "xp": getattr(player, "xp", player["xp"]),
                     "id": playerId
                 }
             )

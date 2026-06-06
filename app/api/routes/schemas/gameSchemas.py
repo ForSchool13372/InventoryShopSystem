@@ -1,4 +1,10 @@
 from pydantic import BaseModel, field_validator
+from typing import List, Literal
+
+
+# =========================================================
+# REQUEST MODELS
+# =========================================================
 
 class ItemRequest(BaseModel):
     itemName: str
@@ -21,3 +27,39 @@ class ItemRequest(BaseModel):
 
 class LoginRequest(BaseModel):
     playerId: int
+
+
+# =========================================================
+# RESPONSE MODELS (THIS IS THE IMPORTANT UPGRADE)
+# =========================================================
+
+class LoginResponse(BaseModel):
+    success: bool
+    token: str
+    id: int
+
+
+class PlayerResponse(BaseModel):
+    gold: int
+    hp: int
+    level: int
+    xp: int
+
+
+class InventoryResponse(BaseModel):
+    items: list
+
+
+class ShopItem(BaseModel):
+    itemName: str
+    stock: int
+    price: int
+
+
+class ShopResponse(BaseModel):
+    data: List[ShopItem]
+
+
+class ActionResponse(BaseModel):
+    success: bool
+    message: str | None = None

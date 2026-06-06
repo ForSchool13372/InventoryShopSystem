@@ -1,7 +1,8 @@
 from datetime import datetime, timedelta, timezone
 from jose import jwt, JWTError
 import os
-from typing import TypedDict, Optional, Dict, Any
+from typing import TypedDict, Optional, Dict, Any, cast
+
 
 # =========================================================
 # CONFIG
@@ -26,37 +27,26 @@ class TokenPayload(TypedDict):
 # =========================================================
 
 def createAccessToken(data: Dict[str, Any]) -> str:
-    """
-    Create a JWT token with proper expiry handling.
-    """
-
-    toEncode = data.copy()
+    toEncode = dict(data)
 
     expire = datetime.now(timezone.utc) + timedelta(
         minutes=ACCESS_TOKEN_EXPIRE_MINUTES
     )
 
-    # IMPORTANT: JWT expects numeric timestamp, not datetime object
     toEncode["exp"] = int(expire.timestamp())
 
     return jwt.encode(toEncode, SECRET_KEY, algorithm=ALGORITHM)
 
 
 # =========================================================
-# VERIFY TOKEN
+# VERIFY TOKEN (STRICTER + SAFER)
 # =========================================================
 
 def verifyToken(token: str) -> Optional[TokenPayload]:
-    """
-    Decode and validate JWT token.
-    Returns payload or None if invalid.
-    """
-
     if not token:
         return None
 
     try:
-        # FastAPI HTTPBearer already strips "Bearer"
         payload = jwt.decode(
             token,
             SECRET_KEY,
@@ -66,17 +56,19 @@ def verifyToken(token: str) -> Optional[TokenPayload]:
         playerId = payload.get("playerId")
         exp = payload.get("exp")
 
-        if playerId is None or exp is None:
+        if not isinstance(playerId, (int, str)):
             return None
 
-        # Optional: explicit expiry check (extra safety)
-        if datetime.now(timezone.utc).timestamp() > int(exp):
+        if not isinstance(exp, (int, float)):
             return None
 
-        return {
+        if datetime.now(timezone.utc).timestamp() > float(exp):
+            return None
+
+        return cast(TokenPayload, {
             "playerId": int(playerId),
             "exp": int(exp)
-        }
+        })
 
     except JWTError:
         return None

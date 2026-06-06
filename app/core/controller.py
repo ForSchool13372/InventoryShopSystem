@@ -1,11 +1,9 @@
+from typing import Dict, Any
 from app.core.auth import createAccessToken
 
 
 class Controller:
     def __init__(self, ctx):
-        # =========================================================
-        # CONTEXT
-        # =========================================================
         self.ctx = ctx
         self.player = ctx.player
         self.playerId = ctx.playerId
@@ -17,9 +15,6 @@ class Controller:
         self.questManager = ctx.questManager
         self.gameEventService = ctx.gameEventService
 
-        # =========================================================
-        # SHORTCUTS
-        # =========================================================
         self.combat = self.services.combat
         self.shop = self.services.shop
         self.items = self.services.item
@@ -31,7 +26,7 @@ class Controller:
     # =========================================================
     # EVENT SYSTEM
     # =========================================================
-    def _emitEvent(self, eventType, data=None):
+    def _emitEvent(self, eventType: str, data: Dict[str, Any] = None) -> None:
         try:
             self.gameEventService.handleEvent({
                 "type": eventType,
@@ -39,14 +34,13 @@ class Controller:
                 "data": data or {}
             })
         except Exception:
-            # don't crash game logic if logging fails
             pass
 
     # =========================================================
     # LIFECYCLE
     # =========================================================
-    def login(self):
-        token = createAccessToken({
+    def login(self) -> Dict[str, Any]:
+        token: str = createAccessToken({
             "playerId": self.playerId
         })
 
@@ -58,19 +52,19 @@ class Controller:
             "token": token
         }
 
-    def revive(self):
+    def revive(self) -> Dict[str, Any]:
         self.player.revive()
         self._emitEvent("REVIVE")
         return {"success": True}
 
-    def persist(self):
+    def persist(self) -> Dict[str, Any]:
         self.playerRepo.save(self.playerId, self.player)
         return {"success": True}
 
     # =========================================================
     # PLAYER
     # =========================================================
-    def getPlayerStats(self):
+    def getPlayerStats(self) -> Dict[str, Any]:
         return {
             "gold": self.player.gold,
             "hp": self.player.hp,
@@ -81,7 +75,7 @@ class Controller:
     # =========================================================
     # GAME ACTIONS
     # =========================================================
-    def fight(self):
+    def fight(self) -> Dict[str, Any]:
         result = self.combat.handleFight(self.player, self.world.enemies)
 
         eventType = (
@@ -97,7 +91,7 @@ class Controller:
 
         return result
 
-    def buy(self, itemName, quantity):
+    def buy(self, itemName: str, quantity: int) -> Dict[str, Any]:
         item = self.items.getItem(itemName)
 
         if not item:
@@ -113,7 +107,7 @@ class Controller:
 
         return result
 
-    def sell(self, itemName, quantity):
+    def sell(self, itemName: str, quantity: int) -> Dict[str, Any]:
         item = self.items.getItem(itemName)
 
         if not item:
@@ -132,13 +126,13 @@ class Controller:
     # =========================================================
     # DATA ACCESS
     # =========================================================
-    def getShop(self):
+    def getShop(self) -> Any:
         return self.shopRepo.getShopItems()
 
-    def getInventory(self):
+    def getInventory(self) -> Any:
         return self.inventoryRepo.loadInventory(self.playerId)
 
-    def getQuests(self):
+    def getQuests(self) -> Any:
         return self.world.quests
 
     # =========================================================

@@ -21,8 +21,7 @@ class ShopService:
 
             stock = ctx.shopRepo.getStock(conn, itemName)
 
-            # FIX: now returns {"stock": x}
-            if stock is None or stock["stock"] < quantity:
+            if stock["stock"] < quantity:
                 return self._fail("Not enough stock")
 
             ctx.shopRepo.decreaseStock(conn, itemName, quantity)
@@ -61,7 +60,6 @@ class ShopService:
 
             owned = ctx.shopRepo.getPlayerItemQuantity(conn, playerId, itemName)
 
-            # FIX: now returns {"quantity": x}
             if owned["quantity"] < quantity:
                 return self._fail("Not enough items")
 

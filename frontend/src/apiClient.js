@@ -26,37 +26,27 @@ export const isAuthenticated = () => {
 };
 
 // =========================================================
-// REQUEST HEADERS
-// =========================================================
-const getAuthHeaders = () => {
-    const token = getAuthToken();
-
-    return token
-        ? { Authorization: `Bearer ${token}` }
-        : {};
-};
-
-// =========================================================
 // CORE REQUEST WRAPPER
 // =========================================================
 export const apiRequest = async (url, options = {}) => {
     const token = getAuthToken();
 
-    const isPublicRoute = url.includes("/login");
+    const headers = {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...(options.headers || {})
+    };
 
-    // allow login without token
-    if (!token && !isPublicRoute) {
-        throw new Error("Not authenticated");
+    let res;
+
+    try {
+        res = await fetch(url, {
+            ...options,
+            headers
+        });
+    } catch {
+        throw new Error("Network error");
     }
-
-    const res = await fetch(url, {
-        ...options,
-        headers: {
-            "Content-Type": "application/json",
-            ...getAuthHeaders(),
-            ...(options.headers || {})
-        }
-    });
 
     let data = null;
 

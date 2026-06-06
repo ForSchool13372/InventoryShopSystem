@@ -63,21 +63,21 @@ function App() {
 
     const loadShop = async () => {
         const data = await getShop();
-        setItems(data.data);
+        setItems(data?.data ?? []);
     };
 
     const loadInventory = async () => {
         if (!token || !playerId) return;
 
         const data = await getInventory();
-        setInventory(data.data.items);
+        setInventory(data?.items ?? []);
     };
 
     const loadPlayerStats = async () => {
         if (!token || !playerId) return;
 
         const data = await getPlayer();
-        setPlayerStats(data.data);
+        setPlayerStats(data ?? null);
     };
 
     // ----------------------------
@@ -109,9 +109,13 @@ function App() {
                     getPlayer()
                 ]);
 
-                setItems(shop.data);
-                setInventory(inventory.data.items);
-                setPlayerStats(player.data);
+                console.log("shop", shop);
+                console.log("inventory", inventory);
+                console.log("player", player);
+
+                setItems(shop?.data ?? []);
+                setInventory(inventory?.items ?? []);
+                setPlayerStats(player ?? null);
             } finally {
                 setLoading(false);
             }
@@ -129,7 +133,7 @@ function App() {
 
             const res = await loginPlayer(id);
 
-            const newToken = res.token || res.data?.token;
+            const newToken = res?.token || res?.data?.token;
 
             if (!newToken) {
                 throw new Error("No token returned from server");
@@ -145,7 +149,7 @@ function App() {
 
         } catch (err) {
             soundSystem.play("error");
-            addToast(err.message || "Invalid ID", "error");
+            addToast(err?.message || "Invalid ID", "error");
             return false;
         }
     };
@@ -176,7 +180,7 @@ function App() {
 
         } catch (err) {
             soundSystem.play("error");
-            addToast(err.message, "error");
+            addToast(err?.message || "Buy failed", "error");
 
         } finally {
             setTimeout(() => setBuyingItem(null), 150);
@@ -195,7 +199,7 @@ function App() {
 
         } catch (err) {
             soundSystem.play("error");
-            addToast(err.message, "error");
+            addToast(err?.message || "Sell failed", "error");
 
         } finally {
             setTimeout(() => setSellingItem(null), 150);

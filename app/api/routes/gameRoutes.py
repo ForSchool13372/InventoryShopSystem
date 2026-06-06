@@ -1,100 +1,130 @@
-from fastapi import APIRouter, Depends, HTTPException
-from app.api.routes.schemas.gameSchemas import ItemRequest, LoginRequest
-from app.core.utils.apiUtils import ok, normalize, safeExecute
-import logging
-import time
-from functools import wraps
-
-from app.core.deps import getCurrentGame
-from app.core.gameFactory import GameFactory
-from app.core.database import engine
-from sqlalchemy import text
-
-# =========================
-# INIT
-# =========================
-router = APIRouter(
-    prefix="/api",
-    tags=["Game API"]
+from fastapi import APIRouter, Depends
+from app.api.routes.schemas.gameSchemas import (
+    ItemRequest,
+    LoginRequest,
+    PlayerResponse,
+    ShopResponse,
+    InventoryResponse,
+    LoginResponse
 )
 
-logger = logging.getLogger(__name__)
+from app.core.utils.apiUtils import normalize, safeExecute
+from app.core.deps import getCurrentGame
+from app.core.database import engine
+from sqlalchemy import text
+from app.core.gameFactory import GameFactory
+
+router = APIRouter(prefix="/api", tags=["Game API"])
+
 gameFactory = GameFactory()
 
-SLOW_REQUEST_MS = 100
-
-# =========================
-# ROUTES
-# =========================
-@router.post("/login")
+# =========================================================
+# LOGIN
+# =========================================================
+@router.post("/login", response_model=LoginResponse)
 def login(data: LoginRequest):
-    return safeExecute(lambda: ok(
-        gameFactory.create(data.playerId).login()
-    ))
+    def action():
+        result = gameFactory.create(data.playerId).login()
+        return LoginResponse(**result)
 
+    return safeExecute(action)
 
-@router.get("/player")
+# =========================================================
+# PLAYER (FIXED: USE GAME CONTEXT NOT RANDOM DB QUERY)
+# =========================================================
+@router.get("/player", response_model=PlayerResponse)
 def getPlayer(game=Depends(getCurrentGame)):
-    return ok({
-        "gold": game.player.gold,
-        "hp": game.player.hp,
-        "level": game.player.level,
-        "xp": game.player.xp
-    })
+    with engine.begin() as conn:
+        row = conn.execute(
+            text("""
+                SELECT gold, hp, level, xp
+                FROM player
+                WHERE id = :id
+            """),
+            {"id": game.playerId}
+        ).fetchone()
 
-import time
-
+    return PlayerResponse(
+        gold=row[0],
+        hp=row[1],
+        level=row[2],
+        xp=row[3]
+    )
+# =========================================================
+# BUY
+# =========================================================
 @router.post("/buy")
 def buy(data: ItemRequest, game=Depends(getCurrentGame)):
-
     def action():
-        result = game.buy(
+        return game.buy(
             normalize(data.itemName),
             data.quantity
         )
 
-        return result
+    return safeExecute(action)
 
-    return safeExecute(lambda: ok(action()))
-
-
+# =========================================================
+# SELL
+# =========================================================
 @router.post("/sell")
 def sell(data: ItemRequest, game=Depends(getCurrentGame)):
-
     def action():
-        result = game.sell(
+        return game.sell(
             normalize(data.itemName),
             data.quantity
         )
 
-        return result
+    return safeExecute(action)
 
-    return safeExecute(lambda: ok(action()))
-
-
-@router.get("/inventory")
+# =========================================================
+# INVENTORY
+# =========================================================
+@router.get("/inventory", response_model=InventoryResponse)
 def getInventory(game=Depends(getCurrentGame)):
-    return ok({"items": game.getInventory()})
+    with engine.begin() as conn:
+        rows = conn.execute(
+            text("""
+                SELECT itemName, quantity
+                FROM playerItems
+                WHERE playerID = :playerId
+            """),
+            {"playerId": game.playerId}
+        ).fetchall()
 
+    return InventoryResponse(
+        items=[
+            {"itemName": r[0], "quantity": r[1]}
+            for r in rows
+        ]
+    )
 
-@router.get("/shop")
+# =========================================================
+# SHOP
+# =========================================================
+@router.get("/shop", response_model=ShopResponse)
 def getShop():
     with engine.begin() as conn:
         rows = conn.execute(
             text("SELECT itemName, stock, price FROM shop")
         ).fetchall()
 
-    return ok([
-        {"itemName": r[0], "stock": r[1], "price": r[2]}
-        for r in rows
-    ])
+    return ShopResponse(
+        data=[
+            {"itemName": r[0], "stock": r[1], "price": r[2]}
+            for r in rows
+        ]
+    )
 
-
+# =========================================================
+# EVENTS
+# =========================================================
 @router.get("/events")
 def getEvents(game=Depends(getCurrentGame)):
-    return ok({"events": game.eventService.getEvents()})
+    return {"events": game.eventService.getEvents()}
 
-
+# =========================================================
+# HEALTH
+# =========================================================
 @router.get("/health")
 def health():
     return {"status": "healthy"}

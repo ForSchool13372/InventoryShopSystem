@@ -5,12 +5,11 @@ from app.services.itemService import ItemService
 from app.services.combatService import CombatService
 from app.core.gameData import createEnemies, createQuests
 from app.repositories.playerRepository import PlayerRepository
-
 from app.core.gameContext import GameContext
 
 
 # =========================================================
-# COMPOSITION ROOT
+# COMPOSITION ROOT (SHARED SINGLETON-LIKE SYSTEMS)
 # =========================================================
 
 class Services:
@@ -34,7 +33,7 @@ class World:
 
 
 # =========================================================
-# GAME FACTORY
+# GAME FACTORY (REQUEST SCOPED CONTEXT BUILDER)
 # =========================================================
 
 class GameFactory:
@@ -44,38 +43,43 @@ class GameFactory:
         self.world = World()
 
     def create(self, playerId: int):
-
-        # lazy imports (avoid circular imports)
         from app.models.player import Player
         from app.core.questManager import QuestManager
         from app.services.gameEventService import GameEventService
         from app.core.controller import Controller
 
-        # =====================================================
-        # LOAD PLAYER (SAFE GUARD)
-        # =====================================================
+        # -----------------------------------------------------
+        # SAFE TYPE
+        # -----------------------------------------------------
+        playerId = int(playerId)
+
+        # -----------------------------------------------------
+        # LOAD PLAYER FROM DB (SOURCE OF TRUTH)
+        # -----------------------------------------------------
         data = self.repos.player.load(playerId)
 
         if not data:
             raise ValueError(f"Player not found: {playerId}")
 
-        # =====================================================
-        # BUILD DOMAIN PLAYER
-        # =====================================================
-        player = Player(data.get("gold", 0))
+        # -----------------------------------------------------
+        # BUILD PLAYER OBJECT (TEMP RUNTIME MODEL ONLY)
+        # -----------------------------------------------------
+        player = Player(
+            gold=data.get("gold", 0)
+        )
         player.hp = data.get("hp", 100)
         player.level = data.get("level", 1)
         player.xp = data.get("xp", 0)
 
-        # =====================================================
-        # REQUEST-SCOPED SYSTEMS
-        # =====================================================
+        # -----------------------------------------------------
+        # GAME SYSTEMS (SCOPED PER REQUEST)
+        # -----------------------------------------------------
         questManager = QuestManager(self.world.quests, player)
         gameEventService = GameEventService(player, questManager)
 
-        # =====================================================
-        # CONTEXT (SOURCE OF TRUTH)
-        # =====================================================
+        # -----------------------------------------------------
+        # CONTEXT
+        # -----------------------------------------------------
         ctx = GameContext(
             player=player,
             playerId=playerId,
@@ -86,7 +90,4 @@ class GameFactory:
             gameEventService=gameEventService
         )
 
-        # =====================================================
-        # CONTROLLER
-        # =====================================================
         return Controller(ctx)
