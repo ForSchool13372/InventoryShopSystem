@@ -1,8 +1,7 @@
 import pytest
 from app.services.itemService import ItemService
-from app.services.combat import fight
+from app.services.combatService import CombatService
 from app.services.gameEventService import GameEventService
-from app.services.shop import Shop
 from app.services.shopService import ShopService
 from tests.utils.test_ctx import ShopTestContext
 
@@ -30,46 +29,6 @@ def test_getItem_invalid_returnsNone():
 
 
 # =========================================================
-# SHOP TESTS (MODEL)
-# =========================================================
-
-def test_add_item_to_stock(create_item):
-    shop = Shop()
-
-    item = create_item("sword", 10)
-    shop.addItemToStock(item, 2)
-
-    assert shop.stock["sword"] == 2
-
-
-def test_add_item_accumulates(create_item):
-    shop = Shop()
-
-    item = create_item("potion", 5)
-    shop.addItemToStock(item, 2)
-    shop.addItemToStock(item, 3)
-
-    assert shop.stock["potion"] == 5
-
-
-def test_to_dict():
-    shop = Shop()
-    shop.stock = {"sword": 1}
-
-    data = shop.toDict()
-
-    assert data == {"stock": {"sword": 1}}
-
-
-def test_from_dict():
-    shop = Shop()
-
-    shop.fromDict({"stock": {"sword": 10}})
-
-    assert shop.stock["sword"] == 10
-
-
-# =========================================================
 # SHOP SERVICE TESTS
 # =========================================================
 
@@ -77,7 +36,7 @@ def test_buy_success(create_player, create_item, fake_shop_repo):
     player = create_player(gold=200)
     item = create_item("sword", 50)
 
-    service = ShopService()
+    service = ShopService(fake_shop_repo)
 
     ctx = ShopTestContext(
         player=player,
@@ -98,7 +57,7 @@ def test_buy_fail_not_enough_gold(create_player, create_item, fake_shop_repo):
     player = create_player(gold=10)
     item = create_item("sword", 50)
 
-    service = ShopService()
+    service = ShopService(fake_shop_repo)
 
     ctx = ShopTestContext(
         player=player,
@@ -118,7 +77,7 @@ def test_buy_invalid_quantity(create_player, create_item, fake_shop_repo):
     player = create_player(gold=200)
     item = create_item("sword", 50)
 
-    service = ShopService()
+    service = ShopService(fake_shop_repo)
 
     ctx = ShopTestContext(
         player=player,
@@ -138,7 +97,7 @@ def test_buy_fail_not_enough_stock(create_player, create_item, fake_shop_repo):
 
     fake_shop_repo.stock["sword"] = 1
 
-    service = ShopService()
+    service = ShopService(fake_shop_repo)
 
     ctx = ShopTestContext(
         player=player,
@@ -160,7 +119,7 @@ def test_sell_success(create_player, create_item, fake_shop_repo):
 
     fake_shop_repo.playerItems["sword"] = 3
 
-    service = ShopService()
+    service = ShopService(fake_shop_repo)
 
     ctx = ShopTestContext(
         player=player,
@@ -183,7 +142,7 @@ def test_sell_fail_not_enough_items(create_player, create_item, fake_shop_repo):
 
     fake_shop_repo.playerItems["sword"] = 1
 
-    service = ShopService()
+    service = ShopService(fake_shop_repo)
 
     ctx = ShopTestContext(
         player=player,
@@ -203,11 +162,13 @@ def test_sell_fail_not_enough_items(create_player, create_item, fake_shop_repo):
 # COMBAT TESTS
 # =========================================================
 
-def test_fight_returns_valid_structure(create_player, create_enemy, fake_rng):
+def test_fight_returns_valid_structure(create_player, create_enemy):
     player = create_player()
     enemy = create_enemy()
 
-    result = fight(player, [enemy], rng=fake_rng)
+    service = CombatService()
+
+    result = service.handleFight(player, [enemy])
 
     assert isinstance(result, dict)
     assert "result" in result

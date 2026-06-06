@@ -4,6 +4,14 @@ from app.main import app
 client = TestClient(app)
 
 # =========================================================
+# HELPERS
+# =========================================================
+
+def get_token():
+    response = client.post("/api/login", json={"playerId": 1})
+    return response.json()["token"]
+
+# =========================================================
 # API TESTS
 # =========================================================
 
@@ -15,7 +23,12 @@ def test_health():
 
 
 def test_getShop():
-    response = client.get("/api/shop")
+    token = get_token()
+
+    response = client.get(
+        "/api/shop",
+        headers={"Authorization": f"Bearer {token}"}
+    )
 
     assert response.status_code == 200
 
@@ -37,8 +50,7 @@ def test_login():
 
 
 def test_getPlayer():
-    loginResponse = client.post("/api/login", json={"playerId": 1})
-    token = loginResponse.json()["token"]
+    token = get_token()
 
     response = client.get(
         "/api/player",
@@ -56,8 +68,7 @@ def test_getPlayer():
 
 
 def test_getInventory():
-    loginResponse = client.post("/api/login", json={"playerId": 1})
-    token = loginResponse.json()["token"]
+    token = get_token()
 
     response = client.get(
         "/api/inventory",
@@ -72,8 +83,7 @@ def test_getInventory():
 
 
 def test_buy_invalid_quantity():
-    loginResponse = client.post("/api/login", json={"playerId": 1})
-    token = loginResponse.json()["token"]
+    token = get_token()
 
     response = client.post(
         "/api/buy",
