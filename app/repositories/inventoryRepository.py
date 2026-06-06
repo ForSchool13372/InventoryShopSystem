@@ -19,10 +19,9 @@ class InventoryRepository:
             for r in rows
         ]
 
+
     def saveInventory(self, playerId: int, inventoryDict: dict):
         with engine.begin() as conn:
-
-            # Clear old inventory
             conn.execute(text("""
                 DELETE FROM playerItems
                 WHERE playerID = :playerId
@@ -30,7 +29,6 @@ class InventoryRepository:
                 "playerId": playerId
             })
 
-            # Reinsert fresh state
             for itemName, qty in inventoryDict.items():
                 conn.execute(text("""
                     INSERT INTO playerItems (playerID, itemName, quantity)

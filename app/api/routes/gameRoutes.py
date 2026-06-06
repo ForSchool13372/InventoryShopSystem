@@ -10,13 +10,15 @@ from app.api.routes.schemas.gameSchemas import (
 
 from app.core.utils.apiUtils import normalize, safeExecute
 from app.core.deps import getCurrentGame
-from app.core.database import engine
-from sqlalchemy import text
 from app.core.gameFactory import GameFactory
+
+# repos
+from app.repositories.inventoryRepository import InventoryRepository
 
 router = APIRouter(prefix="/api", tags=["Game API"])
 
 gameFactory = GameFactory()
+inventoryRepository = InventoryRepository()
 
 # =========================================================
 # LOGIN
@@ -76,19 +78,11 @@ def sell(data: ItemRequest, game=Depends(getCurrentGame)):
 # =========================================================
 @router.get("/inventory", response_model=InventoryResponse)
 def getInventory(game=Depends(getCurrentGame)):
-    with engine.begin() as conn:
-        rows = conn.execute(
-            text("""
-                SELECT itemName, quantity
-                FROM playerItems
-                WHERE playerID = :playerId
-            """),
-            {"playerId": game.playerId}
-        ).fetchall()
+    rows = inventoryRepository.loadInventory(game.playerId)
 
     return InventoryResponse(
         items=[
-            {"itemName": r[0], "quantity": r[1]}
+            {"itemName": r["itemName"], "quantity": r["quantity"]}
             for r in rows
         ]
     )
@@ -98,18 +92,10 @@ def getInventory(game=Depends(getCurrentGame)):
 # SHOP
 # =========================================================
 @router.get("/shop", response_model=ShopResponse)
-def getShop():
-    with engine.begin() as conn:
-        rows = conn.execute(
-            text("SELECT itemName, stock, price FROM shop")
-        ).fetchall()
+def getShop(game=Depends(getCurrentGame)):
+    shop = game.shop.getShop()
 
-    return ShopResponse(
-        data=[
-            {"itemName": r[0], "stock": r[1], "price": r[2]}
-            for r in rows
-        ]
-    )
+    return ShopResponse(data=shop)
 
 
 # =========================================================

@@ -109,10 +109,6 @@ function App() {
                     getPlayer()
                 ]);
 
-                console.log("shop", shop);
-                console.log("inventory", inventory);
-                console.log("player", player);
-
                 setItems(shop?.data ?? []);
                 setInventory(inventory?.items ?? []);
                 setPlayerStats(player ?? null);

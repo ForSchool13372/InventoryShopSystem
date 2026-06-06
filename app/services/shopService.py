@@ -4,6 +4,13 @@ from app.core.database import engine
 
 class ShopService:
 
+    def __init__(self, shopRepo):
+        self.shopRepo = shopRepo
+
+    def getShop(self):
+        with engine.begin() as conn:
+            return self.shopRepo.getShopStock(conn)
+
     def buy(self, ctx):
         self._validate_item(ctx.item)
         self._validate_quantity(ctx.quantity)
@@ -19,31 +26,30 @@ class ShopService:
 
         with engine.begin() as conn:
 
-            stock = ctx.shopRepo.getStock(conn, itemName)
+            stock = self.shopRepo.getStock(conn, itemName)
 
             if stock["stock"] < quantity:
                 return self._fail("Not enough stock")
 
-            ctx.shopRepo.decreaseStock(conn, itemName, quantity)
+            self.shopRepo.decreaseStock(conn, itemName, quantity)
 
-            ctx.shopRepo.addOrUpdatePlayerItem(
+            self.shopRepo.addOrUpdatePlayerItem(
                 conn,
                 playerId,
                 itemName,
                 quantity
             )
 
-            conn.execute(text("""
-                UPDATE player
-                SET gold = gold - :cost
-                WHERE id = :id
-            """), {
-                "cost": totalCost,
-                "id": playerId
-            })
+            conn.execute(
+                text("""
+                    UPDATE player
+                    SET gold = gold - :cost
+                    WHERE id = :id
+                """),
+                {"cost": totalCost, "id": playerId}
+            )
 
         ctx.player.gold -= totalCost
-
         return self._success("Purchase Successful")
 
     def sell(self, ctx):
@@ -58,31 +64,30 @@ class ShopService:
 
         with engine.begin() as conn:
 
-            owned = ctx.shopRepo.getPlayerItemQuantity(conn, playerId, itemName)
+            owned = self.shopRepo.getPlayerItemQuantity(conn, playerId, itemName)
 
             if owned["quantity"] < quantity:
                 return self._fail("Not enough items")
 
-            ctx.shopRepo.removePlayerItem(
+            self.shopRepo.removePlayerItem(
                 conn,
                 playerId,
                 itemName,
                 quantity
             )
 
-            ctx.shopRepo.increaseStock(conn, itemName, quantity)
+            self.shopRepo.increaseStock(conn, itemName, quantity)
 
-            conn.execute(text("""
-                UPDATE player
-                SET gold = gold + :gain
-                WHERE id = :id
-            """), {
-                "gain": totalGain,
-                "id": playerId
-            })
+            conn.execute(
+                text("""
+                    UPDATE player
+                    SET gold = gold + :gain
+                    WHERE id = :id
+                """),
+                {"gain": totalGain, "id": playerId}
+            )
 
         ctx.player.gold += totalGain
-
         return self._success("Sale Successful")
 
     # =========================================================
