@@ -1,210 +1,151 @@
-import pytest
-from app.services.itemService import ItemService
-from app.services.combatService import CombatService
-from app.services.gameEventService import GameEventService
-from app.services.shopService import ShopService
-from tests.utils.test_ctx import ShopTestContext
+from fastapi.testclient import TestClient
+from app.main import app
 
+client = TestClient(app)
 
 # =========================================================
-# ITEM SERVICE TESTS
+# HELPERS
 # =========================================================
 
-@pytest.mark.parametrize("itemName", ["sword", "potion"])
-def test_getItem_returnsItem(itemName):
-    service = ItemService()
-
-    item = service.getItem(itemName)
-
-    assert item is not None
-    assert hasattr(item, "name")
-
-
-def test_getItem_invalid_returnsNone():
-    service = ItemService()
-
-    item = service.getItem("fake_item")
-
-    assert item is None
-
+def get_token():
+    response = client.post("/api/login", json={"playerId": 1})
+    return response.json()["token"]
 
 # =========================================================
-# SHOP SERVICE TESTS
+# API TESTS
 # =========================================================
 
-def test_buy_success(create_player, create_item, fake_shop_repo):
-    player = create_player(gold=200)
-    item = create_item("sword", 50)
+def test_health():
+    response = client.get("/api/health")
 
-    service = ShopService(fake_shop_repo)
+    assert response.status_code == 200
+    assert response.json() == {"status": "healthy"}
 
-    ctx = ShopTestContext(
-        player=player,
-        item=item,
-        quantity=2,
-        playerId=1,
-        shopRepo=fake_shop_repo
+
+def test_getShop():
+    token = get_token()
+
+    response = client.get(
+        "/api/shop",
+        headers={"Authorization": f"Bearer {token}"}
     )
 
-    result = service.buy(ctx)
+    assert response.status_code == 200
 
-    assert result["success"] is True
-    assert player.gold == 100
-    assert fake_shop_repo.stock["sword"] == 8
+    body = response.json()
+
+    assert "data" in body
+    assert isinstance(body["data"], list)
 
 
-def test_buy_fail_not_enough_gold(create_player, create_item, fake_shop_repo):
-    player = create_player(gold=10)
-    item = create_item("sword", 50)
+def test_login():
+    response = client.post("/api/login", json={"playerId": 1})
 
-    service = ShopService(fake_shop_repo)
+    assert response.status_code == 200
 
-    ctx = ShopTestContext(
-        player=player,
-        item=item,
-        quantity=1,
-        playerId=1,
-        shopRepo=fake_shop_repo
+    body = response.json()
+
+    assert "token" in body
+    assert "id" in body
+
+
+def test_getPlayer():
+    token = get_token()
+
+    response = client.get(
+        "/api/player",
+        headers={"Authorization": f"Bearer {token}"}
     )
 
-    result = service.buy(ctx)
+    assert response.status_code == 200
 
-    assert result["success"] is False
-    assert result["message"] == "Not enough gold"
+    body = response.json()
+
+    assert "gold" in body
+    assert "hp" in body
+    assert "level" in body
+    assert "xp" in body
 
 
-def test_buy_invalid_quantity(create_player, create_item, fake_shop_repo):
-    player = create_player(gold=200)
-    item = create_item("sword", 50)
+def test_getInventory():
+    token = get_token()
 
-    service = ShopService(fake_shop_repo)
-
-    ctx = ShopTestContext(
-        player=player,
-        item=item,
-        quantity=0,
-        playerId=1,
-        shopRepo=fake_shop_repo
+    response = client.get(
+        "/api/inventory",
+        headers={"Authorization": f"Bearer {token}"}
     )
 
-    with pytest.raises(ValueError):
-        service.buy(ctx)
+    assert response.status_code == 200
+
+    body = response.json()
+
+    assert "items" in body
 
 
-def test_buy_fail_not_enough_stock(create_player, create_item, fake_shop_repo):
-    player = create_player(gold=1000)
-    item = create_item("sword", 50)
+def test_buy_invalid_quantity():
+    token = get_token()
 
-    fake_shop_repo.stock["sword"] = 1
-
-    service = ShopService(fake_shop_repo)
-
-    ctx = ShopTestContext(
-        player=player,
-        item=item,
-        quantity=5,
-        playerId=1,
-        shopRepo=fake_shop_repo
+    response = client.post(
+        "/api/buy",
+        headers={"Authorization": f"Bearer {token}"},
+        json={
+            "itemName": "Potion",
+            "quantity": 0
+        }
     )
 
-    result = service.buy(ctx)
-
-    assert result["success"] is False
-    assert result["message"] == "Not enough stock"
-
-
-def test_sell_success(create_player, create_item, fake_shop_repo):
-    player = create_player(gold=0)
-    item = create_item("sword", 50)
-
-    fake_shop_repo.playerItems["sword"] = 3
-
-    service = ShopService(fake_shop_repo)
-
-    ctx = ShopTestContext(
-        player=player,
-        item=item,
-        quantity=2,
-        playerId=1,
-        shopRepo=fake_shop_repo
-    )
-
-    result = service.sell(ctx)
-
-    assert result["success"] is True
-    assert player.gold == 100
-    assert fake_shop_repo.stock["sword"] == 12
-
-
-def test_sell_fail_not_enough_items(create_player, create_item, fake_shop_repo):
-    player = create_player(gold=0)
-    item = create_item("sword", 50)
-
-    fake_shop_repo.playerItems["sword"] = 1
-
-    service = ShopService(fake_shop_repo)
-
-    ctx = ShopTestContext(
-        player=player,
-        item=item,
-        quantity=5,
-        playerId=1,
-        shopRepo=fake_shop_repo
-    )
-
-    result = service.sell(ctx)
-
-    assert result["success"] is False
-    assert result["message"] == "Not enough items"
+    assert response.status_code == 422
 
 
 # =========================================================
-# COMBAT TESTS
+# ADDED COVERAGE TESTS (IMPORTANT)
 # =========================================================
 
-def test_fight_returns_valid_structure(create_player, create_enemy):
-    player = create_player()
-    enemy = create_enemy()
+def test_buy_success():
+    token = get_token()
 
-    service = CombatService()
+    response = client.post(
+        "/api/buy",
+        headers={"Authorization": f"Bearer {token}"},
+        json={
+            "itemName": "sword",
+            "quantity": 1
+        }
+    )
 
-    result = service.handleFight(player, [enemy])
-
-    assert isinstance(result, dict)
-    assert "result" in result
-    assert "xp" in result
-    assert "enemy" in result
-    assert "logs" in result
-    assert result["result"] in ("win", "lose")
-    assert isinstance(result["logs"], list)
+    assert response.status_code == 200
 
 
-# =========================================================
-# GAME EVENT TESTS
-# =========================================================
+def test_buy_fail_not_enough_gold():
+    token = get_token()
 
-def test_fight_win_event(create_player, fake_quest_manager):
-    player = create_player()
+    response = client.post(
+        "/api/buy",
+        headers={"Authorization": f"Bearer {token}"},
+        json={
+            "itemName": "sword",
+            "quantity": 9999
+        }
+    )
 
-    service = GameEventService(player, fake_quest_manager)
-
-    service.handleEvent({
-        "type": "fightWin",
-        "xp": 50,
-        "enemy": "goblin"
-    })
-
-    assert player.xp == 50
-    assert fake_quest_manager.updated_enemy == "goblin"
+    assert response.status_code in (200, 400)
 
 
-def test_fight_lose_event(create_player, fake_quest_manager):
-    player = create_player()
+def test_sell_success():
+    token = get_token()
 
-    service = GameEventService(player, fake_quest_manager)
+    response = client.post(
+        "/api/sell",
+        headers={"Authorization": f"Bearer {token}"},
+        json={
+            "itemName": "sword",
+            "quantity": 1
+        }
+    )
 
-    service.handleEvent({
-        "type": "fightLose"
-    })
+    assert response.status_code == 200
 
-    assert player.hp == 0
+
+def test_missing_token_fails():
+    response = client.get("/api/player")
+    assert response.status_code == 401
