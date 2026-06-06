@@ -164,30 +164,41 @@ function App() {
     // ----------------------------
     // GAME ACTIONS
     // ----------------------------
-    const handleBuy = async (itemName) => {
+    const handleBuy = async (itemName, quantity = 1) => {
         setBuyingItem(itemName);
 
         try {
-            await buyItem(itemName, 1);
+            const res = await buyItem(itemName, quantity);
+
             await refreshAll();
 
-            soundSystem.play("buy");
-            addToast(`Bought ${itemName}`, "success");
+            const success = res?.success === true;
+
+            if (success) {
+                soundSystem.play("buy");
+                addToast(`Bought ${itemName}`, "success");
+            } else {
+                soundSystem.play("error");
+                addToast(res?.message || "Buy failed", "error");
+            }
+
+            return success; // ✅ ONLY BOOLEAN NOW
 
         } catch (err) {
             soundSystem.play("error");
             addToast(err?.message || "Buy failed", "error");
 
+            return false; // ❌ NO THROW, JUST FALSE
         } finally {
             setTimeout(() => setBuyingItem(null), 150);
         }
     };
 
-    const handleSell = async (itemName) => {
+    const handleSell = async (itemName, quantity = 1) => {
         setSellingItem(itemName);
 
         try {
-            await sellItem(itemName, 1);
+            await sellItem(itemName, quantity);
             await refreshAll();
 
             soundSystem.play("sell");

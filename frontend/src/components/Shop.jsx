@@ -5,18 +5,48 @@ function Shop({ items, token, onBuy, theme }) {
     const [loadingItem, setLoadingItem] = useState(null);
     const [purchasedItem, setPurchasedItem] = useState(null);
 
-    const handleBuy = async (itemName) => {
+    // quantity per item
+    const [quantities, setQuantities] = useState({});
+
+    const setQty = (itemName, value) => {
+        setQuantities((prev) => ({
+            ...prev,
+            [itemName]: Math.max(1, value)
+        }));
+    };
+
+    const getQty = (itemName) => quantities[itemName] || 1;
+
+    const handleBuy = async (item) => {
+        const itemName = item.itemName;
+        const quantity = getQty(itemName);
+
+        setPurchasedItem(null);
+        setLoadingItem(itemName);
+
         try {
-            setLoadingItem(itemName);
+            const success = await onBuy(itemName, quantity);
 
-            setPurchasedItem(itemName);
-            setTimeout(() => setPurchasedItem(null), 800);
+            if (success === true) {
+                setPurchasedItem(itemName);
 
-            await onBuy(itemName);
+                setTimeout(() => {
+                    setPurchasedItem(null);
+                }, 800);
+            } else {
+                setPurchasedItem(null);
+            }
 
+        } catch {
+            setPurchasedItem(null);
         } finally {
             setLoadingItem(null);
         }
+    };
+
+    const buyMax = (item) => {
+        const max = item.stock;
+        setQty(item.itemName, max);
     };
 
     const cardStyle = {
@@ -91,6 +121,8 @@ function Shop({ items, token, onBuy, theme }) {
                 const isLoading = loadingItem === item.itemName;
                 const isDisabled = !token || item.stock === 0 || isLoading;
 
+                const qty = getQty(item.itemName);
+
                 return (
                     <motion.div
                         key={item.itemName}
@@ -117,23 +149,61 @@ function Shop({ items, token, onBuy, theme }) {
                                 Stock: {item.stock}
                             </span>
 
-                            {/* PRICE (NEW) */}
-                            <span
-                                style={{
-                                    color: "#fbbf24",
-                                    fontSize: "0.85rem",
-                                    fontWeight: "700",
-                                    marginTop: "2px"
-                                }}
-                            >
+                            <span style={{
+                                color: "#fbbf24",
+                                fontSize: "0.85rem",
+                                fontWeight: "700",
+                                marginTop: "2px"
+                            }}>
                                 💰 Price: {item.price ?? "N/A"}
                             </span>
+
+                            {/* QUANTITY CONTROLS */}
+                            {token && item.stock > 0 && (
+                                <div style={{
+                                    display: "flex",
+                                    alignItems: "center",
+                                    gap: "8px",
+                                    marginTop: "8px"
+                                }}>
+                                    <button
+                                        onClick={() => setQty(item.itemName, qty - 1)}
+                                        style={{ ...buttonBase, padding: "4px 10px" }}
+                                    >
+                                        -
+                                    </button>
+
+                                    <span style={{ fontWeight: "700" }}>
+                                        x{qty}
+                                    </span>
+
+                                    <button
+                                        onClick={() => setQty(item.itemName, qty + 1)}
+                                        disabled={qty >= item.stock}
+                                        style={{ ...buttonBase, padding: "4px 10px" }}
+                                    >
+                                        +
+                                    </button>
+
+                                    <button
+                                        onClick={() => buyMax(item)}
+                                        style={{
+                                            ...buttonBase,
+                                            background: "#111827",
+                                            color: "white",
+                                            marginLeft: "8px"
+                                        }}
+                                    >
+                                        Max
+                                    </button>
+                                </div>
+                            )}
                         </div>
 
                         {/* BUTTON */}
                         {token && (
                             <motion.button
-                                onClick={() => handleBuy(item.itemName)}
+                                onClick={() => handleBuy(item)}
                                 disabled={isDisabled}
                                 whileTap={{ scale: 0.95 }}
                                 style={{
@@ -151,7 +221,7 @@ function Shop({ items, token, onBuy, theme }) {
                                     ? "Buying..."
                                     : item.stock === 0
                                         ? "Out of stock"
-                                        : "Buy"}
+                                        : `Buy x${qty}`}
                             </motion.button>
                         )}
                     </motion.div>

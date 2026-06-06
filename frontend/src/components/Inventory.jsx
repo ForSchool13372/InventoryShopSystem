@@ -7,7 +7,19 @@ function Inventory({ inventory, token, onSell, theme }) {
     const [viewMode, setViewMode] = useState("list");
     const [search, setSearch] = useState("");
 
-    const handleSell = async (itemName) => {
+    // quantity state per item
+    const [quantities, setQuantities] = useState({});
+
+    const getQty = (name) => quantities[name] || 1;
+
+    const setQty = (name, value) => {
+        setQuantities((prev) => ({
+            ...prev,
+            [name]: Math.max(1, value)
+        }));
+    };
+
+    const handleSell = async (itemName, quantity = 1) => {
         try {
             setLoadingItem(itemName);
             setFloatingGold(itemName);
@@ -16,11 +28,16 @@ function Inventory({ inventory, token, onSell, theme }) {
                 setFloatingGold(null);
             }, 900);
 
-            await onSell(itemName);
+            await onSell(itemName, quantity);
 
         } finally {
             setLoadingItem(null);
         }
+    };
+
+    const sellAll = (item) => {
+        setQty(item.itemName, item.quantity);
+        handleSell(item.itemName, item.quantity);
     };
 
     const cardStyle = {
@@ -84,7 +101,6 @@ function Inventory({ inventory, token, onSell, theme }) {
         );
     }
 
-    // FILTER ITEMS BASED ON SEARCH
     const filteredInventory = inventory.filter((item) =>
         item.itemName.toLowerCase().includes(search.toLowerCase())
     );
@@ -105,7 +121,6 @@ function Inventory({ inventory, token, onSell, theme }) {
         <div style={cardStyle}>
             <h2 style={titleStyle}>Inventory</h2>
 
-            {/* SEARCH BAR */}
             <input
                 type="text"
                 placeholder="Search items..."
@@ -114,7 +129,6 @@ function Inventory({ inventory, token, onSell, theme }) {
                 style={searchBar}
             />
 
-            {/* VIEW TOGGLE */}
             <button
                 style={toggleBtn}
                 onClick={() =>
@@ -126,14 +140,13 @@ function Inventory({ inventory, token, onSell, theme }) {
                 Switch to {viewMode === "list" ? "Grid" : "List"}
             </button>
 
-            {/* FLOATING GOLD ANIMATION */}
+            {/* FLOATING GOLD */}
             <AnimatePresence>
                 {floatingGold && (
                     <motion.div
                         initial={{ opacity: 0, y: 10, scale: 0.8 }}
                         animate={{ opacity: 1, y: -20, scale: 1.2 }}
                         exit={{ opacity: 0 }}
-                        transition={{ duration: 0.8 }}
                         style={{
                             position: "absolute",
                             top: "10px",
@@ -149,16 +162,15 @@ function Inventory({ inventory, token, onSell, theme }) {
                 )}
             </AnimatePresence>
 
-            {/* EMPTY STATE */}
             {filteredInventory.length === 0 && (
                 <p style={mutedText}>🎒 No matching items found</p>
             )}
 
-            {/* ITEMS */}
             <div style={containerStyle}>
                 <AnimatePresence>
                     {filteredInventory.map((item) => {
                         const isLoading = loadingItem === item.itemName;
+                        const qty = getQty(item.itemName);
 
                         const itemCardStyle =
                             viewMode === "grid"
@@ -189,56 +201,77 @@ function Inventory({ inventory, token, onSell, theme }) {
                         return (
                             <motion.div
                                 key={item.itemName}
-                                initial={{ opacity: 0, y: 10, scale: 0.98 }}
-                                animate={{ opacity: 1, y: 0, scale: 1 }}
-                                exit={{ opacity: 0, scale: 0.9 }}
-                                transition={{ duration: 0.2 }}
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0 }}
                                 style={itemCardStyle}
                             >
-                                {/* ITEM INFO */}
                                 <div style={{ display: "flex", flexDirection: "column" }}>
                                     <span style={{ fontWeight: "700" }}>
                                         {item.itemName}
                                     </span>
 
-                                    <span
-                                        style={{
-                                            color: theme.subText,
-                                            fontSize: "0.85rem",
-                                            marginTop: "4px",
-                                            background: `${theme.subText}20`,
-                                            padding: "2px 8px",
-                                            borderRadius: "999px",
-                                            width: "fit-content"
-                                        }}
-                                    >
+                                    <span style={{
+                                        color: theme.subText,
+                                        fontSize: "0.85rem",
+                                        marginTop: "4px"
+                                    }}>
                                         Qty: {item.quantity}
                                     </span>
+
+                                    {/* QUANTITY CONTROLS */}
+                                    <div style={{ display: "flex", gap: "6px", marginTop: "8px", alignItems: "center" }}>
+
+                                        <button
+                                            onClick={() => setQty(item.itemName, Math.max(1, qty - 1))}
+                                            style={buttonBase}
+                                        >
+                                            -
+                                        </button>
+
+                                        <span style={{ fontWeight: "700", minWidth: "20px", textAlign: "center" }}>
+                                            {qty}
+                                        </span>
+
+                                        <button
+                                            onClick={() =>
+                                                setQty(item.itemName, Math.min(item.quantity, qty + 1))
+                                            }
+                                            disabled={qty >= item.quantity}
+                                            style={buttonBase}
+                                        >
+                                            +
+                                        </button>
+
+                                    </div>
                                 </div>
 
-                                {/* SELL BUTTON */}
-                                <button
-                                    onClick={() => handleSell(item.itemName)}
-                                    disabled={isLoading}
-                                    style={{
-                                        ...buttonBase,
-                                        cursor: isLoading
-                                            ? "not-allowed"
-                                            : "pointer",
-                                        background: isLoading
-                                            ? "#9ca3af"
-                                            : "#ef4444",
-                                        color: "white",
-                                        transform: isLoading
-                                            ? "scale(0.97)"
-                                            : "scale(1)",
-                                        transition: "0.2s",
-                                        marginTop:
-                                            viewMode === "grid" ? "auto" : "0"
-                                    }}
-                                >
-                                    {isLoading ? "Selling..." : "Sell"}
-                                </button>
+                                {/* SELL BUTTONS */}
+                                <div style={{ display: "flex", gap: "6px" }}>
+                                    <button
+                                        onClick={() => handleSell(item.itemName, qty)}
+                                        disabled={isLoading}
+                                        style={{
+                                            ...buttonBase,
+                                            background: "#ef4444",
+                                            color: "white"
+                                        }}
+                                    >
+                                        {isLoading ? "Selling..." : `Sell x${qty}`}
+                                    </button>
+
+                                    <button
+                                        onClick={() => sellAll(item)}
+                                        disabled={isLoading}
+                                        style={{
+                                            ...buttonBase,
+                                            background: "#111827",
+                                            color: "white"
+                                        }}
+                                    >
+                                        Sell All
+                                    </button>
+                                </div>
                             </motion.div>
                         );
                     })}
