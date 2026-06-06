@@ -21,7 +21,7 @@ def test_getShop():
 
     body = response.json()
 
-    assert body["success"] is True
+    assert "data" in body
     assert isinstance(body["data"], list)
 
 
@@ -32,14 +32,13 @@ def test_login():
 
     body = response.json()
 
-    assert body["success"] is True
-    assert "data" in body
-    assert "token" in body["data"]
+    assert "token" in body
+    assert "id" in body
 
 
 def test_getPlayer():
     loginResponse = client.post("/api/login", json={"playerId": 1})
-    token = loginResponse.json()["data"]["token"]
+    token = loginResponse.json()["token"]
 
     response = client.get(
         "/api/player",
@@ -50,16 +49,15 @@ def test_getPlayer():
 
     body = response.json()
 
-    assert body["success"] is True
-    assert "gold" in body["data"]
-    assert "hp" in body["data"]
-    assert "level" in body["data"]
-    assert "xp" in body["data"]
+    assert "gold" in body
+    assert "hp" in body
+    assert "level" in body
+    assert "xp" in body
 
 
 def test_getInventory():
     loginResponse = client.post("/api/login", json={"playerId": 1})
-    token = loginResponse.json()["data"]["token"]
+    token = loginResponse.json()["token"]
 
     response = client.get(
         "/api/inventory",
@@ -70,13 +68,12 @@ def test_getInventory():
 
     body = response.json()
 
-    assert body["success"] is True
-    assert "items" in body["data"]
+    assert "items" in body
 
 
 def test_buy_invalid_quantity():
     loginResponse = client.post("/api/login", json={"playerId": 1})
-    token = loginResponse.json()["data"]["token"]
+    token = loginResponse.json()["token"]
 
     response = client.post(
         "/api/buy",

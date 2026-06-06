@@ -29,27 +29,20 @@ def login(data: LoginRequest):
 
     return safeExecute(action)
 
+
 # =========================================================
-# PLAYER (FIXED: USE GAME CONTEXT NOT RANDOM DB QUERY)
+# PLAYER
 # =========================================================
 @router.get("/player", response_model=PlayerResponse)
 def getPlayer(game=Depends(getCurrentGame)):
-    with engine.begin() as conn:
-        row = conn.execute(
-            text("""
-                SELECT gold, hp, level, xp
-                FROM player
-                WHERE id = :id
-            """),
-            {"id": game.playerId}
-        ).fetchone()
-
     return PlayerResponse(
-        gold=row[0],
-        hp=row[1],
-        level=row[2],
-        xp=row[3]
+        gold=game.player.gold,
+        hp=game.player.hp,
+        level=game.player.level,
+        xp=game.player.xp
     )
+
+
 # =========================================================
 # BUY
 # =========================================================
@@ -63,6 +56,7 @@ def buy(data: ItemRequest, game=Depends(getCurrentGame)):
 
     return safeExecute(action)
 
+
 # =========================================================
 # SELL
 # =========================================================
@@ -75,6 +69,7 @@ def sell(data: ItemRequest, game=Depends(getCurrentGame)):
         )
 
     return safeExecute(action)
+
 
 # =========================================================
 # INVENTORY
@@ -98,6 +93,7 @@ def getInventory(game=Depends(getCurrentGame)):
         ]
     )
 
+
 # =========================================================
 # SHOP
 # =========================================================
@@ -115,12 +111,14 @@ def getShop():
         ]
     )
 
+
 # =========================================================
 # EVENTS
 # =========================================================
 @router.get("/events")
 def getEvents(game=Depends(getCurrentGame)):
     return {"events": game.eventService.getEvents()}
+
 
 # =========================================================
 # HEALTH
