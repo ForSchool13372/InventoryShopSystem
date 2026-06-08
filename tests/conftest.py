@@ -1,12 +1,37 @@
 import pytest
+from fastapi.testclient import TestClient
 
+from app.main import app
 from app.models.item import Item
 from app.models.player import Player
 from app.models.enemy import Enemy
 
 
 # =========================================================
-# FIXTURES (FACTORIES)
+# CLIENT FIXTURE
+# =========================================================
+
+@pytest.fixture
+def client():
+    return TestClient(app)
+
+
+# =========================================================
+# AUTH FIXTURE
+# =========================================================
+
+@pytest.fixture
+def token(client):
+    response = client.post("/api/login", json={"playerId": 1})
+
+    data = response.json()
+    assert "token" in data
+
+    return data["token"]
+
+
+# =========================================================
+# FACTORIES
 # =========================================================
 
 @pytest.fixture
@@ -37,7 +62,61 @@ def create_enemy():
 
 
 # =========================================================
-# TEST DOUBLES (FAKES)
+# FAKE ENGINE (IMPORTANT FIX)
+# =========================================================
+
+class FakeResult:
+    def __init__(self, row=None, rows=None):
+        self._row = row
+        self._rows = rows or []
+
+    def fetchone(self):
+        return self._row
+
+    def fetchall(self):
+        return self._rows
+
+
+class FakeConn:
+    def __init__(self):
+        self.executed = []
+
+    def execute(self, query, params=None):
+        self.executed.append((str(query), params))
+
+        q = str(query)
+
+        if "SELECT stock" in q:
+            return FakeResult(row=(10,))
+
+        if "FROM shop" in q:
+            return FakeResult(rows=[("sword", 10, 5)])
+
+        if "playerItems" in q:
+            return FakeResult(row=(3,))
+
+        return FakeResult()
+
+    #  REQUIRED FOR "with engine.begin()"
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        return False
+
+
+class FakeEngine:
+    def begin(self):
+        return FakeConn()
+
+
+@pytest.fixture
+def fake_engine():
+    return FakeEngine()
+
+
+# =========================================================
+# OTHER FAKES (YOUR EXISTING)
 # =========================================================
 
 class FakeRNG:
@@ -56,18 +135,10 @@ class FakeQuestManager:
         self.updated_enemy = enemy
 
 
-# =========================================================
-# FAKE SHOP REPO (FIXED - MATCHES REAL CONTRACT)
-# =========================================================
-
 class FakeShopRepo:
     def __init__(self):
         self.stock = {"sword": 10, "potion": 10}
         self.playerItems = {}
-
-    # =========================================================
-    # STOCK (NOW RETURNS DICT)
-    # =========================================================
 
     def getStock(self, conn, itemName):
         if itemName not in self.stock:
@@ -79,10 +150,6 @@ class FakeShopRepo:
 
     def increaseStock(self, conn, itemName, quantity):
         self.stock[itemName] = self.stock.get(itemName, 0) + quantity
-
-    # =========================================================
-    # PLAYER ITEMS (NOW RETURNS DICT)
-    # =========================================================
 
     def addOrUpdatePlayerItem(self, conn, playerId, itemName, quantity):
         self.playerItems[itemName] = self.playerItems.get(itemName, 0) + quantity
@@ -100,7 +167,7 @@ class FakeShopRepo:
 
 
 # =========================================================
-# FIXTURES (EXPOSE FAKES)
+# FIXTURE EXPORTS
 # =========================================================
 
 @pytest.fixture

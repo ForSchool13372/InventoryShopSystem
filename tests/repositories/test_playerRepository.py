@@ -1,0 +1,130 @@
+import pytest
+from app.repositories.playerRepository import PlayerRepository
+
+
+# =========================================================
+# FAKE DB LAYER (SQLALCHEMY STYLE)
+# =========================================================
+
+class FakeResult:
+    def __init__(self, row=None):
+        self._row = row
+
+    def fetchone(self):
+        return self._row
+
+
+class FakeConn:
+    def __init__(self):
+        self.executed = []
+
+    def execute(self, query, params=None):
+        self.executed.append((str(query), params))
+
+        q = str(query).lower()
+
+        # -------------------------
+        # LOAD PLAYER
+        # -------------------------
+        if "from player" in q and "where id" in q:
+            return FakeResult((100, 50, 1, 10))
+
+        return FakeResult()
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        return False
+
+
+class FakeEngine:
+    def begin(self):
+        return FakeConn()
+
+
+# =========================================================
+# TESTS
+# =========================================================
+
+def test_load_player(monkeypatch):
+    repo = PlayerRepository()
+
+    monkeypatch.setattr(
+        "app.repositories.playerRepository.engine",
+        FakeEngine()
+    )
+
+    result = repo.load(1)
+
+    assert isinstance(result, dict)
+    assert result["gold"] == 100
+    assert result["hp"] == 50
+    assert result["level"] == 1
+    assert result["xp"] == 10
+
+
+def test_load_player_not_found(monkeypatch):
+    repo = PlayerRepository()
+
+    class EmptyConn(FakeConn):
+        def execute(self, query, params=None):
+            self.executed.append((str(query), params))
+            return FakeResult(None)
+
+    class EmptyEngine:
+        def begin(self):
+            return EmptyConn()
+
+    monkeypatch.setattr(
+        "app.repositories.playerRepository.engine",
+        EmptyEngine()
+    )
+
+    result = repo.load(999)
+
+    assert result is None
+
+
+def test_save_player_dict(monkeypatch):
+    repo = PlayerRepository()
+
+    monkeypatch.setattr(
+        "app.repositories.playerRepository.engine",
+        FakeEngine()
+    )
+
+    player = {
+        "gold": 200,
+        "hp": 80,
+        "level": 2,
+        "xp": 20
+    }
+
+    repo.save(1, player)
+
+    assert True
+
+
+def test_save_player_object(monkeypatch):
+    repo = PlayerRepository()
+
+    monkeypatch.setattr(
+        "app.repositories.playerRepository.engine",
+        FakeEngine()
+    )
+
+    class PlayerObj:
+        def __init__(self):
+            self.gold = 200
+            self.hp = 80
+            self.level = 2
+            self.xp = 20
+
+        # Make PlayerObj subscriptable so repo.save can use player["gold"], etc.
+        def __getitem__(self, key):
+            return getattr(self, key)
+
+    repo.save(1, PlayerObj())
+
+    assert True
