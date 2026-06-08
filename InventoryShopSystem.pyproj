@@ -69,16 +69,19 @@
     <Compile Include="pytest.ini" />
     <Compile Include="run.py" />
     <Compile Include="tests\api\test_auth.py" />
+    <Compile Include="tests\api\test_cacheRoutes.py" />
     <Compile Include="tests\api\test_health.py" />
     <Compile Include="tests\api\test_inventory.py" />
-    <Compile Include="tests\api\test_player.py" />
+    <Compile Include="tests\api\test_player_api.py" />
     <Compile Include="tests\api\test_shop.py" />
     <Compile Include="tests\conftest.py" />
     <Compile Include="tests\core\test_apiUtils.py" />
     <Compile Include="tests\core\test_cacheService.py" />
+    <Compile Include="tests\core\test_controller.py" />
     <Compile Include="tests\core\test_gameFactory.py" />
     <Compile Include="tests\core\test_questManager.py" />
     <Compile Include="tests\models\test_enemy.py" />
+    <Compile Include="tests\models\test_player.py" />
     <Compile Include="tests\models\test_quest.py" />
     <Compile Include="tests\repositories\test_inventoryRepository.py" />
     <Compile Include="tests\repositories\test_playerRepository.py" />
@@ -87,7 +90,6 @@
     <Compile Include="tests\services\test_combatService.py" />
     <Compile Include="tests\services\test_gameEventService.py" />
     <Compile Include="tests\services\test_itemService.py" />
-    <Compile Include="tests\services\test_services.py" />
     <Compile Include="tests\services\test_shopService.py" />
     <Compile Include="tests\utils\test_ctx.py" />
   </ItemGroup>

@@ -3,6 +3,7 @@ from app.repositories.shopRepository import ShopRepository
 from app.repositories.inventoryRepository import InventoryRepository
 from app.services.itemService import ItemService
 from app.services.combatService import CombatService
+from app.services.leaderboardService import LeaderboardService
 from app.core.gameData import createEnemies, createQuests
 from app.repositories.playerRepository import PlayerRepository
 from app.core.gameContext import GameContext
@@ -17,6 +18,7 @@ class Services:
         self.shop = ShopService(repos.shop)
         self.combat = CombatService()
         self.item = ItemService()
+        self.leaderboard = LeaderboardService(repos.player)
 
 
 class Repos:
@@ -57,7 +59,6 @@ class GameFactory:
     def __init__(self):
         self.repos = Repos()
         self.services = Services(self.repos)
-        self.repos = Repos()
         self.world = World()
 
     def create(self, playerId: int):
@@ -88,3 +89,9 @@ class GameFactory:
         )
 
         return Controller(ctx)
+
+    # =========================
+    # LEADERBOARD ACCESS
+    # =========================
+    def getLeaderboard(self):
+        return self.services.leaderboard.getLeaderboard()

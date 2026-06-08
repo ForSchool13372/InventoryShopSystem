@@ -1,36 +1,37 @@
-﻿import { useEffect, useState } from "react";
+﻿import useGame from "./hooks/useGame";
+import { useState } from "react";
 import { useAuth } from "./useAuth";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import soundSystem from "./utils/soundSystem";
 
-import {
-    setAuthToken,
-    loginPlayer,
-    getInventory,
-    getPlayer,
-    buyItem,
-    sellItem,
-    getShop
-} from "./apiClient";
+import { setAuthToken, loginPlayer } from "./apiClient";
 
 import Login from "./components/Login";
 import Shop from "./components/Shop";
 import Inventory from "./components/Inventory";
 import PlayerStats from "./components/PlayerStats";
+import useToast from "./hooks/useToast";
+import Toasts from "./components/Toasts";
+import useGameActions from "./hooks/useGameActions";
 
 function App() {
     const { token, playerId, login, logout } = useAuth();
 
-    const [items, setItems] = useState([]);
-    const [inventory, setInventory] = useState([]);
-    const [playerStats, setPlayerStats] = useState(null);
-    const [loading, setLoading] = useState(true);
+    const { items, inventory, playerStats, loading, refreshAll, resetGame } = useGame(token, playerId);
 
-    const [toasts, setToasts] = useState([]);
     const [darkMode, setDarkMode] = useState(false);
+
+    const { toasts, addToast } = useToast();
 
     const [buyingItem, setBuyingItem] = useState(null);
     const [sellingItem, setSellingItem] = useState(null);
+
+    const { handleBuy, handleSell } = useGameActions({
+        refreshAll,
+        addToast,
+        setBuyingItem,
+        setSellingItem
+    });
 
     // ----------------------------
     // THEME
@@ -43,82 +44,6 @@ function App() {
     };
 
     const toggleDarkMode = () => setDarkMode(prev => !prev);
-
-    // ----------------------------
-    // TOASTS
-    // ----------------------------
-    const addToast = (message, type = "info") => {
-        const id = Date.now();
-
-        setToasts(prev => [...prev, { id, message, type }]);
-
-        setTimeout(() => {
-            setToasts(prev => prev.filter(t => t.id !== id));
-        }, 2200);
-    };
-
-    // ----------------------------
-    // LOADERS (CLEAN)
-    // ----------------------------
-
-    const loadShop = async () => {
-        const data = await getShop();
-        setItems(data?.data ?? []);
-    };
-
-    const loadInventory = async () => {
-        if (!token || !playerId) return;
-
-        const data = await getInventory();
-        setInventory(data?.items ?? []);
-    };
-
-    const loadPlayerStats = async () => {
-        if (!token || !playerId) return;
-
-        const data = await getPlayer();
-        setPlayerStats(data ?? null);
-    };
-
-    // ----------------------------
-    // REFRESH ALL (CLEAN)
-    // ----------------------------
-
-    const refreshAll = async () => {
-        if (!token || !playerId) return;
-
-        await Promise.all([
-            loadShop(),
-            loadInventory(),
-            loadPlayerStats()
-        ]);
-    };
-
-    // ----------------------------
-    // INIT EFFECT (FIXED)
-    // ----------------------------
-    useEffect(() => {
-        if (!token) return;
-
-        const syncData = async () => {
-            setLoading(true);
-            try {
-                const [shop, inventory, player] = await Promise.all([
-                    getShop(),
-                    getInventory(),
-                    getPlayer()
-                ]);
-
-                setItems(shop?.data ?? []);
-                setInventory(inventory?.items ?? []);
-                setPlayerStats(player ?? null);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        syncData();
-    }, [token]);
 
     // ----------------------------
     // AUTH
@@ -152,66 +77,12 @@ function App() {
 
     const handleLogout = () => {
         logout();
-
-        setItems([]);
-        setInventory([]);
-        setPlayerStats(null);
+        resetGame();
 
         soundSystem.play("click");
         addToast("Logged out", "info");
     };
 
-    // ----------------------------
-    // GAME ACTIONS
-    // ----------------------------
-    const handleBuy = async (itemName, quantity = 1) => {
-        setBuyingItem(itemName);
-
-        try {
-            const res = await buyItem(itemName, quantity);
-
-            await refreshAll();
-
-            const success = res?.success === true;
-
-            if (success) {
-                soundSystem.play("buy");
-                addToast(`Bought ${itemName}`, "success");
-            } else {
-                soundSystem.play("error");
-                addToast(res?.message || "Buy failed", "error");
-            }
-
-            return success; // ✅ ONLY BOOLEAN NOW
-
-        } catch (err) {
-            soundSystem.play("error");
-            addToast(err?.message || "Buy failed", "error");
-
-            return false; // ❌ NO THROW, JUST FALSE
-        } finally {
-            setTimeout(() => setBuyingItem(null), 150);
-        }
-    };
-
-    const handleSell = async (itemName, quantity = 1) => {
-        setSellingItem(itemName);
-
-        try {
-            await sellItem(itemName, quantity);
-            await refreshAll();
-
-            soundSystem.play("sell");
-            addToast(`Sold ${itemName}`, "success");
-
-        } catch (err) {
-            soundSystem.play("error");
-            addToast(err?.message || "Sell failed", "error");
-
-        } finally {
-            setTimeout(() => setSellingItem(null), 150);
-        }
-    };
 
     // ----------------------------
     // ANIMATIONS
@@ -373,43 +244,7 @@ function App() {
             </div>
 
             {/* TOASTS */}
-            <div
-                style={{
-                    position: "fixed",
-                    top: "20px",
-                    right: "20px",
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: "10px",
-                    zIndex: 9999
-                }}
-            >
-                <AnimatePresence>
-                    {toasts.map((toast) => (
-                        <motion.div
-                            key={toast.id}
-                            initial={{ opacity: 0, x: 20, scale: 0.95 }}
-                            animate={{ opacity: 1, x: 0, scale: 1 }}
-                            exit={{ opacity: 0, x: 20, scale: 0.95 }}
-                            style={{
-                                padding: "10px 14px",
-                                borderRadius: "12px",
-                                color: "white",
-                                fontWeight: "600",
-                                background:
-                                    toast.type === "success"
-                                        ? "#22c55e"
-                                        : toast.type === "error"
-                                            ? "#ef4444"
-                                            : "#4f46e5",
-                                boxShadow: "0 10px 25px rgba(0,0,0,0.25)"
-                            }}
-                        >
-                            {toast.message}
-                        </motion.div>
-                    ))}
-                </AnimatePresence>
-            </div>
+            <Toasts toasts={toasts} />
         </motion.div>
     );
 }

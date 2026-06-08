@@ -44,3 +44,23 @@ class PlayerRepository:
                     "id": playerId
                 }
             )
+
+    def getAll(self):
+        with engine.begin() as conn:
+            result = conn.execute(
+                text("""
+                    SELECT id, gold, hp, level, xp
+                    FROM player
+                """)
+            ).fetchall()
+
+            return [
+                {
+                    "playerId": row[0],
+                    "gold": row[1],
+                    "hp": row[2],
+                    "level": row[3],
+                    "xp": row[4]
+                }
+                for row in result
+            ]

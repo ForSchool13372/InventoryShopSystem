@@ -112,3 +112,14 @@ def getEvents(game=Depends(getCurrentGame)):
 @router.get("/health")
 def health():
     return {"status": "healthy"}
+
+# =========================================================
+# LEADERBOARD
+# =========================================================
+
+@router.get("/leaderboard")
+def getLeaderboard():
+    def action():
+        return gameFactory.getLeaderboard()
+
+    return safeExecute(action)

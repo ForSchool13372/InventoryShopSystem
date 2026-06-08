@@ -1,25 +1,25 @@
-﻿import { useState } from "react";
+﻿import { useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
 function Shop({ items, token, onBuy, theme }) {
     const [loadingItem, setLoadingItem] = useState(null);
     const [purchasedItem, setPurchasedItem] = useState(null);
-
-    // quantity per item
     const [quantities, setQuantities] = useState({});
 
-    const setQty = (itemName, value) => {
+    const setQty = useCallback((itemName, value, maxStock = Infinity) => {
         setQuantities((prev) => ({
             ...prev,
-            [itemName]: Math.max(1, value)
+            [itemName]: Math.max(1, Math.min(value, maxStock))
         }));
-    };
+    }, []);
 
     const getQty = (itemName) => quantities[itemName] || 1;
 
     const handleBuy = async (item) => {
         const itemName = item.itemName;
         const quantity = getQty(itemName);
+
+        if (!token || item.stock === 0 || quantity > item.stock) return;
 
         setPurchasedItem(null);
         setLoadingItem(itemName);
@@ -36,7 +36,6 @@ function Shop({ items, token, onBuy, theme }) {
             } else {
                 setPurchasedItem(null);
             }
-
         } catch {
             setPurchasedItem(null);
         } finally {
@@ -45,8 +44,7 @@ function Shop({ items, token, onBuy, theme }) {
     };
 
     const buyMax = (item) => {
-        const max = item.stock;
-        setQty(item.itemName, max);
+        setQty(item.itemName, item.stock, item.stock);
     };
 
     const cardStyle = {
@@ -87,7 +85,6 @@ function Shop({ items, token, onBuy, theme }) {
         >
             <h2 style={titleStyle}>Shop</h2>
 
-            {/* PURCHASE ANIMATION */}
             <AnimatePresence>
                 {purchasedItem && (
                     <motion.div
@@ -109,19 +106,21 @@ function Shop({ items, token, onBuy, theme }) {
                 )}
             </AnimatePresence>
 
-            {/* EMPTY */}
             {items.length === 0 && (
                 <div style={emptyStateStyle}>
                     🛒 Shop is currently empty
                 </div>
             )}
 
-            {/* ITEMS */}
             {items.map((item) => {
                 const isLoading = loadingItem === item.itemName;
-                const isDisabled = !token || item.stock === 0 || isLoading;
-
                 const qty = getQty(item.itemName);
+
+                const isDisabled =
+                    !token ||
+                    item.stock === 0 ||
+                    isLoading ||
+                    qty > item.stock;
 
                 return (
                     <motion.div
@@ -139,7 +138,6 @@ function Shop({ items, token, onBuy, theme }) {
                             opacity: item.stock === 0 ? 0.6 : 1
                         }}
                     >
-                        {/* ITEM INFO */}
                         <div style={{ display: "flex", flexDirection: "column" }}>
                             <span style={{ fontWeight: "800" }}>
                                 {item.itemName}
@@ -158,7 +156,6 @@ function Shop({ items, token, onBuy, theme }) {
                                 💰 Price: {item.price ?? "N/A"}
                             </span>
 
-                            {/* QUANTITY CONTROLS */}
                             {token && item.stock > 0 && (
                                 <div style={{
                                     display: "flex",
@@ -167,7 +164,7 @@ function Shop({ items, token, onBuy, theme }) {
                                     marginTop: "8px"
                                 }}>
                                     <button
-                                        onClick={() => setQty(item.itemName, qty - 1)}
+                                        onClick={() => setQty(item.itemName, qty - 1, item.stock)}
                                         style={{ ...buttonBase, padding: "4px 10px" }}
                                     >
                                         -
@@ -178,7 +175,7 @@ function Shop({ items, token, onBuy, theme }) {
                                     </span>
 
                                     <button
-                                        onClick={() => setQty(item.itemName, qty + 1)}
+                                        onClick={() => setQty(item.itemName, qty + 1, item.stock)}
                                         disabled={qty >= item.stock}
                                         style={{ ...buttonBase, padding: "4px 10px" }}
                                     >
@@ -200,7 +197,6 @@ function Shop({ items, token, onBuy, theme }) {
                             )}
                         </div>
 
-                        {/* BUTTON */}
                         {token && (
                             <motion.button
                                 onClick={() => handleBuy(item)}
