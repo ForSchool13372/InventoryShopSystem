@@ -15,6 +15,10 @@ from app.models.enemy import Enemy
 def client():
     return TestClient(app)
 
+@pytest.fixture
+def ws_client(client):
+    return client.websocket_connect
+
 
 # =========================================================
 # AUTH FIXTURE

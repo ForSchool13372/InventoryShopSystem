@@ -1,4 +1,6 @@
-from fastapi import APIRouter, Depends
+﻿from fastapi import APIRouter, Depends, WebSocket
+import asyncio
+
 from app.api.routes.schemas.gameSchemas import (
     ItemRequest,
     LoginRequest,
@@ -10,15 +12,31 @@ from app.api.routes.schemas.gameSchemas import (
 
 from app.core.utils.apiUtils import normalize, safeExecute
 from app.core.deps import getCurrentGame
-from app.core.gameFactory import GameFactory
 
-# repos
+from app.core.wsManager import wsManager
+from app.state.gameState import gameState
+
 from app.repositories.inventoryRepository import InventoryRepository
+from app.repositories.playerRepository import PlayerRepository
 
 router = APIRouter(prefix="/api", tags=["Game API"])
 
-gameFactory = GameFactory()
 inventoryRepository = InventoryRepository()
+playerRepository = PlayerRepository()
+
+
+# =========================================================
+# REAL-TIME HELPERS
+# =========================================================
+
+def getGlobalLeaderboard():
+    players = playerRepository.getAll()
+    return sorted(
+        players,
+        key=lambda p: (p["level"], p["xp"], p["gold"]),
+        reverse=True
+    )
+
 
 # =========================================================
 # LOGIN
@@ -26,7 +44,8 @@ inventoryRepository = InventoryRepository()
 @router.post("/login", response_model=LoginResponse)
 def login(data: LoginRequest):
     def action():
-        result = gameFactory.create(data.playerId).login()
+        game = getCurrentGame(data.playerId)
+        result = game.login()
         return LoginResponse(**result)
 
     return safeExecute(action)
@@ -37,11 +56,13 @@ def login(data: LoginRequest):
 # =========================================================
 @router.get("/player", response_model=PlayerResponse)
 def getPlayer(game=Depends(getCurrentGame)):
+    player = game.getPlayerStats()
+
     return PlayerResponse(
-        gold=game.player.gold,
-        hp=game.player.hp,
-        level=game.player.level,
-        xp=game.player.xp
+        gold=player["gold"],
+        hp=player["hp"],
+        level=player["level"],
+        xp=player["xp"]
     )
 
 
@@ -51,10 +72,12 @@ def getPlayer(game=Depends(getCurrentGame)):
 @router.post("/buy")
 def buy(data: ItemRequest, game=Depends(getCurrentGame)):
     def action():
-        return game.buy(
+        result = game.buy(
             normalize(data.itemName),
             data.quantity
         )
+
+        return result
 
     return safeExecute(action)
 
@@ -65,10 +88,12 @@ def buy(data: ItemRequest, game=Depends(getCurrentGame)):
 @router.post("/sell")
 def sell(data: ItemRequest, game=Depends(getCurrentGame)):
     def action():
-        return game.sell(
+        result = game.sell(
             normalize(data.itemName),
             data.quantity
         )
+
+        return result
 
     return safeExecute(action)
 
@@ -94,7 +119,6 @@ def getInventory(game=Depends(getCurrentGame)):
 @router.get("/shop", response_model=ShopResponse)
 def getShop(game=Depends(getCurrentGame)):
     shop = game.shop.getShop()
-
     return ShopResponse(data=shop)
 
 
@@ -113,13 +137,25 @@ def getEvents(game=Depends(getCurrentGame)):
 def health():
     return {"status": "healthy"}
 
-# =========================================================
-# LEADERBOARD
-# =========================================================
 
-@router.get("/leaderboard")
-def getLeaderboard():
-    def action():
-        return gameFactory.getLeaderboard()
+# =========================================================
+# LEADERBOARD WEBSOCKET
+# =========================================================
+@router.websocket("/ws/leaderboard")
+async def leaderboardSocket(websocket: WebSocket):
+    await wsManager.connect(websocket)
 
-    return safeExecute(action)
+    try:
+        while True:
+            await websocket.send_json({
+                "type": "LEADERBOARD_UPDATE",
+                "data": getGlobalLeaderboard()
+            })
+
+            await asyncio.sleep(5)
+
+    except Exception:
+        pass
+
+    finally:
+        wsManager.disconnect(websocket)

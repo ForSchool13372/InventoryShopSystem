@@ -2,70 +2,54 @@ from datetime import datetime, timezone
 
 
 class GameEventService:
-    def __init__(self, player, questManager):
-        self.player = player
+    def __init__(self, gameState, questManager):
+        self.gameState = gameState
         self.questManager = questManager
-
-        # =========================================================
-        # EVENT HISTORY (HIGH ROI ADDITION)
-        # =========================================================
         self.eventHistory = []
 
     # =========================================================
     # PUBLIC API
     # =========================================================
-
     def handleEvent(self, event):
-        """
-        Processes game events + stores history for later retrieval
-        """
-
         enrichedEvent = self._enrichEvent(event)
         self._storeEvent(enrichedEvent)
 
         eventType = enrichedEvent["type"]
+        playerId = enrichedEvent["playerId"]
+
+        player = self.gameState.getPlayer(playerId)
+
+        if not player:
+            return
 
         # =========================================================
         # GAME LOGIC
         # =========================================================
 
-        if eventType == "fightWin":
-            self.player.gainXP(enrichedEvent["xp"])
-            self.questManager.update(enrichedEvent["enemy"])
+        if eventType == "FIGHT_WIN":
+            player.gainXP(enrichedEvent.get("xp", 0))
+            self.questManager.update(enrichedEvent.get("enemy"))
 
-        elif eventType == "fightLose":
-            self.player.hp = 0
+        elif eventType == "FIGHT_LOSE":
+            player.hp = 0
 
     # =========================================================
     # EVENT STORAGE
     # =========================================================
-
     def _storeEvent(self, event):
         self.eventHistory.append(event)
 
     def getEvents(self, limit=None):
-        """
-        Returns event history (latest first)
-        """
         events = list(reversed(self.eventHistory))
-
-        if limit:
-            return events[:limit]
-
-        return events
+        return events[:limit] if limit else events
 
     # =========================================================
     # EVENT ENRICHMENT
     # =========================================================
-
     def _enrichEvent(self, event):
-        """
-        Adds metadata to every event (VERY IMPORTANT FOR PORTFOLIO)
-        """
-
         return {
             "type": event["type"],
             "timestamp": datetime.now(timezone.utc).isoformat(),
-            "playerId": getattr(self.player, "id", None),
-            **event
+            "playerId": event["playerId"],
+            "data": event.get("data", {}),
         }

@@ -4,7 +4,7 @@ import { useAuth } from "./useAuth";
 import { motion } from "framer-motion";
 import soundSystem from "./utils/soundSystem";
 
-import { setAuthToken, loginPlayer } from "./apiClient";
+import {loginPlayer } from "./apiClient";
 
 import Login from "./components/Login";
 import Shop from "./components/Shop";
@@ -12,6 +12,7 @@ import Inventory from "./components/Inventory";
 import PlayerStats from "./components/PlayerStats";
 import useToast from "./hooks/useToast";
 import Toasts from "./components/Toasts";
+import Leaderboard from "./components/Leaderboard";
 import useGameActions from "./hooks/useGameActions";
 
 function App() {
@@ -56,11 +57,8 @@ function App() {
 
             const newToken = res?.token || res?.data?.token;
 
-            if (!newToken) {
-                throw new Error("No token returned from server");
-            }
+            if (!newToken) throw new Error("No token returned from server");
 
-            setAuthToken(newToken);
             login(newToken, id);
 
             soundSystem.play("success");
@@ -125,7 +123,7 @@ function App() {
                     filter: "blur(160px)",
                     top: "-300px",
                     left: "-300px",
-                    borderRadius: "50%"
+                    borderRadius: "50%",
                 }}
             />
 
@@ -154,7 +152,7 @@ function App() {
                         <h1
                             style={{
                                 fontSize: "2rem",
-                                fontWeight: "800",
+                                fontWeight: "650",
                                 margin: 0,
                                 color: theme.text
                             }}
@@ -241,6 +239,11 @@ function App() {
                         sellingItem={sellingItem}
                     />
                 </motion.div>
+
+                <motion.div variants={fadeUp(0.25)} initial="hidden" animate="show">
+                    <Leaderboard theme={theme} token={token} />
+                </motion.div>
+
             </div>
 
             {/* TOASTS */}

@@ -4,8 +4,16 @@ import { AuthContext } from "./AuthContext";
 const TOKEN_KEY = "auth_token";
 const PLAYER_ID_KEY = "playerId";
 
-const getInitialToken = () => localStorage.getItem(TOKEN_KEY);
-const getInitialPlayerId = () => localStorage.getItem(PLAYER_ID_KEY);
+const getInitialToken = () => {
+    const t = localStorage.getItem(TOKEN_KEY);
+    return t && t !== "null" && t !== "undefined" ? t : null;
+};
+
+const getInitialPlayerId = () => {
+    const id = localStorage.getItem(PLAYER_ID_KEY);
+    return id && id !== "null" && id !== "undefined" ? id : null;
+};
+
 
 export const AuthProvider = ({ children }) => {
     const [token, setToken] = useState(getInitialToken);

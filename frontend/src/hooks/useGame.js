@@ -7,13 +7,20 @@ import {
 
 export default function useGame(token, playerId) {
 
-    // =========================================================
-    // STATE
-    // =========================================================
     const [items, setItems] = useState([]);
     const [inventory, setInventory] = useState([]);
     const [playerStats, setPlayerStats] = useState(null);
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(false);
+
+    // =========================================================
+    // RESET LOADING DURING RENDER (React 19 safe)
+    // =========================================================
+    const shouldLoad = token && playerId;
+
+    if (!shouldLoad && loading) {
+        // React 19 requires synchronous state updates to happen in render
+        setLoading(false);
+    }
 
     // =========================================================
     // LOADERS
@@ -24,29 +31,24 @@ export default function useGame(token, playerId) {
     }, []);
 
     const loadInventory = useCallback(async () => {
-        if (!token || !playerId) return;
+        if (!shouldLoad) return;
         const data = await getInventory();
         setInventory(data?.items ?? []);
-    }, [token, playerId]);
+    }, [shouldLoad]);
 
     const loadPlayerStats = useCallback(async () => {
-        if (!token || !playerId) return;
+        if (!shouldLoad) return;
         const data = await getPlayer();
         setPlayerStats(data ?? null);
-    }, [token, playerId]);
+    }, [shouldLoad]);
 
-    // =========================================================
-    // GAME OPERATIONS
-    // =========================================================
     const refreshAll = useCallback(async () => {
-        if (!token || !playerId) return;
-
         await Promise.all([
             loadShop(),
             loadInventory(),
             loadPlayerStats()
         ]);
-    }, [token, playerId, loadShop, loadInventory, loadPlayerStats]);
+    }, [loadShop, loadInventory, loadPlayerStats]);
 
     const resetGame = () => {
         setItems([]);
@@ -55,26 +57,29 @@ export default function useGame(token, playerId) {
     };
 
     // =========================================================
-    // INIT (SYNC ON LOGIN)
+    // EFFECT (only async work allowed)
     // =========================================================
     useEffect(() => {
-        if (!token) return;
+        if (!shouldLoad) return;
+
+        let cancelled = false;
 
         const syncData = async () => {
             setLoading(true);
             try {
                 await refreshAll();
             } finally {
-                setLoading(false);
+                if (!cancelled) setLoading(false);
             }
         };
 
         syncData();
-    }, [token, refreshAll]);
 
-    // =========================================================
-    // RETURN
-    // =========================================================
+        return () => {
+            cancelled = true;
+        };
+    }, [shouldLoad, refreshAll]);
+
     return {
         items,
         inventory,

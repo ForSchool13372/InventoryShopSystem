@@ -1,4 +1,4 @@
-﻿from fastapi import HTTPException, Depends, status
+﻿from fastapi import HTTPException, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
 from app.core.auth import verifyToken
@@ -6,9 +6,8 @@ from app.core.gameFactory import GameFactory
 
 authScheme = HTTPBearer()
 
-
-def getGameFactory():
-    return GameFactory()
+# single shared factory (IMPORTANT FIX)
+factory = GameFactory()
 
 
 def getCurrentPlayerId(
@@ -17,8 +16,7 @@ def getCurrentPlayerId(
     if not credentials or not credentials.credentials:
         raise HTTPException(status_code=401, detail="Missing auth token")
 
-    token = credentials.credentials
-    payload = verifyToken(token)
+    payload = verifyToken(credentials.credentials)
 
     if payload is None:
         raise HTTPException(status_code=401, detail="Invalid token")
@@ -31,8 +29,5 @@ def getCurrentPlayerId(
     return playerId
 
 
-def getCurrentGame(
-    playerId: int = Depends(getCurrentPlayerId),
-    factory: GameFactory = Depends(getGameFactory)
-):
+def getCurrentGame(playerId: int = Depends(getCurrentPlayerId)):
     return factory.create(playerId)

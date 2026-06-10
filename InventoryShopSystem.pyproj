@@ -34,6 +34,7 @@
     <Compile Include="app\core\redisClient.py" />
     <Compile Include="app\core\logger.py" />
     <Compile Include="app\core\utils\apiUtils.py" />
+    <Compile Include="app\core\wsManager.py" />
     <Compile Include="app\services\itemService.py" />
     <Compile Include="app\core\controller.py" />
     <Compile Include="app\models\inventory.py" />
@@ -58,6 +59,7 @@
     <Compile Include="app\core\deps.py" />
     <Compile Include="app\repositories\playerRepository.py" />
     <Compile Include="app\repositories\shopRepository.py" />
+    <Compile Include="app\services\leaderboardService.py" />
     <Compile Include="app\services\shopService.py" />
     <Compile Include="app\core\questManager.py" />
     <Compile Include="app\models\quest.py" />
@@ -72,6 +74,7 @@
     <Compile Include="tests\api\test_cacheRoutes.py" />
     <Compile Include="tests\api\test_health.py" />
     <Compile Include="tests\api\test_inventory.py" />
+    <Compile Include="tests\api\test_leaderboard_api.py" />
     <Compile Include="tests\api\test_player_api.py" />
     <Compile Include="tests\api\test_shop.py" />
     <Compile Include="tests\conftest.py" />
@@ -92,6 +95,7 @@
     <Compile Include="tests\services\test_itemService.py" />
     <Compile Include="tests\services\test_shopService.py" />
     <Compile Include="tests\utils\test_ctx.py" />
+    <Compile Include="wsTest.py" />
   </ItemGroup>
   <ItemGroup>
     <Interpreter Include="env\">

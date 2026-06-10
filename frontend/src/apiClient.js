@@ -5,11 +5,6 @@ const TOKEN_KEY = "auth_token";
 // =========================================================
 // TOKEN STORAGE
 // =========================================================
-export const setAuthToken = (token) => {
-    if (!token) return;
-    localStorage.setItem(TOKEN_KEY, token);
-};
-
 export const clearAuthToken = () => {
     localStorage.removeItem(TOKEN_KEY);
 };
@@ -108,3 +103,27 @@ export const sellItem = (itemName, quantity = 1) =>
         method: "POST",
         body: JSON.stringify({ itemName, quantity })
     });
+
+export const createLeaderboardSocket = (onMessage) => {
+    const wsUrl = API.startsWith("https")
+        ? API.replace("https", "wss") + "/api/ws/leaderboard"
+        : API.replace("http", "ws") + "/api/ws/leaderboard";
+
+    const ws = new WebSocket(wsUrl);
+
+    ws.onmessage = (event) => {
+        let data;
+        try {
+            data = JSON.parse(event.data);
+        } catch {
+            return;
+        }
+
+        onMessage({
+            type: data.type,
+            data: Array.isArray(data.data) ? data.data : []
+        });
+    };
+
+    return ws;
+};

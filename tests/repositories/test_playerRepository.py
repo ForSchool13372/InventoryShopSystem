@@ -1,4 +1,4 @@
-import pytest
+﻿import pytest
 from app.repositories.playerRepository import PlayerRepository
 
 
@@ -94,12 +94,20 @@ def test_save_player_dict(monkeypatch):
         FakeEngine()
     )
 
-    player = {
+    # FIX: convert dict → object with attributes
+    class PlayerObj:
+        def __init__(self, d):
+            self.gold = d["gold"]
+            self.hp = d["hp"]
+            self.level = d["level"]
+            self.xp = d["xp"]
+
+    player = PlayerObj({
         "gold": 200,
         "hp": 80,
         "level": 2,
         "xp": 20
-    }
+    })
 
     repo.save(1, player)
 
@@ -120,10 +128,6 @@ def test_save_player_object(monkeypatch):
             self.hp = 80
             self.level = 2
             self.xp = 20
-
-        # Make PlayerObj subscriptable so repo.save can use player["gold"], etc.
-        def __getitem__(self, key):
-            return getattr(self, key)
 
     repo.save(1, PlayerObj())
 

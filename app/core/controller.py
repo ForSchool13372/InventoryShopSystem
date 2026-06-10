@@ -1,11 +1,12 @@
 from typing import Dict, Any
 from app.core.auth import createAccessToken
+from app.state.gameState import gameState
+from app.models.player import Player
 
 
 class Controller:
     def __init__(self, ctx):
         self.ctx = ctx
-        self.player = ctx.player
         self.playerId = ctx.playerId
 
         self.services = ctx.services
@@ -40,6 +41,20 @@ class Controller:
     # LIFECYCLE
     # =========================================================
     def login(self) -> Dict[str, Any]:
+        data = self.playerRepo.load(self.playerId)
+
+        if not data:
+            return {"success": False, "message": "Player not found"}
+
+        player = Player(
+            gold=data["gold"],
+            hp=data["hp"],
+            level=data["level"],
+            xp=data["xp"]
+        )
+
+        gameState.addPlayer(self.playerId, player)
+
         token: str = createAccessToken({
             "playerId": self.playerId
         })
@@ -53,30 +68,35 @@ class Controller:
         }
 
     def revive(self) -> Dict[str, Any]:
-        self.player.revive()
-        self._emitEvent("REVIVE")
-        return {"success": True}
+        player = gameState.getPlayer(self.playerId)
+        player.revive()
 
-    def persist(self) -> Dict[str, Any]:
-        self.playerRepo.save(self.playerId, self.player)
+        self._emitEvent("REVIVE")
         return {"success": True}
 
     # =========================================================
     # PLAYER
     # =========================================================
     def getPlayerStats(self) -> Dict[str, Any]:
-        return {
-            "gold": self.player.gold,
-            "hp": self.player.hp,
-            "level": self.player.level,
-            "xp": self.player.xp
-        }
+        player = gameState.getPlayer(self.playerId)
+
+        if not player:
+            return {
+                "gold": 0,
+                "hp": 100,
+                "level": 1,
+                "xp": 0
+            }
+
+        return player.getStats()
 
     # =========================================================
     # GAME ACTIONS
     # =========================================================
     def fight(self) -> Dict[str, Any]:
-        result = self.combat.handleFight(self.player, self.world.enemies)
+        player = gameState.getPlayer(self.playerId)
+
+        result = self.combat.handleFight(player, self.world.enemies)
 
         eventType = (
             "FIGHT_WIN"
@@ -92,13 +112,17 @@ class Controller:
         return result
 
     def buy(self, itemName: str, quantity: int) -> Dict[str, Any]:
-        item = self.items.getItem(itemName)
+        player = gameState.getPlayer(self.playerId)
 
+        item = self.items.getItem(itemName)
         if not item:
             return {"success": False, "message": "Item not found"}
 
-        ctx = self._buildShopCtx(item, quantity)
+        ctx = self._buildShopCtx(player, item, quantity)
         result = self.shop.buy(ctx)
+
+        # optional persistence (NOT source of truth anymore)
+        self.playerRepo.save(self.playerId, player)
 
         self._emitEvent("BUY", {
             "item": itemName,
@@ -108,13 +132,16 @@ class Controller:
         return result
 
     def sell(self, itemName: str, quantity: int) -> Dict[str, Any]:
-        item = self.items.getItem(itemName)
+        player = gameState.getPlayer(self.playerId)
 
+        item = self.items.getItem(itemName)
         if not item:
             return {"success": False, "message": "Item not found"}
 
-        ctx = self._buildShopCtx(item, quantity)
+        ctx = self._buildShopCtx(player, item, quantity)
         result = self.shop.sell(ctx)
+
+        self.playerRepo.save(self.playerId, player)
 
         self._emitEvent("SELL", {
             "item": itemName,
@@ -138,12 +165,12 @@ class Controller:
     # =========================================================
     # INTERNAL HELPERS
     # =========================================================
-    def _buildShopCtx(self, item, quantity):
+    def _buildShopCtx(self, player, item, quantity):
         class ShopCtx:
             pass
 
         ctx = ShopCtx()
-        ctx.player = self.player
+        ctx.player = player
         ctx.playerId = self.playerId
         ctx.item = item
         ctx.quantity = quantity

@@ -7,6 +7,7 @@ from app.services.leaderboardService import LeaderboardService
 from app.core.gameData import createEnemies, createQuests
 from app.repositories.playerRepository import PlayerRepository
 from app.core.gameContext import GameContext
+from app.state.gameState import gameState
 
 
 # =========================================================
@@ -94,4 +95,4 @@ class GameFactory:
     # LEADERBOARD ACCESS
     # =========================
     def getLeaderboard(self):
-        return self.services.leaderboard.getLeaderboard()
+        return gameState.getLeaderboard()

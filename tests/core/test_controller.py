@@ -1,6 +1,7 @@
 import pytest
 
 from app.core.controller import Controller
+from app.state.gameState import gameState
 
 
 class FakeEventService:
@@ -20,6 +21,14 @@ class FakePlayer:
 
     def revive(self):
         self.hp = 100
+
+    def getStats(self):
+        return {
+            "gold": self.gold,
+            "hp": self.hp,
+            "level": self.level,
+            "xp": self.xp
+        }
 
 
 class FakeCombat:
@@ -49,6 +58,14 @@ class FakeItemService:
 class FakeRepo:
     def __init__(self):
         self.saved = None
+
+    def load(self, playerId):
+        return {
+            "gold": 100,
+            "hp": 50,
+            "level": 2,
+            "xp": 10
+        }
 
     def save(self, playerId, player):
         self.saved = (playerId, player)
@@ -111,6 +128,9 @@ def test_revive_restores_hp():
     ctx = FakeCtx()
     ctrl = Controller(ctx)
 
+    # Add player to gameState (Controller expects this)
+    gameState.addPlayer(1, ctx.player)
+
     ctx.player.hp = 10
     result = ctrl.revive()
 
@@ -121,6 +141,9 @@ def test_revive_restores_hp():
 def test_get_player_stats():
     ctx = FakeCtx()
     ctrl = Controller(ctx)
+
+    # Add player to gameState (Controller expects this)
+    gameState.addPlayer(1, ctx.player)
 
     stats = ctrl.getPlayerStats()
 
@@ -134,6 +157,8 @@ def test_fight_emits_event(monkeypatch):
     ctx = FakeCtx()
     ctrl = Controller(ctx)
 
+    gameState.addPlayer(1, ctx.player)
+
     result = ctrl.fight()
 
     assert result["result"] == "win"
@@ -143,6 +168,8 @@ def test_fight_emits_event(monkeypatch):
 def test_buy_success(monkeypatch):
     ctx = FakeCtx()
     ctrl = Controller(ctx)
+
+    gameState.addPlayer(1, ctx.player)
 
     result = ctrl.buy("sword", 2)
 
@@ -154,6 +181,8 @@ def test_buy_item_not_found():
     ctx = FakeCtx()
     ctrl = Controller(ctx)
 
+    gameState.addPlayer(1, ctx.player)
+
     result = ctrl.buy("invalid", 1)
 
     assert result["success"] is False
@@ -163,6 +192,8 @@ def test_buy_item_not_found():
 def test_sell_success():
     ctx = FakeCtx()
     ctrl = Controller(ctx)
+
+    gameState.addPlayer(1, ctx.player)
 
     result = ctrl.sell("sword", 1)
 

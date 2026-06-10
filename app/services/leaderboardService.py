@@ -7,10 +7,7 @@ class LeaderboardService:
 
         sortedPlayers = sorted(
             allPlayers,
-            key=lambda p: (
-                p.get("level", 1),
-                p.get("xp", 0)
-            ),
+            key=lambda p: (p.get("level", 1), p.get("xp", 0)),
             reverse=True
         )
 
