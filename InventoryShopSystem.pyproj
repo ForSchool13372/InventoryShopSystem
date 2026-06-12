@@ -67,6 +67,7 @@
     <Compile Include="app\models\player.py" />
     <Compile Include=".github\workflows\ci.yml" />
     <Compile Include="app\services\tasks.py" />
+    <Compile Include="app\state\gameState.py" />
     <Compile Include="docker-compose.yml" />
     <Compile Include="pytest.ini" />
     <Compile Include="run.py" />
@@ -109,6 +110,30 @@
     </Interpreter>
   </ItemGroup>
   <ItemGroup>
+    <Content Include="frontend\src\animations.js" />
+    <Content Include="frontend\src\apiClient.js" />
+    <Content Include="frontend\src\App.css" />
+    <Content Include="frontend\src\App.jsx" />
+    <Content Include="frontend\src\AuthContext.jsx" />
+    <Content Include="frontend\src\AuthProvider.jsx" />
+    <Content Include="frontend\src\components\Header.jsx" />
+    <Content Include="frontend\src\components\Inventory.jsx" />
+    <Content Include="frontend\src\components\Leaderboard.jsx" />
+    <Content Include="frontend\src\components\Login.jsx" />
+    <Content Include="frontend\src\components\PlayerStats.jsx" />
+    <Content Include="frontend\src\components\Shop.jsx" />
+    <Content Include="frontend\src\components\Toasts.jsx" />
+    <Content Include="frontend\src\hooks\useAuth.js" />
+    <Content Include="frontend\src\hooks\useAuthActions.js" />
+    <Content Include="frontend\src\hooks\useGame.js" />
+    <Content Include="frontend\src\hooks\useGameActions.js" />
+    <Content Include="frontend\src\hooks\useGamePage.js" />
+    <Content Include="frontend\src\hooks\useLeaderboard.js" />
+    <Content Include="frontend\src\hooks\useToast.js" />
+    <Content Include="frontend\src\index.css" />
+    <Content Include="frontend\src\main.jsx" />
+    <Content Include="frontend\src\theme.js" />
+    <Content Include="frontend\src\utils\soundSystem.js" />
     <Content Include="README.md" />
     <Content Include="requirements.txt" />
   </ItemGroup>
@@ -121,10 +146,16 @@
     <Folder Include="app\cli\" />
     <Folder Include="app\core\utils\" />
     <Folder Include="app\models\" />
+    <Folder Include="app\state\" />
     <Folder Include="app\repositories\" />
     <Folder Include="app\services\" />
     <Folder Include=".github\" />
     <Folder Include=".github\workflows\" />
+    <Folder Include="frontend\" />
+    <Folder Include="frontend\src\" />
+    <Folder Include="frontend\src\components\" />
+    <Folder Include="frontend\src\hooks\" />
+    <Folder Include="frontend\src\utils\" />
     <Folder Include="tests\" />
     <Folder Include="tests\api\" />
     <Folder Include="tests\core\" />

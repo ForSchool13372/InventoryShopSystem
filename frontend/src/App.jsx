@@ -1,99 +1,49 @@
-﻿import useGame from "./hooks/useGame";
-import { useState } from "react";
-import { useAuth } from "./useAuth";
+﻿// =========================================================
+// REACT CORE / LIBRARIES
+// =========================================================
 import { motion } from "framer-motion";
-import soundSystem from "./utils/soundSystem";
 
-import {loginPlayer } from "./apiClient";
+// =========================================================
+// MAIN HOOK
+// =========================================================
+import useGamePage from "./hooks/useGamePage";
 
+// =========================================================
+// COMPONENTS
+// =========================================================
 import Login from "./components/Login";
 import Shop from "./components/Shop";
 import Inventory from "./components/Inventory";
 import PlayerStats from "./components/PlayerStats";
-import useToast from "./hooks/useToast";
 import Toasts from "./components/Toasts";
 import Leaderboard from "./components/Leaderboard";
-import useGameActions from "./hooks/useGameActions";
+import Header from "./components/Header";
 
+// =========================================================
+// UTILITIES / CONFIG
+// =========================================================
+import { getTheme } from "./theme";
+import { page, fadeUp } from "./animations";
 function App() {
-    const { token, playerId, login, logout } = useAuth();
+    const {
+        token,
+        playerId,
+        handleLogin,
+        handleLogout,
+        items,
+        inventory,
+        playerStats,
+        loading,
+        handleBuy,
+        handleSell,
+        buyingItem,
+        sellingItem,
+        toasts,
+        darkMode,
+        toggleDarkMode
+    } = useGamePage();
 
-    const { items, inventory, playerStats, loading, refreshAll, resetGame } = useGame(token, playerId);
-
-    const [darkMode, setDarkMode] = useState(false);
-
-    const { toasts, addToast } = useToast();
-
-    const [buyingItem, setBuyingItem] = useState(null);
-    const [sellingItem, setSellingItem] = useState(null);
-
-    const { handleBuy, handleSell } = useGameActions({
-        refreshAll,
-        addToast,
-        setBuyingItem,
-        setSellingItem
-    });
-
-    // ----------------------------
-    // THEME
-    // ----------------------------
-    const theme = {
-        background: darkMode ? "#0b1220" : "#f4f7ff",
-        cardBg: darkMode ? "#111a2e" : "#ffffff",
-        text: darkMode ? "#e5e7eb" : "#111827",
-        subText: darkMode ? "#94a3b8" : "#6b7280"
-    };
-
-    const toggleDarkMode = () => setDarkMode(prev => !prev);
-
-    // ----------------------------
-    // AUTH
-    // ----------------------------
-    const handleLogin = async (id) => {
-        try {
-            if (!id) throw new Error("Missing ID");
-
-            const res = await loginPlayer(id);
-
-            const newToken = res?.token || res?.data?.token;
-
-            if (!newToken) throw new Error("No token returned from server");
-
-            login(newToken, id);
-
-            soundSystem.play("success");
-            addToast("Welcome back", "success");
-
-            return true;
-
-        } catch (err) {
-            soundSystem.play("error");
-            addToast(err?.message || "Invalid ID", "error");
-            return false;
-        }
-    };
-
-    const handleLogout = () => {
-        logout();
-        resetGame();
-
-        soundSystem.play("click");
-        addToast("Logged out", "info");
-    };
-
-
-    // ----------------------------
-    // ANIMATIONS
-    // ----------------------------
-    const page = {
-        hidden: { opacity: 0, y: 12 },
-        show: { opacity: 1, y: 0, transition: { duration: 0.35 } }
-    };
-
-    const fadeUp = (delay = 0) => ({
-        hidden: { opacity: 0, y: 10 },
-        show: { opacity: 1, y: 0, transition: { delay, duration: 0.3 } }
-    });
+    const theme = getTheme(darkMode);
 
     return (
         <motion.div
@@ -137,56 +87,13 @@ function App() {
                 }}
             >
                 {/* HEADER */}
-                <motion.div
-                    variants={fadeUp(0)}
-                    initial="hidden"
-                    animate="show"
-                    style={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "center",
-                        marginBottom: "24px"
-                    }}
-                >
-                    <div>
-                        <h1
-                            style={{
-                                fontSize: "2rem",
-                                fontWeight: "650",
-                                margin: 0,
-                                color: theme.text
-                            }}
-                        >
-                            Inventory Shop System
-                        </h1>
-                        <p
-                            style={{
-                                margin: "4px 0 0 0",
-                                fontSize: "0.9rem",
-                                color: theme.subText
-                            }}
-                        >
-                            {token ? `Logged in as ${playerId}` : "Start your journey today!"}
-                        </p>
-                    </div>
-
-                    <motion.button
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        onClick={toggleDarkMode}
-                        style={{
-                            padding: "8px 12px",
-                            borderRadius: "10px",
-                            border: "none",
-                            cursor: "pointer",
-                            background: darkMode ? "#e5e7eb" : "#111827",
-                            color: darkMode ? "#111827" : "#fff",
-                            fontWeight: "600"
-                        }}
-                    >
-                        {darkMode ? "Light ☀️" : "Dark 🌙"}
-                    </motion.button>
-                </motion.div>
+                <Header
+                    token={token}
+                    playerId={playerId}
+                    darkMode={darkMode}
+                    toggleDarkMode={toggleDarkMode}
+                    theme={theme}
+                />
 
                 {loading && (
                     <motion.p style={{ color: theme.subText }}>

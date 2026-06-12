@@ -1,7 +1,12 @@
 import soundSystem from "../utils/soundSystem";
 import { buyItem, sellItem } from "../apiClient";
 
-export default function useGameActions({ refreshAll, addToast, setBuyingItem, setSellingItem }) {
+export default function useGameActions({
+    refreshGameAfterTrade,   //  CHANGE THIS (was refreshAll)
+    addToast,
+    setBuyingItem,
+    setSellingItem
+}) {
 
     const handleBuy = async (itemName, quantity = 1) => {
         setBuyingItem(itemName);
@@ -9,7 +14,7 @@ export default function useGameActions({ refreshAll, addToast, setBuyingItem, se
         try {
             const res = await buyItem(itemName, quantity);
 
-            await refreshAll();
+            await refreshGameAfterTrade(); //  CHANGE HERE
 
             const success = res?.success === true;
 
@@ -38,7 +43,8 @@ export default function useGameActions({ refreshAll, addToast, setBuyingItem, se
 
         try {
             await sellItem(itemName, quantity);
-            await refreshAll();
+
+            await refreshGameAfterTrade(); //  CHANGE HERE
 
             soundSystem.play("sell");
             addToast(`Sold ${itemName}`, "success");

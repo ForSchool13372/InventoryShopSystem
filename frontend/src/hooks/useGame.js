@@ -12,18 +12,14 @@ export default function useGame(token, playerId) {
     const [playerStats, setPlayerStats] = useState(null);
     const [loading, setLoading] = useState(false);
 
-    // =========================================================
-    // RESET LOADING DURING RENDER (React 19 safe)
-    // =========================================================
     const shouldLoad = token && playerId;
 
     if (!shouldLoad && loading) {
-        // React 19 requires synchronous state updates to happen in render
         setLoading(false);
     }
 
     // =========================================================
-    // LOADERS
+    // INDIVIDUAL LOADERS
     // =========================================================
     const loadShop = useCallback(async () => {
         const data = await getShop();
@@ -42,6 +38,9 @@ export default function useGame(token, playerId) {
         setPlayerStats(data ?? null);
     }, [shouldLoad]);
 
+    // =========================================================
+    // REFRESH STRATEGIES
+    // =========================================================
     const refreshAll = useCallback(async () => {
         await Promise.all([
             loadShop(),
@@ -50,6 +49,22 @@ export default function useGame(token, playerId) {
         ]);
     }, [loadShop, loadInventory, loadPlayerStats]);
 
+    const refreshGameAfterTrade = useCallback(async () => {
+        await Promise.all([
+            loadShop(),        // stock changed
+            loadInventory(),   // items changed
+            loadPlayerStats()  // gold/XP changed
+        ]);
+    }, [loadShop, loadInventory, loadPlayerStats]);
+
+    const refreshInventoryOnly = useCallback(async () => {
+        await loadInventory();
+    }, [loadInventory]);
+
+    const refreshPlayerOnly = useCallback(async () => {
+        await loadPlayerStats();
+    }, [loadPlayerStats]);
+
     const resetGame = () => {
         setItems([]);
         setInventory([]);
@@ -57,7 +72,7 @@ export default function useGame(token, playerId) {
     };
 
     // =========================================================
-    // EFFECT (only async work allowed)
+    // INITIAL LOAD
     // =========================================================
     useEffect(() => {
         if (!shouldLoad) return;
@@ -85,10 +100,20 @@ export default function useGame(token, playerId) {
         inventory,
         playerStats,
         loading,
+
+        // full
         refreshAll,
+
+        // smarter UX ones
+        refreshGameAfterTrade,
+        refreshInventoryOnly,
+        refreshPlayerOnly,
+
+        // setters (optional keep)
         setItems,
         setInventory,
         setPlayerStats,
+
         resetGame
     };
 }
