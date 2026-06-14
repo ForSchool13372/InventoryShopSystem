@@ -1,10 +1,24 @@
 import pytest
+import app.core.redisClient as redisModule
+from tests.fakeRedis import FakeRedis
+
 from fastapi.testclient import TestClient
 
 from app.main import app
 from app.models.item import Item
 from app.models.player import Player
 from app.models.enemy import Enemy
+
+
+# =========================================================
+# REDIS FIX (MOCK - MUST BE AT TOP)
+# =========================================================
+
+@pytest.fixture(autouse=True)
+def fake_redis(monkeypatch):
+    fake = FakeRedis()
+    monkeypatch.setattr(redisModule, "redisClient", fake)
+    return fake
 
 
 # =========================================================
@@ -66,7 +80,7 @@ def create_enemy():
 
 
 # =========================================================
-# FAKE ENGINE (IMPORTANT FIX)
+# FAKE ENGINE
 # =========================================================
 
 class FakeResult:
@@ -101,7 +115,6 @@ class FakeConn:
 
         return FakeResult()
 
-    #  REQUIRED FOR "with engine.begin()"
     def __enter__(self):
         return self
 
@@ -120,7 +133,7 @@ def fake_engine():
 
 
 # =========================================================
-# OTHER FAKES (YOUR EXISTING)
+# OTHER FAKES
 # =========================================================
 
 class FakeRNG:
@@ -178,11 +191,9 @@ class FakeShopRepo:
 def fake_rng():
     return FakeRNG()
 
-
 @pytest.fixture
 def fake_quest_manager():
     return FakeQuestManager()
-
 
 @pytest.fixture
 def fake_shop_repo():
