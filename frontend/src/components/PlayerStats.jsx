@@ -1,202 +1,184 @@
 ﻿import { motion } from "framer-motion";
 
 function PlayerStats({ playerStats, theme }) {
-
-    const cardStyle = {
-        background: theme.cardBg,
-        color: theme.text,
-        padding: "20px",
-        borderRadius: "18px",
-        boxShadow: "0 12px 35px rgba(0,0,0,0.08)",
-        border: "1px solid rgba(0,0,0,0.05)"
-    };
-
-    const titleStyle = {
-        fontSize: "1.2rem",
-        fontWeight: "800",
-        marginBottom: "12px",
-        color: theme.text
-    };
-
-    const statsGrid = {
-        display: "grid",
-        gridTemplateColumns: "repeat(3, 1fr)",
-        gap: "12px"
-    };
-
-    const baseStatCard = {
-        padding: "14px",
-        borderRadius: "14px",
-        border: `1px solid ${theme.subText}25`,
-        background: theme.cardBg,
-        cursor: "default"
-    };
-
-    const labelStyle = {
-        fontSize: "0.75rem",
-        color: theme.subText,
-        fontWeight: "600",
-        marginBottom: "6px"
-    };
-
-    const valueStyle = {
-        fontSize: "1.1rem",
-        fontWeight: "800"
-    };
+    const currentTheme = theme;
 
     if (!playerStats) {
         return (
-            <div style={cardStyle}>
-                <h2 style={titleStyle}>Player Stats</h2>
-                <p style={{ color: theme.subText }}>
+            <div style={styles.card(currentTheme)}>
+                <h2 style={styles.title(currentTheme)}>PLAYER STATS</h2>
+                <p style={{ color: currentTheme.subText }}>
                     📊 No player data loaded
                 </p>
             </div>
         );
     }
 
-    const xp = playerStats.xp || 0;
-    const level = playerStats.level || 1;
+    const xp = playerStats.xp ?? 0;
+    const level = playerStats.level ?? 1;
     const xpNeeded = level * 100;
     const xpPercent = Math.min(100, (xp / xpNeeded) * 100);
     const isMaxXp = xpPercent >= 100;
 
     return (
-        <div style={cardStyle}>
-            {/* HEADER */}
-            <h2 style={titleStyle}>Player Stats</h2>
+        <div style={styles.card(currentTheme)}>
+            <h2 style={styles.title(currentTheme)}>PLAYER STATS</h2>
 
-            {/* GRID */}
-            <div style={statsGrid}>
+            {/* SECTION LABEL */}
+            <div style={styles.sectionLabel(currentTheme)}>CORE STATS</div>
 
-                {/* GOLD */}
-                <motion.div
-                    whileHover={{ scale: 1.05, y: -3 }}
-                    transition={{ duration: 0.2 }}
-                    style={{
-                        ...baseStatCard,
-                        background: "linear-gradient(135deg, #facc15, #fbbf24)",
-                        color: "#111827",
-                        boxShadow: "0 8px 20px rgba(250,204,21,0.25)"
-                    }}
-                >
-                    <div style={labelStyle}>Gold</div>
-                    <div style={valueStyle}>💰 {playerStats.gold}</div>
-                </motion.div>
+            {/* TOP STATS */}
+            <div style={styles.grid}>
+                <Stat label="Gold" value={`💰 ${playerStats.gold ?? 0}`} color1="#facc15" color2="#fbbf24" />
+                <Stat label="Health" value={`❤️ ${playerStats.hp ?? 0}`} color1="#ef4444" color2="#f87171" />
+                <Stat label="Level" value={`⭐ ${level}`} color1="#4f46e5" color2="#6366f1" />
+            </div>
 
-                {/* HP */}
-                <motion.div
-                    whileHover={{ scale: 1.05, y: -3 }}
-                    transition={{ duration: 0.2 }}
-                    style={{
-                        ...baseStatCard,
-                        background: "linear-gradient(135deg, #ef4444, #f87171)",
-                        color: "white",
-                        boxShadow: "0 8px 20px rgba(239,68,68,0.25)"
-                    }}
-                >
-                    <div style={labelStyle}>Health</div>
-                    <div style={valueStyle}>❤️ {playerStats.hp}</div>
-                </motion.div>
+            {/* SECTION LABEL */}
+            <div style={styles.sectionLabel(currentTheme)}>PROGRESSION</div>
 
-                {/* LEVEL */}
-                <motion.div
-                    whileHover={{ scale: 1.05, y: -3 }}
-                    transition={{ duration: 0.2 }}
-                    style={{
-                        ...baseStatCard,
-                        background: "linear-gradient(135deg, #4f46e5, #6366f1)",
-                        color: "white",
-                        boxShadow: "0 8px 20px rgba(79,70,229,0.25)"
-                    }}
-                >
-                    <div style={labelStyle}>Level</div>
-                    <div style={valueStyle}>⭐ {playerStats.level}</div>
-                </motion.div>
-
-                {/* XP BAR */}
-                <div style={{ marginTop: "18px" }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
-                        <span style={{ color: theme.subText, fontSize: "0.8rem", fontWeight: "600" }}>
-                            XP
-                        </span>
-
-                        <motion.span
-                            animate={isMaxXp ? { scale: [1, 1.2, 1] } : {}}
-                            transition={{ repeat: isMaxXp ? Infinity : 0, duration: 0.8 }}
-                            style={{
-                                color: isMaxXp ? "#22c55e" : theme.subText,
-                                fontSize: "0.8rem",
-                                fontWeight: "700"
-                            }}
-                        >
-                            {xp} / {xpNeeded}
-                        </motion.span>
-                    </div>
-
-                    {/* BACK BAR */}
-                    <div
-                        style={{
-                            width: "100%",
-                            height: "12px",
-                            background: "rgba(0,0,0,0.15)",
-                            borderRadius: "999px",
-                            overflow: "hidden",
-                            position: "relative"
-                        }}
-                    >
-                        {/* GLOW LAYER */}
-                        <div
-                            style={{
-                                position: "absolute",
-                                inset: 0,
-                                background: isMaxXp
-                                    ? "rgba(34,197,94,0.3)"
-                                    : "rgba(79,70,229,0.2)",
-                                filter: "blur(10px)"
-                            }}
-                        />
-
-                        {/* FILL */}
-                        <motion.div
-                            initial={{ width: 0 }}
-                            animate={{ width: `${xpPercent}%` }}
-                            transition={{ duration: 0.6, ease: "easeOut" }}
-                            style={{
-                                height: "100%",
-                                background: isMaxXp
-                                    ? "linear-gradient(90deg, #22c55e, #a3e635)"
-                                    : "linear-gradient(90deg, #4f46e5, #22c55e)",
-                                borderRadius: "999px",
-                                boxShadow: isMaxXp
-                                    ? "0 0 15px rgba(34,197,94,0.7)"
-                                    : "0 0 12px rgba(79,70,229,0.5)"
-                            }}
-                        />
-                    </div>
-
-                    {/* LEVEL UP TEXT */}
-                    {isMaxXp && (
-                        <motion.div
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.3 }}
-                            style={{
-                                marginTop: "8px",
-                                color: "#22c55e",
-                                fontWeight: "800",
-                                fontSize: "0.85rem",
-                                textShadow: "0 0 10px rgba(34,197,94,0.6)"
-                            }}
-                        >
-                            ⚡ LEVEL UP READY!
-                        </motion.div>
-                    )}
+            {/* XP SECTION */}
+            <div style={styles.xpSection}>
+                <div style={styles.xpHeader(currentTheme, isMaxXp)}>
+                    <span>Experience</span>
+                    <span>{xp} / {xpNeeded}</span>
                 </div>
 
+                <div style={styles.xpBar}>
+                    <motion.div
+                        initial={{ width: 0 }}
+                        animate={{ width: `${xpPercent}%` }}
+                        transition={{ duration: 0.9, ease: "easeOut" }}
+                        style={styles.xpFill(isMaxXp)}
+                    />
+                </div>
+
+                {isMaxXp && (
+                    <motion.div
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        style={styles.levelUp}
+                    >
+                        ⚡ READY TO LEVEL UP
+                    </motion.div>
+                )}
             </div>
         </div>
     );
 }
+
+/* ---------------- COMPONENT ---------------- */
+
+function Stat({ label, value, color1, color2 }) {
+    return (
+        <motion.div
+            whileHover={{ scale: 1.06, y: -4 }}
+            transition={{ duration: 0.2 }}
+            style={{
+                background: `linear-gradient(135deg, ${color1}, ${color2})`,
+                borderRadius: "16px",
+                padding: "14px",
+                color: "#111",
+                boxShadow: "0 10px 25px rgba(0,0,0,0.15)",
+                cursor: "default"
+            }}
+        >
+            <div style={styles.label}>{label}</div>
+            <div style={styles.value}>{value}</div>
+        </motion.div>
+    );
+}
+
+/* ---------------- STYLES ---------------- */
+
+const styles = {
+    card: (theme) => ({
+        background: theme.cardBg,
+        color: theme.text,
+        padding: "22px",
+        borderRadius: "20px",
+        border: "1px solid rgba(255,255,255,0.06)",
+        boxShadow: "0 18px 50px rgba(0,0,0,0.25)",
+
+        display: "flex",
+        flexDirection: "column"
+    }),
+
+    title: (theme) => ({
+        fontSize: "1.2rem",
+        fontWeight: 800,
+        letterSpacing: "2px",
+        marginBottom: 14,
+        color: theme.text
+    }),
+
+    sectionLabel: () => ({
+        fontSize: "0.7rem",
+        fontWeight: 800,
+        letterSpacing: "2px",
+        marginBottom: 10,
+        marginTop: 8,
+    }),
+
+    grid: {
+        display: "grid",
+        gridTemplateColumns: "repeat(3, 1fr)",
+        gap: 12,
+        marginBottom: 18
+    },
+
+    label: {
+        fontSize: "0.7rem",
+        fontWeight: 700,
+        opacity: 0.85,
+        marginBottom: 6
+    },
+
+    value: {
+        fontSize: "1.15rem",
+        fontWeight: 900
+    },
+
+    xpSection: {
+        marginTop: 6
+    },
+
+    xpHeader: (theme, isMaxXp) => ({
+        display: "flex",
+        justifyContent: "space-between",
+        fontSize: "0.8rem",
+        fontWeight: 700,
+        marginBottom: 8,
+        color: isMaxXp ? "#22c55e" : theme.subText
+    }),
+
+    xpBar: {
+        width: "100%",
+        height: "14px",
+        background: "rgba(255,255,255,0.08)",
+        borderRadius: "999px",
+        overflow: "hidden",
+        position: "relative"
+    },
+
+    xpFill: (isMaxXp) => ({
+        height: "100%",
+        borderRadius: "999px",
+        background: isMaxXp
+            ? "linear-gradient(90deg, #22c55e, #a3e635)"
+            : "linear-gradient(90deg, #4f46e5, #22c55e)",
+        boxShadow: isMaxXp
+            ? "0 0 18px rgba(34,197,94,0.6)"
+            : "0 0 14px rgba(79,70,229,0.4)"
+    }),
+
+    levelUp: {
+        marginTop: 10,
+        fontSize: "0.85rem",
+        fontWeight: 900,
+        color: "#22c55e",
+        textShadow: "0 0 12px rgba(34,197,94,0.5)"
+    }
+};
 
 export default PlayerStats;

@@ -119,7 +119,8 @@ function App() {
                         gap: "24px",
                         marginTop: "20px",
                         marginBottom: "20px",
-                        width: "100%"
+                        width: "100%",
+                        alignItems: "start"
                     }}
                 >
                     <motion.div variants={fadeUp(0.1)} initial="hidden" animate="show">

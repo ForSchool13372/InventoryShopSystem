@@ -10,45 +10,28 @@ from app.api.routes.schemas.gameSchemas import (
     LoginResponse
 )
 
-from app.core.utils.apiUtils import normalize, safeExecute
+from app.core.utils.apiUtils import safeExecute
 from app.core.deps import getCurrentGame
+from app.core.utils.rateLimiter import rateLimiter
 
 from app.core.wsManager import wsManager
-from app.state.gameState import gameState
-
 from app.repositories.inventoryRepository import InventoryRepository
 from app.repositories.playerRepository import PlayerRepository
+from app.services.leaderboardService import LeaderboardService
+
 
 router = APIRouter(prefix="/api", tags=["Game API"])
 
 inventoryRepository = InventoryRepository()
 playerRepository = PlayerRepository()
-
-
-# =========================================================
-# REAL-TIME HELPERS
-# =========================================================
-
-def getGlobalLeaderboard():
-    players = playerRepository.getAll()
-    return sorted(
-        players,
-        key=lambda p: (p["level"], p["xp"], p["gold"]),
-        reverse=True
-    )
-
+leaderboardService = LeaderboardService(playerRepository)
 
 # =========================================================
 # LOGIN
 # =========================================================
 @router.post("/login", response_model=LoginResponse)
 def login(data: LoginRequest):
-    def action():
-        game = getCurrentGame(data.playerId)
-        result = game.login()
-        return LoginResponse(**result)
-
-    return safeExecute(action)
+    return safeExecute(lambda: LoginResponse(**getCurrentGame(data.playerId).login()))
 
 
 # =========================================================
@@ -70,32 +53,40 @@ def getPlayer(game=Depends(getCurrentGame)):
 # BUY
 # =========================================================
 @router.post("/buy")
-def buy(data: ItemRequest, game=Depends(getCurrentGame)):
-    def action():
-        result = game.buy(
-            normalize(data.itemName),
+def buy(
+    data: ItemRequest,
+    game=Depends(getCurrentGame),
+    allowed=Depends(rateLimiter("buy"))
+):
+    if not allowed:
+        return {"error": "Too many requests"}
+
+    return safeExecute(
+        lambda: game.buy(
+            data.itemName,
             data.quantity
         )
-
-        return result
-
-    return safeExecute(action)
+    )
 
 
 # =========================================================
 # SELL
 # =========================================================
 @router.post("/sell")
-def sell(data: ItemRequest, game=Depends(getCurrentGame)):
-    def action():
-        result = game.sell(
-            normalize(data.itemName),
+def sell(
+    data: ItemRequest,
+    game=Depends(getCurrentGame),
+    allowed=Depends(rateLimiter("sell"))
+):
+    if not allowed:
+        return {"error": "Too many requests"}
+
+    return safeExecute(
+        lambda: game.sell(
+            data.itemName,
             data.quantity
         )
-
-        return result
-
-    return safeExecute(action)
+    )
 
 
 # =========================================================
@@ -118,8 +109,7 @@ def getInventory(game=Depends(getCurrentGame)):
 # =========================================================
 @router.get("/shop", response_model=ShopResponse)
 def getShop(game=Depends(getCurrentGame)):
-    shop = game.shop.getShop()
-    return ShopResponse(data=shop)
+    return ShopResponse(data=game.shop.getShop())
 
 
 # =========================================================
@@ -149,9 +139,8 @@ async def leaderboardSocket(websocket: WebSocket):
         while True:
             await websocket.send_json({
                 "type": "LEADERBOARD_UPDATE",
-                "data": getGlobalLeaderboard()
+                "data": leaderboardService.getLeaderboard()
             })
-
             await asyncio.sleep(5)
 
     except Exception:

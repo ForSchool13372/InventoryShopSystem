@@ -17,7 +17,6 @@ class Shop(Base):
 
     id = Column(Integer, primary_key=True)
 
-    # FIX: itemName should be STRING, not Integer
     itemName = Column(String, unique=True, nullable=False)
 
     stock = Column(Integer, default=0)

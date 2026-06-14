@@ -4,7 +4,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>bcbd5d31-dfb1-4f67-9fbf-dc4f028f5a91</ProjectGuid>
     <ProjectHome>.</ProjectHome>
-    <StartupFile>app\cli\cli.py</StartupFile>
+    <StartupFile>app\core\redisClient.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
@@ -34,6 +34,7 @@
     <Compile Include="app\core\redisClient.py" />
     <Compile Include="app\core\logger.py" />
     <Compile Include="app\core\utils\apiUtils.py" />
+    <Compile Include="app\core\utils\rateLimiter.py" />
     <Compile Include="app\core\wsManager.py" />
     <Compile Include="app\services\itemService.py" />
     <Compile Include="app\core\controller.py" />
@@ -84,6 +85,7 @@
     <Compile Include="tests\core\test_controller.py" />
     <Compile Include="tests\core\test_gameFactory.py" />
     <Compile Include="tests\core\test_questManager.py" />
+    <Compile Include="tests\core\test_wsManager.py" />
     <Compile Include="tests\models\test_enemy.py" />
     <Compile Include="tests\models\test_player.py" />
     <Compile Include="tests\models\test_quest.py" />
