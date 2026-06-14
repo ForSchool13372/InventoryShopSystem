@@ -1,8 +1,11 @@
 ﻿import os
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.logger import setupLogger
+from app.core.redisClient import initRedis
 from app.api.routes.gameRoutes import router as gameRouter
 from app.api.routes.cacheRoutes import router as cacheRouter
 
@@ -18,9 +21,19 @@ DEBUG = ENV == "dev"
 setupLogger()
 
 # =========================
+# LIFESPAN (STARTUP/SHUTDOWN)
+# =========================
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # startup
+    initRedis()
+    yield
+    # shutdown (optional cleanup later)
+
+# =========================
 # APP
 # =========================
-app = FastAPI()
+app = FastAPI(lifespan=lifespan)
 
 # =========================
 # CORS

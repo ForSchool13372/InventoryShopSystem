@@ -2,23 +2,37 @@
 from dotenv import load_dotenv
 import redis
 
-# load environment variables
 load_dotenv()
 
-# Redis client
-redisClient = redis.Redis(
-    host=os.getenv("REDIS_HOST", "localhost"),
-    port=int(os.getenv("REDIS_PORT", 6379)),
-    username=os.getenv("REDIS_USER"),
-    password=os.getenv("REDIS_PASSWORD"),
-    decode_responses=True,
-    socket_connect_timeout=5,
-    socket_timeout=5,
-)
+# =========================================================
+# REDIS CLIENT (LAZY INIT - SAFE FOR TESTS + CI)
+# =========================================================
 
-# optional: quick health check (safe for production startup)
+redisClient = None
+
+
+def initRedis():
+    global redisClient
+
+    redisClient = redis.Redis(
+        host=os.getenv("REDIS_HOST", "localhost"),
+        port=int(os.getenv("REDIS_PORT", 6379)),
+        username=os.getenv("REDIS_USER"),
+        password=os.getenv("REDIS_PASSWORD"),
+        decode_responses=True,
+        socket_connect_timeout=5,
+        socket_timeout=5,
+    )
+
+
+# =========================================================
+# OPTIONAL HEALTH CHECK
+# =========================================================
+
 def checkRedisConnection():
     try:
+        if redisClient is None:
+            return False
         return redisClient.ping()
     except Exception:
         return False
