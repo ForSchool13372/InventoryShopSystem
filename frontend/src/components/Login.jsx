@@ -4,9 +4,6 @@ function Login({ token, onLogin, onLogout, error, theme }) {
     const [inputPlayerId, setInputPlayerId] = useState("");
     const [loading, setLoading] = useState(false);
 
-    // ----------------------------
-    // LOGIN HANDLER
-    // ----------------------------
     const handleSubmit = async () => {
         if (!inputPlayerId || loading) return;
 
@@ -14,24 +11,15 @@ function Login({ token, onLogin, onLogout, error, theme }) {
 
         try {
             const result = await onLogin(inputPlayerId);
-
-            if (result) {
-                setInputPlayerId("");
-            }
-
+            if (result) setInputPlayerId("");
         } catch {
-            // no sound here — App handles it
+            // handled globally
         } finally {
             setLoading(false);
         }
     };
 
-    // ----------------------------
-    // LOGOUT (NO SOUND HERE)
-    // ----------------------------
-    const handleLogoutClick = () => {
-        onLogout();
-    };
+    const handleLogoutClick = () => onLogout();
 
     // ----------------------------
     // STYLES
@@ -39,33 +27,45 @@ function Login({ token, onLogin, onLogout, error, theme }) {
     const cardStyle = {
         background: theme.cardBg,
         color: theme.text,
-        padding: "20px",
+        padding: "22px",
         borderRadius: "16px",
-        boxShadow: "0 10px 30px rgba(0,0,0,0.08)",
-        border: "1px solid rgba(0,0,0,0.05)"
+        boxShadow: "0 12px 35px rgba(0,0,0,0.12)",
+        border: "1px solid rgba(255,255,255,0.04)",
+        transition: "all 0.25s ease"
+    };
+
+    const titleStyle = {
+        marginBottom: "12px",
+        color: theme.text,
+        fontWeight: "800",
+        fontSize: "1.4rem",
+        letterSpacing: "-0.02em"
     };
 
     const inputStyle = {
         flex: 1,
-        padding: "10px 12px",
+        padding: "11px 12px",
         borderRadius: "10px",
         border: `1px solid ${theme.subText}55`,
         outline: "none",
         background: theme.cardBg,
-        color: theme.text
+        color: theme.text,
+        transition: "0.2s ease"
     };
 
-    const buttonBase = {
+    const buttonStyle = (active, color) => ({
         padding: "10px 14px",
         borderRadius: "10px",
         border: "none",
-        fontWeight: "600"
-    };
+        fontWeight: "600",
+        cursor: active ? "pointer" : "not-allowed",
+        background: active ? color : "#9ca3af",
+        color: "white",
+        transition: "all 0.2s ease",
+        transform: "translateY(0px)"
+    });
 
-    const mutedText = {
-        color: theme.subText,
-        margin: 0
-    };
+    const isDisabled = loading || !inputPlayerId;
 
     // ----------------------------
     // LOGGED IN STATE
@@ -73,24 +73,38 @@ function Login({ token, onLogin, onLogout, error, theme }) {
     if (token) {
         return (
             <div style={cardStyle}>
-                <h2 style={{ marginBottom: "10px", color: theme.text }}>
-                    Login
-                </h2>
+                <h2 style={titleStyle}>Login</h2>
 
                 <div style={{
                     display: "flex",
                     justifyContent: "space-between",
                     alignItems: "center"
                 }}>
-                    <p style={mutedText}>Logged in ✔</p>
+                    <div style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "8px",
+                        fontWeight: "600",
+                        color: "#22c55e"
+                    }}>
+                        <span style={{
+                            width: "8px",
+                            height: "8px",
+                            borderRadius: "50%",
+                            background: "#22c55e",
+                            display: "inline-block"
+                        }} />
+                        Logged in
+                    </div>
 
                     <button
                         onClick={handleLogoutClick}
-                        style={{
-                            ...buttonBase,
-                            cursor: "pointer",
-                            background: "#ef4444",
-                            color: "white"
+                        style={buttonStyle(true, "#ef4444")}
+                        onMouseEnter={(e) => {
+                            e.target.style.transform = "translateY(-1px)";
+                        }}
+                        onMouseLeave={(e) => {
+                            e.target.style.transform = "translateY(0px)";
                         }}
                     >
                         Logout
@@ -105,9 +119,7 @@ function Login({ token, onLogin, onLogout, error, theme }) {
     // ----------------------------
     return (
         <div style={cardStyle}>
-            <h2 style={{ marginBottom: "10px", color: theme.text, fontWeight: "800" }}>
-                Login
-            </h2>
+            <h2 style={titleStyle}>Login</h2>
 
             <div style={{
                 display: "flex",
@@ -119,16 +131,29 @@ function Login({ token, onLogin, onLogout, error, theme }) {
                     value={inputPlayerId}
                     onChange={(e) => setInputPlayerId(e.target.value)}
                     style={inputStyle}
+                    onFocus={(e) => {
+                        e.target.style.border = "1px solid #4f46e5";
+                        e.target.style.boxShadow = "0 0 0 3px rgba(79,70,229,0.15)";
+                    }}
+                    onBlur={(e) => {
+                        e.target.style.border = `1px solid ${theme.subText}55`;
+                        e.target.style.boxShadow = "none";
+                    }}
                 />
 
                 <button
                     onClick={handleSubmit}
-                    disabled={loading || !inputPlayerId}
-                    style={{
-                        ...buttonBase,
-                        cursor: loading || !inputPlayerId ? "not-allowed" : "pointer",
-                        background: loading || !inputPlayerId ? "#9ca3af" : "#4f46e5",
-                        color: "white"
+                    disabled={isDisabled}
+                    style={buttonStyle(!isDisabled, "#4f46e5")}
+                    onMouseEnter={(e) => {
+                        if (!isDisabled) {
+                            e.target.style.transform = "translateY(-1px)";
+                            e.target.style.boxShadow = "0 8px 20px rgba(79,70,229,0.25)";
+                        }
+                    }}
+                    onMouseLeave={(e) => {
+                        e.target.style.transform = "translateY(0px)";
+                        e.target.style.boxShadow = "none";
                     }}
                 >
                     {loading ? "Logging in..." : "Login"}
@@ -136,13 +161,17 @@ function Login({ token, onLogin, onLogout, error, theme }) {
             </div>
 
             {error && (
-                <p style={{
+                <div style={{
+                    marginTop: "12px",
+                    padding: "10px",
+                    borderRadius: "10px",
+                    background: "rgba(239,68,68,0.08)",
                     color: "#ef4444",
-                    marginTop: "10px",
-                    fontWeight: "500"
+                    fontWeight: "500",
+                    animation: "fadeIn 0.2s ease"
                 }}>
                     {error}
-                </p>
+                </div>
             )}
         </div>
     );

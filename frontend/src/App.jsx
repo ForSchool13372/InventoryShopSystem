@@ -1,16 +1,7 @@
-﻿// =========================================================
-// REACT CORE / LIBRARIES
-// =========================================================
-import { motion } from "framer-motion";
+﻿import { motion } from "framer-motion";
 
-// =========================================================
-// MAIN HOOK
-// =========================================================
 import useGamePage from "./hooks/useGamePage";
 
-// =========================================================
-// COMPONENTS
-// =========================================================
 import Login from "./components/Login";
 import Shop from "./components/Shop";
 import Inventory from "./components/Inventory";
@@ -19,11 +10,33 @@ import Toasts from "./components/Toasts";
 import Leaderboard from "./components/Leaderboard";
 import Header from "./components/Header";
 
-// =========================================================
-// UTILITIES / CONFIG
-// =========================================================
 import { getTheme } from "./theme";
 import { page, fadeUp } from "./animations";
+
+// =========================================================
+// OUTSIDE COMPONENTS (FIX FOR YOUR ERROR)
+// =========================================================
+const Layout = ({ children }) => (
+    <div style={{
+        width: "100%",
+        maxWidth: "1920px",
+        margin: "0 auto",
+        zIndex: 2
+    }}>
+        {children}
+    </div>
+);
+
+const Section = ({ children, delay = 0 }) => (
+    <motion.div
+        variants={fadeUp(delay)}
+        initial="hidden"
+        animate="show"
+    >
+        {children}
+    </motion.div>
+);
+
 function App() {
     const {
         token,
@@ -77,16 +90,7 @@ function App() {
                 }}
             />
 
-            {/* MAIN CONTAINER (FULL WIDTH CONTROL) */}
-            <div
-                style={{
-                    width: "100%",
-                    maxWidth: "1920px",
-                    margin: "0 auto",
-                    zIndex: 2
-                }}
-            >
-                {/* HEADER */}
+            <Layout>
                 <Header
                     token={token}
                     playerId={playerId}
@@ -96,65 +100,77 @@ function App() {
                 />
 
                 {loading && (
-                    <motion.p style={{ color: theme.subText }}>
-                        Loading world...
-                    </motion.p>
+                    <Section delay={0.02}>
+                        <p style={{ color: theme.subText }}>
+                            Loading world...
+                        </p>
+                    </Section>
                 )}
 
-                {/* LOGIN */}
-                <motion.div variants={fadeUp(0.05)} initial="hidden" animate="show">
+                <Section delay={0.05}>
                     <Login
                         token={token}
                         onLogin={handleLogin}
                         onLogout={handleLogout}
                         theme={theme}
                     />
-                </motion.div>
+                </Section>
 
-                {/* GRID (WIDER + CLEAN DASHBOARD FEEL) */}
-                <div
-                    style={{
-                        display: "grid",
-                        gridTemplateColumns: "3fr 1.2fr",
-                        gap: "24px",
-                        marginTop: "20px",
-                        marginBottom: "20px",
-                        width: "100%",
-                        alignItems: "start"
-                    }}
-                >
-                    <motion.div variants={fadeUp(0.1)} initial="hidden" animate="show">
-                        <Shop
-                            items={items}
-                            token={token}
-                            onBuy={handleBuy}
-                            theme={theme}
-                            buyingItem={buyingItem}
-                        />
-                    </motion.div>
+                {token && (
+                    <Section delay={0.1}>
+                        <div style={{
+                            display: "grid",
+                            gridTemplateColumns: "3fr 1.2fr",
+                            gap: "24px",
+                            marginTop: "20px",
+                            marginBottom: "20px",
+                            alignItems: "start"
+                        }}>
+                            <div style={{
+                                display: "flex",
+                                flexDirection: "column",
+                                gap: "24px"
+                            }}>
+                                <Section delay={0.1}>
+                                    <Shop
+                                        items={items}
+                                        token={token}
+                                        onBuy={handleBuy}
+                                        theme={theme}
+                                        buyingItem={buyingItem}
+                                        playerStats={playerStats}
+                                    />
+                                </Section>
 
-                    <motion.div variants={fadeUp(0.15)} initial="hidden" animate="show">
-                        <PlayerStats playerStats={playerStats} theme={theme} />
-                    </motion.div>
-                </div>
+                                <Section delay={0.15}>
+                                    <Inventory
+                                        inventory={inventory}
+                                        token={token}
+                                        onSell={handleSell}
+                                        theme={theme}
+                                        sellingItem={sellingItem}
+                                    />
+                                </Section>
 
-                <motion.div variants={fadeUp(0.2)} initial="hidden" animate="show">
-                    <Inventory
-                        inventory={inventory}
-                        token={token}
-                        onSell={handleSell}
-                        theme={theme}
-                        sellingItem={sellingItem}
-                    />
-                </motion.div>
+                                <Section delay={0.2}>
+                                    <Leaderboard
+                                        theme={theme}
+                                        token={token}
+                                    />
+                                </Section>
+                            </div>
 
-                <motion.div variants={fadeUp(0.25)} initial="hidden" animate="show">
-                    <Leaderboard theme={theme} token={token} />
-                </motion.div>
+                            <Section delay={0.12}>
+                                <PlayerStats
+                                    playerStats={playerStats}
+                                    theme={theme}
+                                />
+                            </Section>
+                        </div>
+                    </Section>
+                )}
+            </Layout>
 
-            </div>
-
-            {/* TOASTS */}
             <Toasts toasts={toasts} />
         </motion.div>
     );

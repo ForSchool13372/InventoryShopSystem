@@ -86,6 +86,7 @@
     <Compile Include="tests\core\test_gameFactory.py" />
     <Compile Include="tests\core\test_questManager.py" />
     <Compile Include="tests\core\test_wsManager.py" />
+    <Compile Include="tests\fakeRedis.py" />
     <Compile Include="tests\models\test_enemy.py" />
     <Compile Include="tests\models\test_player.py" />
     <Compile Include="tests\models\test_quest.py" />

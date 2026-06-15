@@ -7,29 +7,33 @@ function Inventory({ inventory, token, onSell, theme }) {
     const [viewMode, setViewMode] = useState("list");
     const [search, setSearch] = useState("");
 
-    // quantity state per item
     const [quantities, setQuantities] = useState({});
 
     const getQty = (name) => quantities[name] || 1;
 
-    const setQty = (name, value) => {
+    const setQty = (name, value, maxStock = Infinity) => {
         setQuantities((prev) => ({
             ...prev,
-            [name]: Math.max(1, value)
+            [name]: Math.max(1, Math.min(value, maxStock))
         }));
     };
+
+    // ✅ Capitalize + clean underscores
+    const formatName = (name = "") =>
+        name
+            .replace(/_/g, " ")
+            .split(" ")
+            .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+            .join(" ");
 
     const handleSell = async (itemName, quantity = 1) => {
         try {
             setLoadingItem(itemName);
             setFloatingGold(itemName);
 
-            setTimeout(() => {
-                setFloatingGold(null);
-            }, 900);
+            setTimeout(() => setFloatingGold(null), 900);
 
             await onSell(itemName, quantity);
-
         } finally {
             setLoadingItem(null);
         }
@@ -67,7 +71,8 @@ function Inventory({ inventory, token, onSell, theme }) {
         padding: "8px 14px",
         borderRadius: "10px",
         border: "none",
-        fontWeight: "600"
+        fontWeight: "600",
+        cursor: "pointer"
     };
 
     const toggleBtn = {
@@ -82,7 +87,7 @@ function Inventory({ inventory, token, onSell, theme }) {
     };
 
     const searchBar = {
-        width: "100%",
+        width: "90%",
         padding: "10px 12px",
         borderRadius: "10px",
         border: `1px solid ${theme.subText}33`,
@@ -104,18 +109,6 @@ function Inventory({ inventory, token, onSell, theme }) {
     const filteredInventory = inventory.filter((item) =>
         item.itemName.toLowerCase().includes(search.toLowerCase())
     );
-
-    const containerStyle =
-        viewMode === "grid"
-            ? {
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))",
-                gap: "12px",
-                marginTop: "12px"
-            }
-            : {
-                display: "block"
-            };
 
     return (
         <div style={cardStyle}>
@@ -140,7 +133,6 @@ function Inventory({ inventory, token, onSell, theme }) {
                 Switch to {viewMode === "list" ? "Grid" : "List"}
             </button>
 
-            {/* FLOATING GOLD */}
             <AnimatePresence>
                 {floatingGold && (
                     <motion.div
@@ -166,15 +158,31 @@ function Inventory({ inventory, token, onSell, theme }) {
                 <p style={mutedText}>🎒 No matching items found</p>
             )}
 
-            <div style={containerStyle}>
+            {/* GRID/LIST WRAPPER FIX */}
+            <div
+                style={{
+                    display: viewMode === "grid" ? "grid" : "flex",
+                    flexDirection: viewMode === "list" ? "column" : undefined,
+                    gridTemplateColumns:
+                        viewMode === "grid"
+                            ? "repeat(auto-fill, minmax(180px, 1fr))"
+                            : undefined,
+                    gap: "12px",
+                    marginTop: "12px"
+                }}
+            >
                 <AnimatePresence>
                     {filteredInventory.map((item) => {
                         const isLoading = loadingItem === item.itemName;
                         const qty = getQty(item.itemName);
 
-                        const itemCardStyle =
-                            viewMode === "grid"
-                                ? {
+                        return (
+                            <motion.div
+                                key={item.itemName}
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0 }}
+                                style={{
                                     padding: "14px",
                                     borderRadius: "14px",
                                     border: `1px solid ${theme.subText}33`,
@@ -183,70 +191,94 @@ function Inventory({ inventory, token, onSell, theme }) {
                                     opacity: isLoading ? 0.6 : 1,
                                     display: "flex",
                                     flexDirection: "column",
-                                    gap: "10px"
-                                }
-                                : {
+                                    gap: "10px",
+                                    minWidth: 0
+                                }}
+                            >
+                                {/* TOP */}
+                                <div style={{
                                     display: "flex",
                                     justifyContent: "space-between",
-                                    alignItems: "center",
-                                    padding: "14px",
-                                    marginTop: "12px",
-                                    borderRadius: "12px",
-                                    border: `1px solid ${theme.subText}33`,
-                                    background: theme.cardBg,
-                                    boxShadow: "0 8px 18px rgba(0,0,0,0.06)",
-                                    opacity: isLoading ? 0.6 : 1
-                                };
+                                    alignItems: "center"
+                                }}>
+                                    <div style={{ fontWeight: "800" }}>
+                                        {formatName(item.itemName)}
+                                    </div>
 
-                        return (
-                            <motion.div
-                                key={item.itemName}
-                                initial={{ opacity: 0, y: 10 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                exit={{ opacity: 0 }}
-                                style={itemCardStyle}
-                            >
-                                <div style={{ display: "flex", flexDirection: "column" }}>
-                                    <span style={{ fontWeight: "700" }}>
-                                        {item.itemName}
-                                    </span>
-
-                                    <span style={{
-                                        color: theme.subText,
-                                        fontSize: "0.85rem",
-                                        marginTop: "4px"
+                                    <div style={{
+                                        fontSize: "0.8rem",
+                                        padding: "3px 8px",
+                                        borderRadius: "999px",
+                                        background: theme.subText + "20",
+                                        color: theme.subText
                                     }}>
                                         Qty: {item.quantity}
-                                    </span>
-
-                                    {/* QUANTITY CONTROLS */}
-                                    <div style={{ display: "flex", gap: "6px", marginTop: "8px", alignItems: "center" }}>
-
-                                        <button
-                                            onClick={() => setQty(item.itemName, Math.max(1, qty - 1))}
-                                            style={buttonBase}
-                                        >
-                                            -
-                                        </button>
-
-                                        <span style={{ fontWeight: "700", minWidth: "20px", textAlign: "center" }}>
-                                            {qty}
-                                        </span>
-
-                                        <button
-                                            onClick={() =>
-                                                setQty(item.itemName, Math.min(item.quantity, qty + 1))
-                                            }
-                                            disabled={qty >= item.quantity}
-                                            style={buttonBase}
-                                        >
-                                            +
-                                        </button>
-
                                     </div>
                                 </div>
 
-                                {/* SELL BUTTONS */}
+                                {/* CONTROLS */}
+                                <div style={{
+                                    display: "flex",
+                                    alignItems: "center",
+                                    gap: "6px",
+                                    flexWrap: "wrap"
+                                }}>
+                                    <button
+                                        onClick={() =>
+                                            setQty(item.itemName, qty - 1, item.quantity)
+                                        }
+                                        style={buttonBase}
+                                    >
+                                        -
+                                    </button>
+
+                                    <span style={{
+                                        fontWeight: "800",
+                                        minWidth: "28px",
+                                        textAlign: "center"
+                                    }}>
+                                        {qty}
+                                    </span>
+
+                                    <button
+                                        onClick={() =>
+                                            setQty(item.itemName, qty + 1, item.quantity)
+                                        }
+                                        disabled={qty >= item.quantity}
+                                        style={buttonBase}
+                                    >
+                                        +
+                                    </button>
+
+                                    <button
+                                        onClick={() =>
+                                            setQty(item.itemName, item.quantity, item.quantity)
+                                        }
+                                        style={{
+                                            ...buttonBase,
+                                            marginLeft: "auto",
+                                            background: "#111827",
+                                            color: "white"
+                                        }}
+                                    >
+                                        Max
+                                    </button>
+
+                                    <button
+                                        onClick={() =>
+                                            setQty(item.itemName, 1, item.quantity)
+                                        }
+                                        style={{
+                                            ...buttonBase,
+                                            background: "#ef4444",
+                                            color: "white"
+                                        }}
+                                    >
+                                        Reset
+                                    </button>
+                                </div>
+
+                                {/* SELL */}
                                 <div style={{ display: "flex", gap: "6px" }}>
                                     <button
                                         onClick={() => handleSell(item.itemName, qty)}
