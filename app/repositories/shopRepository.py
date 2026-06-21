@@ -3,87 +3,96 @@ from sqlalchemy import text
 
 class ShopRepository:
 
+    # =========================================================
+    # SHOP
+    # =========================================================
+
     def getShopStock(self, conn):
         rows = conn.execute(text("""
-            SELECT itemName, stock, price
+            SELECT itemname, stock, price
             FROM shop
-        """)).fetchall()
+        """)).mappings().all()
 
-        return [
-            {
-                "itemName": r[0],
-                "stock": r[1],
-                "price": r[2]
-            }
-            for r in rows
-        ]
+        return [dict(row) for row in rows]
 
     def getStock(self, conn, itemName: str):
         result = conn.execute(
-            text("SELECT stock FROM shop WHERE itemName = :itemName"),
-            {"itemName": itemName}
-        ).fetchone()
+            text("""
+                SELECT stock
+                FROM shop
+                WHERE itemname = :itemname
+            """),
+            {"itemname": itemName}
+        ).mappings().fetchone()
 
-        return {"stock": result[0] if result else 0}
+        return {"stock": result["stock"] if result else 0}
+
+    # =========================================================
+    # PLAYER ITEMS
+    # =========================================================
 
     def getPlayerItemQuantity(self, conn, playerId: int, itemName: str):
         result = conn.execute(text("""
             SELECT quantity
-            FROM playerItems
-            WHERE playerID = :playerId AND itemName = :itemName
+            FROM playeritems
+            WHERE playerid = :playerid AND itemname = :itemname
         """), {
-            "playerId": playerId,
-            "itemName": itemName
-        }).fetchone()
+            "playerid": playerId,
+            "itemname": itemName
+        }).mappings().fetchone()
 
-        return {"quantity": result[0] if result else 0}
+        return {"quantity": result["quantity"] if result else 0}
+
+    def addOrUpdatePlayerItem(self, conn, playerId: int, itemName: str, quantity: int):
+        conn.execute(text("""
+            INSERT INTO playeritems (playerid, itemname, quantity)
+            VALUES (:playerid, :itemname, :qty)
+            ON CONFLICT (playerid, itemname)
+            DO UPDATE SET quantity = playeritems.quantity + EXCLUDED.quantity
+        """), {
+            "playerid": playerId,
+            "itemname": itemName,
+            "qty": quantity
+        })
+
+    def removePlayerItem(self, conn, playerId: int, itemName: str, quantity: int):
+        conn.execute(text("""
+            UPDATE playeritems
+            SET quantity = quantity - :qty
+            WHERE playerid = :playerid AND itemname = :itemname
+        """), {
+            "playerid": playerId,
+            "itemname": itemName,
+            "qty": quantity
+        })
+
+        conn.execute(text("""
+            DELETE FROM playeritems
+            WHERE playerid = :playerid AND quantity <= 0
+        """), {
+            "playerid": playerId
+        })
+
+    # =========================================================
+    # SHOP STOCK
+    # =========================================================
 
     def decreaseStock(self, conn, itemName: str, quantity: int):
         conn.execute(text("""
             UPDATE shop
             SET stock = stock - :qty
-            WHERE itemName = :itemName
+            WHERE itemname = :itemname
         """), {
             "qty": quantity,
-            "itemName": itemName
+            "itemname": itemName
         })
 
     def increaseStock(self, conn, itemName: str, quantity: int):
         conn.execute(text("""
             UPDATE shop
             SET stock = stock + :qty
-            WHERE itemName = :itemName
+            WHERE itemname = :itemname
         """), {
             "qty": quantity,
-            "itemName": itemName
-        })
-
-    def addOrUpdatePlayerItem(self, conn, playerId: int, itemName: str, quantity: int):
-        conn.execute(text("""
-            INSERT INTO playerItems (playerID, itemName, quantity)
-            VALUES (:playerId, :itemName, :qty)
-            ON CONFLICT (playerID, itemName)
-            DO UPDATE SET quantity = playerItems.quantity + EXCLUDED.quantity
-        """), {
-            "playerId": playerId,
-            "itemName": itemName,
-            "qty": quantity
-        })
-
-    def removePlayerItem(self, conn, playerId: int, itemName: str, quantity: int):
-        conn.execute(text("""
-            UPDATE playerItems
-            SET quantity = quantity - :qty
-            WHERE playerID = :playerId AND itemName = :itemName
-        """), {
-            "playerId": playerId,
-            "itemName": itemName,
-            "qty": quantity
-        })
-
-        conn.execute(text("""
-            DELETE FROM playerItems
-            WHERE playerID = :playerId AND quantity <= 0
-        """), {
-            "playerId": playerId
+            "itemname": itemName
         })

@@ -8,59 +8,63 @@ class PlayerRepository:
         with engine.begin() as conn:
             result = conn.execute(
                 text("""
-                    SELECT gold, hp, level, xp
+                    SELECT *
                     FROM player
                     WHERE id = :id
                 """),
                 {"id": playerId}
-            ).fetchone()
+            ).mappings().fetchone()
 
             if not result:
                 return None
 
-            return {
-                "gold": result[0],
-                "hp": result[1],
-                "level": result[2],
-                "xp": result[3]
-            }
+            return dict(result)
+
 
     def save(self, playerId: int, player):
+        data = player.toDict()
+
+        data = {
+            "gold": data.get("gold", 0),
+            "hp": data.get("hp", 100),
+            "maxhp": data.get("maxHp", 100),
+
+            "level": data.get("level", 1),
+            "xp": data.get("xp", 0),
+
+            "attack": data.get("attack", 10),
+            "defense": data.get("defense", 5),
+
+            "critchance": data.get("critChance", 0.05),
+            "critmultiplier": data.get("critMultiplier", 1.5),
+        }
+
         with engine.begin() as conn:
             conn.execute(
                 text("""
                     UPDATE player
                     SET gold = :gold,
                         hp = :hp,
+                        maxhp = :maxhp,
                         level = :level,
-                        xp = :xp
+                        xp = :xp,
+                        attack = :attack,
+                        defense = :defense,
+                        critchance = :critchance,
+                        critmultiplier = :critmultiplier
                     WHERE id = :id
                 """),
-                {
-                    "gold": player.gold,
-                    "hp": player.hp,
-                    "level": player.level,
-                    "xp": player.xp,
-                    "id": playerId
-                }
+                {"id": playerId, **data}
             )
+
 
     def getAll(self):
         with engine.begin() as conn:
             result = conn.execute(
                 text("""
-                    SELECT id, gold, hp, level, xp
+                    SELECT *
                     FROM player
                 """)
-            ).fetchall()
+            ).mappings().all()
 
-            return [
-                {
-                    "playerId": row[0],
-                    "gold": row[1],
-                    "hp": row[2],
-                    "level": row[3],
-                    "xp": row[4]
-                }
-                for row in result
-            ]
+            return [dict(row) for row in result]

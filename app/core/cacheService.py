@@ -1,6 +1,6 @@
 import json
 from typing import Any, Optional
-from app.core.redisClient import redisClient
+from app.core.redisClient import redisClient, checkRedisConnection
 
 
 class CacheService:
@@ -24,8 +24,10 @@ class CacheService:
         value: Any,
         ttl: int | None = None
     ) -> None:
-        fullKey = self._formatKey(namespace, key)
+        if redisClient is None:
+            return
 
+        fullKey = self._formatKey(namespace, key)
         payload = json.dumps(value)
 
         if ttl:
@@ -41,8 +43,10 @@ class CacheService:
         namespace: str,
         key: str
     ) -> Optional[Any]:
-        fullKey = self._formatKey(namespace, key)
+        if redisClient is None:
+            return None
 
+        fullKey = self._formatKey(namespace, key)
         value = redisClient.get(fullKey)
 
         if value is None:
@@ -57,13 +61,16 @@ class CacheService:
     # DELETE CACHE
     # -------------------------
     def delete(self, namespace: str, key: str) -> None:
+        if redisClient is None:
+            return
+
         redisClient.delete(self._formatKey(namespace, key))
 
     # -------------------------
     # HEALTH CHECK
     # -------------------------
     def health(self) -> bool:
-        return redisClient.ping()
+        return checkRedisConnection()
 
 
 cacheService = CacheService()

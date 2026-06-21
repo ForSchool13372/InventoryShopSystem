@@ -22,7 +22,7 @@ function Leaderboard({ theme, token }) {
         borderRadius: "16px",
         marginTop: "20px",
         border: "1px solid rgba(255,255,255,0.04)",
-        boxShadow: "0 10px 30px rgba(0,0,0,0.08)"
+        boxShadow: "0 10px 30px rgba(0,0,0,0.08)",
     };
 
     const titleStyle = {
@@ -47,20 +47,6 @@ function Leaderboard({ theme, token }) {
             index === 1 ? "rgba(148,163,184,0.06)" :
                 index === 2 ? "rgba(180,83,9,0.06)" : "transparent"
     });
-
-    const isLoggedIn = !!token;
-
-    // ----------------------------
-    // NOT LOGGED IN
-    // ----------------------------
-    if (!isLoggedIn) {
-        return (
-            <div style={cardStyle}>
-                <h2 style={titleStyle}>Leaderboard</h2>
-                <p style={mutedText}>🔒 Please login to view leaderboard</p>
-            </div>
-        );
-    }
 
     // ----------------------------
     // LOADING STATE

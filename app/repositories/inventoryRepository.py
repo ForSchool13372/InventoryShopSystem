@@ -7,34 +7,35 @@ class InventoryRepository:
     def loadInventory(self, playerId: int):
         with engine.begin() as conn:
             rows = conn.execute(text("""
-                SELECT itemName, quantity
-                FROM playerItems
-                WHERE playerID = :playerId
-            """), {
-                "playerId": playerId
-            }).fetchall()
+                SELECT itemname, quantity
+                FROM playeritems
+                WHERE playerid = :playerid
+            """), {"playerid": playerId}).mappings().all()
 
-        return [
-            {"itemName": r[0], "quantity": r[1]}
-            for r in rows
-        ]
+            return [
+                {
+                    "itemName": r["itemname"],
+                    "quantity": r["quantity"]
+                }
+                for r in rows
+            ]
 
 
     def saveInventory(self, playerId: int, inventoryDict: dict):
         with engine.begin() as conn:
             conn.execute(text("""
-                DELETE FROM playerItems
-                WHERE playerID = :playerId
+                DELETE FROM playeritems
+                WHERE playerid = :playerid
             """), {
-                "playerId": playerId
+                "playerid": playerId
             })
 
             for itemName, qty in inventoryDict.items():
                 conn.execute(text("""
-                    INSERT INTO playerItems (playerID, itemName, quantity)
-                    VALUES (:playerId, :itemName, :qty)
+                    INSERT INTO playeritems (playerid, itemname, quantity)
+                    VALUES (:playerid, :itemname, :qty)
                 """), {
-                    "playerId": playerId,
-                    "itemName": itemName,
+                    "playerid": playerId,
+                    "itemname": itemName,
                     "qty": qty
                 })

@@ -35,16 +35,16 @@ class WSManager:
             self.activeConnections.discard(dc)
 
     # =========================================================
-    # LEADERBOARD SAFE FORMAT (IMPORTANT FIX)
+    # LEADERBOARD BROADCAST (CLEAN + SAFE)
     # =========================================================
     async def broadcastLeaderboard(self, leaderboard: list):
         await self.broadcast({
             "type": "LEADERBOARD_UPDATE",
-            "data": list(leaderboard)  # ensures always array-safe
+            "data": list(leaderboard)
         })
 
 
 # =========================================================
-# SINGLETON (IMPORTANT)
+# SINGLETON
 # =========================================================
 wsManager = WSManager()

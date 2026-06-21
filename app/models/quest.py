@@ -1,5 +1,3 @@
-from app.models.player import Player
-
 class Quest:
     def __init__(self, name, targetEnemy, target, rewardXP):
         self.name = name
@@ -10,32 +8,30 @@ class Quest:
         self.completed = False
         self.unlocked = False
 
-    def showQuest(self):
-        print(f"\nQuest: {self.name}")
-        print(f"Progress: {self.progress}/{self.target}")
-        print(f"Reward: {self.rewardXP} XP")
-        print("Completed:", self.completed)
+    def getStatus(self):
+        return {
+            "name": self.name,
+            "progress": self.progress,
+            "target": self.target,
+            "rewardXP": self.rewardXP,
+            "completed": self.completed,
+            "unlocked": self.unlocked
+        }
 
-    #When quest is completed
-    def complete(self, player):
+    def complete(self):
         if self.completed:
-            return
+            return 0
 
         self.completed = True
-        print(f"\nQuest Completed: {self.name}")
-        print(f"+{self.rewardXP} XP Reward")
-        player.gainXP(self.rewardXP)
+        return self.rewardXP
 
-
-    def update(self, enemyName, player):
+    def update(self, enemyName):
         if self.completed or not self.unlocked or enemyName != self.targetEnemy:
-            return False
+            return 0
 
         self.progress += 1
-        print(f"Quest progress: {self.name} {self.progress}/{self.target}")
 
         if self.progress >= self.target:
-            self.complete(player)
-            return True
+            return self.complete()
 
-        return False
+        return 0

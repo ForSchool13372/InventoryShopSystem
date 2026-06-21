@@ -1,44 +1,44 @@
 ﻿import { useState, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
+import { getCardStyle, buttonBase } from "../styles/uiStyles";
+
 function Shop({ items, token, onBuy, theme, playerStats }) {
     const [loadingItem, setLoadingItem] = useState(null);
     const [purchasedItem, setPurchasedItem] = useState(null);
     const [searchQuery, setSearchQuery] = useState("");
     const [cart, setCart] = useState({});
 
-    const playerGold = playerStats?.gold ?? 0;
+    const playerGold = playerStats?.core?.gold ?? 0;
 
-    const formatName = (name) =>
-        name.charAt(0).toUpperCase() + name.slice(1);
+    const formatName = (name = "") => {
+        if (!name) return "";
+        return name.charAt(0).toUpperCase() + name.slice(1);
+    };
 
     const setQty = useCallback((itemName, value, maxStock) => {
         setCart((prev) => {
             const current = prev[itemName];
-
             if (!current) return prev;
 
-            // HANDLE REMOVE ONLY when explicitly called (value === 0)
             if (value === 0) {
                 const updated = { ...prev };
                 delete updated[itemName];
                 return updated;
             }
 
-            // ALWAYS clamp between 1 and maxStock
             const newQty = Math.max(1, Math.min(value, maxStock));
 
             return {
                 ...prev,
-                [itemName]: {
-                    ...current,
-                    qty: newQty
-                }
+                [itemName]: { ...current, qty: newQty }
             };
         });
     }, []);
 
     const addToCart = (item) => {
+        if (item.stock === 0) return;
+
         setCart((prev) => ({
             ...prev,
             [item.itemName]: {
@@ -49,22 +49,26 @@ function Shop({ items, token, onBuy, theme, playerStats }) {
     };
 
     const totalCartCost = useMemo(() => {
-        return Object.values(cart).reduce((sum, entry) => {
-            return sum + (entry.item.price ?? 0) * entry.qty;
-        }, 0);
+        return Object.values(cart).reduce(
+            (sum, entry) => sum + (entry.item.price ?? 0) * entry.qty,
+            0
+        );
     }, [cart]);
 
-    const canAfford = playerGold >= totalCartCost;
+    // IMPORTANT FIX: cart empty should not break logic
+    const cartHasItems = Object.keys(cart).length > 0;
+    const canAfford = cartHasItems && playerGold >= totalCartCost;
 
     const filteredItems = useMemo(() => {
-        return items.filter((item) =>
-            item.itemName.toLowerCase().includes(searchQuery.toLowerCase())
+        return (items ?? []).filter((item) =>
+            (item?.itemName ?? "")
+                .toLowerCase()
+                .includes(searchQuery.toLowerCase())
         );
     }, [items, searchQuery]);
 
     const handleBuy = async () => {
-        if (!token || Object.keys(cart).length === 0) return;
-        if (!canAfford) return;
+        if (!token || !cartHasItems || !canAfford) return;
 
         setLoadingItem("cart");
 
@@ -81,26 +85,7 @@ function Shop({ items, token, onBuy, theme, playerStats }) {
         }
     };
 
-    const cardStyle = {
-        background: theme.cardBg,
-        color: theme.text,
-        padding: "20px",
-        borderRadius: "18px",
-        boxShadow: "0 12px 35px rgba(0,0,0,0.08)",
-        border: "1px solid rgba(0,0,0,0.05)",
-        display: "flex",
-        gap: "16px"
-    };
-
-    const buttonBase = {
-        padding: "6px 10px",
-        borderRadius: "10px",
-        border: "none",
-        fontWeight: "600",
-        cursor: "pointer",
-        minWidth: "34px", 
-        textAlign: "center"
-    };
+    const cardStyle = getCardStyle(theme);
 
     return (
         <motion.div
@@ -108,13 +93,9 @@ function Shop({ items, token, onBuy, theme, playerStats }) {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
         >
-            {/* LEFT - ITEMS */}
+            {/* LEFT */}
             <div style={{ flex: 2 }}>
-                <h2 style={{
-                    fontWeight: "800",
-                    color: theme.text,
-                    fontSize: "1.4rem"
-                }}>
+                <h2 style={{ fontWeight: 800, color: theme.text, fontSize: "1.4rem" }}>
                     🛒 Shop
                 </h2>
 
@@ -142,7 +123,7 @@ function Shop({ items, token, onBuy, theme, playerStats }) {
                 }}>
                     {filteredItems.map((item) => (
                         <motion.div
-                            key={item.itemName}
+                            key={`${item?.itemName ?? "item"}-${item.price ?? 0}`}
                             whileHover={{ scale: 1.02 }}
                             onClick={() => addToCart(item)}
                             style={{
@@ -150,25 +131,24 @@ function Shop({ items, token, onBuy, theme, playerStats }) {
                                 borderRadius: "12px",
                                 border: `1px solid ${theme.subText}33`,
                                 background: theme.cardBg,
-                                cursor: "pointer",
-                                opacity: item.stock === 0 ? 0.5 : 1,
+                                cursor: item.stock === 0 ? "not-allowed" : "pointer",
+                                opacity: item.stock === 0 ? 0.4 : 1,
                                 display: "flex",
                                 flexDirection: "column",
                                 gap: "8px"
                             }}
                         >
-                            {/* TOP ROW */}
                             <div style={{
                                 display: "flex",
                                 justifyContent: "space-between",
                                 alignItems: "center"
                             }}>
-                                <div style={{ fontWeight: "800" }}>
+                                <div style={{ fontWeight: 800 }}>
                                     {formatName(item.itemName)}
                                 </div>
 
                                 <div style={{
-                                    fontWeight: "800",
+                                    fontWeight: 800,
                                     fontSize: "0.85rem",
                                     color: "#fbbf24",
                                     background: "rgba(251,191,36,0.08)",
@@ -179,7 +159,6 @@ function Shop({ items, token, onBuy, theme, playerStats }) {
                                 </div>
                             </div>
 
-                            {/* META ROW */}
                             <div style={{
                                 display: "flex",
                                 gap: "6px",
@@ -212,9 +191,9 @@ function Shop({ items, token, onBuy, theme, playerStats }) {
                 </div>
             </div>
 
-            {/* RIGHT - CART */}
+            {/* RIGHT */}
             <div style={{
-                flex: "0 0 320px", 
+                flex: "0 0 320px",
                 padding: "14px",
                 borderRadius: "12px",
                 border: `1px solid ${theme.subText}33`,
@@ -225,143 +204,100 @@ function Shop({ items, token, onBuy, theme, playerStats }) {
             }}>
                 <h3>🧾 Cart</h3>
 
-                {Object.keys(cart).length === 0 ? (
+                {!cartHasItems ? (
                     <p style={{ color: theme.subText }}>Cart is empty</p>
                 ) : (
                     <>
-                            {Object.values(cart).map((entry) => (
-                                <div
-                                    key={entry.item.itemName}
-                                    style={{
-                                        marginBottom: "12px",
-                                        padding: "10px",
-                                        borderRadius: "12px",
-                                        border: `1px solid ${theme.subText}22`,
-                                        background: theme.cardBg,
-                                        display: "flex",
-                                        flexDirection: "column",
-                                        gap: "8px"
-                                    }}
-                                >
-                                    {/* TOP ROW */}
-                                    <div style={{
-                                        display: "flex",
-                                        justifyContent: "space-between",
-                                        alignItems: "center"
-                                    }}>
-                                        <div style={{ fontWeight: "800" }}>
-                                            {formatName(entry.item.itemName)}
-                                        </div>
-
-                                        <div style={{
-                                            fontSize: "0.8rem",
-                                            fontWeight: "700",
-                                            color: "#fbbf24",
-                                            background: "rgba(251,191,36,0.08)",
-                                            padding: "3px 8px",
-                                            borderRadius: "999px"
-                                        }}>
-                                            💰 {entry.item.price}
-                                        </div>
+                        {Object.values(cart).map((entry) => (
+                            <div
+                                key={`${entry?.item?.itemName ?? "item"}-${entry.item?.price ?? 0}`}
+                                style={{
+                                    marginBottom: "12px",
+                                    padding: "10px",
+                                    borderRadius: "12px",
+                                    border: `1px solid ${theme.subText}22`,
+                                    background: theme.cardBg,
+                                    display: "flex",
+                                    flexDirection: "column",
+                                    gap: "8px"
+                                }}
+                            >
+                                <div style={{
+                                    display: "flex",
+                                    justifyContent: "space-between",
+                                    alignItems: "center"
+                                }}>
+                                    <div style={{ fontWeight: 800 }}>
+                                        {formatName(entry.item.itemName)}
                                     </div>
 
-                                    {/* QTY CONTROLS */}
                                     <div style={{
-                                        display: "flex",
-                                        alignItems: "center",
-                                        gap: "6px",
-                                        flexWrap: "wrap"
+                                        fontSize: "0.8rem",
+                                        fontWeight: 700,
+                                        color: "#fbbf24",
+                                        background: "rgba(251,191,36,0.08)",
+                                        padding: "3px 8px",
+                                        borderRadius: "999px"
                                     }}>
-                                        <button
-                                            style={{
-                                                ...buttonBase,
-                                                width: "32px",
-                                                height: "32px",
-                                                padding: 0
-                                            }}
-                                            onClick={() =>
-                                                setQty(
-                                                    entry.item.itemName,
-                                                    Math.max(1, entry.qty - 1),
-                                                    entry.item.stock
-                                                )
-                                            }
-                                        >
-                                            -
-                                        </button>
-
-                                        <span style={{
-                                            fontWeight: "800",
-                                            minWidth: "28px",
-                                            textAlign: "center"
-                                        }}>
-                                            x{entry.qty}
-                                        </span>
-
-                                        <button
-                                            style={{
-                                                ...buttonBase,
-                                                width: "32px",
-                                                height: "32px",
-                                                padding: 0
-                                            }}
-                                            onClick={() =>
-                                                setQty(
-                                                    entry.item.itemName,
-                                                    entry.qty + 1,
-                                                    entry.item.stock
-                                                )
-                                            }
-                                        >
-                                            +
-                                        </button>
-
-                                        {/* MAX */}
-                                        <button
-                                            style={{
-                                                ...buttonBase,
-                                                marginLeft: "auto",
-                                                background: "#111827",
-                                                color: "white",
-                                                padding: "6px 10px"
-                                            }}
-                                            onClick={() =>
-                                                setQty(
-                                                    entry.item.itemName,
-                                                    entry.item.stock,
-                                                    entry.item.stock
-                                                )
-                                            }
-                                        >
-                                            Max
-                                        </button>
-
-                                        {/* REMOVE */}
-                                        <button
-                                            style={{
-                                                ...buttonBase,
-                                                background: "#ef4444",
-                                                color: "white",
-                                                padding: "6px 10px"
-                                            }}
-                                            onClick={() =>
-                                                setQty(entry.item.itemName, 0, entry.item.stock)
-                                            }
-                                        >
-                                            Remove
-                                        </button>
+                                        💰 {entry.item.price}
                                     </div>
                                 </div>
-                            ))}
+
+                                <div style={{
+                                    display: "flex",
+                                    alignItems: "center",
+                                    gap: "6px",
+                                    flexWrap: "wrap"
+                                }}>
+                                    <button style={buttonBase} onClick={() =>
+                                        setQty(entry.item.itemName, Math.max(1, entry.qty - 1), entry.item.stock)
+                                    }>−</button>
+
+                                    <span style={{ fontWeight: 800, minWidth: "28px" }}>
+                                        x{entry.qty}
+                                    </span>
+
+                                    <button style={buttonBase} onClick={() =>
+                                        setQty(entry.item.itemName, entry.qty + 1, entry.item.stock)
+                                    }>+</button>
+
+                                    <button
+                                        style={{
+                                            ...buttonBase,
+                                            marginLeft: "auto",
+                                            background: "#111827",
+                                            color: "white"
+                                        }}
+                                        onClick={() =>
+                                            setQty(entry.item.itemName, entry.item.stock, entry.item.stock)
+                                        }
+                                    >
+                                        Max
+                                    </button>
+
+                                    <button
+                                        style={{
+                                            ...buttonBase,
+                                            background: "#ef4444",
+                                            color: "white"
+                                        }}
+                                        onClick={() =>
+                                            setQty(entry.item.itemName, 0, entry.item.stock)
+                                        }
+                                    >
+                                        🗑️
+                                    </button>
+                                </div>
+                            </div>
+                        ))}
 
                         <hr />
 
                         <div style={{ marginTop: "10px" }}>
                             <div>Total: 💰 {totalCartCost}</div>
-
                             <div style={{
                                 color: canAfford ? "#22c55e" : "#ef4444",
-                                fontWeight: "600"
+                                fontWeight: 600
                             }}>
                                 {canAfford ? "Can afford" : "Not enough gold"}
                             </div>
@@ -370,7 +306,7 @@ function Shop({ items, token, onBuy, theme, playerStats }) {
                         <motion.button
                             whileTap={{ scale: 0.95 }}
                             onClick={handleBuy}
-                            disabled={!token || !canAfford}
+                            disabled={!token || !cartHasItems || !canAfford}
                             style={{
                                 ...buttonBase,
                                 width: "100%",
@@ -385,7 +321,6 @@ function Shop({ items, token, onBuy, theme, playerStats }) {
                 )}
             </div>
 
-            {/* SUCCESS */}
             <AnimatePresence>
                 {purchasedItem && (
                     <motion.div
@@ -397,7 +332,7 @@ function Shop({ items, token, onBuy, theme, playerStats }) {
                             top: "12px",
                             right: "16px",
                             color: "#22c55e",
-                            fontWeight: "800"
+                            fontWeight: 800
                         }}
                     >
                         ✔ Purchased

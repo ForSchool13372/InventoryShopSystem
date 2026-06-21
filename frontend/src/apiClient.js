@@ -1,4 +1,4 @@
-const API = import.meta.env.VITE_API_URL;
+﻿const API = import.meta.env.VITE_API_URL;
 
 const TOKEN_KEY = "auth_token";
 
@@ -127,3 +127,8 @@ export const createLeaderboardSocket = (onMessage) => {
 
     return ws;
 };
+
+export const startFight = () =>
+    apiRequest(`${API}/api/fight`, {
+        method: "POST"
+    });

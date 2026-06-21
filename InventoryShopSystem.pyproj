@@ -44,7 +44,7 @@
     <Compile Include="app\services\combat.py" />
     <Compile Include="app\core\inputHandler.py" />
     <Compile Include="app\services\combatService.py" />
-    <Compile Include="app\core\gameData.py" />
+    <Compile Include="app\core\seed.py" />
     <Compile Include="app\services\gameEventService.py" />
     <Compile Include="app\core\gameEvents.py" />
     <Compile Include="app\services\menuService.py" />
@@ -119,6 +119,7 @@
     <Content Include="frontend\src\App.jsx" />
     <Content Include="frontend\src\AuthContext.jsx" />
     <Content Include="frontend\src\AuthProvider.jsx" />
+    <Content Include="frontend\src\components\combatPanel.jsx" />
     <Content Include="frontend\src\components\Header.jsx" />
     <Content Include="frontend\src\components\Inventory.jsx" />
     <Content Include="frontend\src\components\Leaderboard.jsx" />
@@ -135,6 +136,7 @@
     <Content Include="frontend\src\hooks\useToast.js" />
     <Content Include="frontend\src\index.css" />
     <Content Include="frontend\src\main.jsx" />
+    <Content Include="frontend\src\styles\uiStyles.js" />
     <Content Include="frontend\src\theme.js" />
     <Content Include="frontend\src\utils\soundSystem.js" />
     <Content Include="README.md" />
@@ -158,6 +160,7 @@
     <Folder Include="frontend\src\" />
     <Folder Include="frontend\src\components\" />
     <Folder Include="frontend\src\hooks\" />
+    <Folder Include="frontend\src\styles\" />
     <Folder Include="frontend\src\utils\" />
     <Folder Include="tests\" />
     <Folder Include="tests\api\" />

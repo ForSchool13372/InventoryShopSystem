@@ -1,7 +1,7 @@
 import soundSystem from "../utils/soundSystem";
 import { loginPlayer } from "../apiClient";
 
-export default function useAuthActions({ login, logout, addToast, resetGame }) {
+export default function useAuthActions({ login, logout, addToast, resetGame, clearFight }) {
 
     const handleLogin = async (id) => {
         try {
@@ -30,6 +30,7 @@ export default function useAuthActions({ login, logout, addToast, resetGame }) {
     const handleLogout = () => {
         logout();
         resetGame();
+        clearFight();
 
         soundSystem.play("click");
         addToast("Logged out", "info");

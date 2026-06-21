@@ -1,12 +1,16 @@
 import soundSystem from "../utils/soundSystem";
-import { buyItem, sellItem } from "../apiClient";
+import { useState } from "react";
+import { buyItem, sellItem, startFight } from "../apiClient";
 
 export default function useGameActions({
-    refreshGameAfterTrade,   //  CHANGE THIS (was refreshAll)
+    playerId,
+    refreshGame,
     addToast,
     setBuyingItem,
     setSellingItem
 }) {
+    const [fightData, setFightData] = useState(null);
+    const [loading, setLoading] = useState(false);
 
     const handleBuy = async (itemName, quantity = 1) => {
         setBuyingItem(itemName);
@@ -14,27 +18,27 @@ export default function useGameActions({
         try {
             const res = await buyItem(itemName, quantity);
 
-            await refreshGameAfterTrade(); //  CHANGE HERE
+            await refreshGame?.();
 
             const success = res?.success === true;
 
             if (success) {
                 soundSystem.play("buy");
-                addToast(`Bought ${itemName}`, "success");
+                addToast?.(`Bought ${itemName}`, "success");
             } else {
                 soundSystem.play("error");
-                addToast(res?.message || "Buy failed", "error");
+                addToast?.(res?.message || "Buy failed", "error");
             }
 
             return success;
 
         } catch (err) {
             soundSystem.play("error");
-            addToast(err?.message || "Buy failed", "error");
+            addToast?.(err?.message || "Buy failed", "error");
             return false;
 
         } finally {
-            setTimeout(() => setBuyingItem(null), 150);
+            setTimeout(() => setBuyingItem?.(null), 150);
         }
     };
 
@@ -44,22 +48,56 @@ export default function useGameActions({
         try {
             await sellItem(itemName, quantity);
 
-            await refreshGameAfterTrade(); //  CHANGE HERE
+            await refreshGame?.();
 
             soundSystem.play("sell");
-            addToast(`Sold ${itemName}`, "success");
+            addToast?.(`Sold ${itemName}`, "success");
 
         } catch (err) {
             soundSystem.play("error");
-            addToast(err?.message || "Sell failed", "error");
+            addToast?.(err?.message || "Sell failed", "error");
 
         } finally {
-            setTimeout(() => setSellingItem(null), 150);
+            setTimeout(() => setSellingItem?.(null), 150);
         }
+    };
+
+    const handleFight = async () => {
+        if (!playerId || loading) return false;
+
+        soundSystem.play("click");
+
+        setLoading(true);
+
+        try {
+            const res = await startFight();
+
+            setFightData(res);
+
+            await refreshGame?.();
+
+            return true;
+
+        } catch (err) {
+            soundSystem.play("error");
+            addToast?.(err?.message || "Fight failed", "error");
+            return false;
+
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const clearFight = () => {
+        setFightData(null);
     };
 
     return {
         handleBuy,
-        handleSell
+        handleSell,
+        fightData,
+        loading,
+        handleFight,
+        clearFight
     };
 }

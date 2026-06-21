@@ -8,6 +8,10 @@ export default function Header({
     toggleDarkMode,
     theme
 }) {
+    const subtitleText = token
+        ? `Logged in as ${playerId}`
+        : "Start your journey today!";
+
     return (
         <motion.div
             variants={fadeUp(0)}
@@ -39,7 +43,7 @@ export default function Header({
                         color: theme.subText
                     }}
                 >
-                    {token ? `Logged in as ${playerId}` : "Start your journey today!"}
+                    {subtitleText}
                 </p>
             </div>
 

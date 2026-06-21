@@ -16,8 +16,7 @@ export default function useGamePage() {
         inventory,
         playerStats,
         loading,
-        refreshAll,
-        refreshGameAfterTrade,
+        refreshGame,
         resetGame
     } = useGame(token, playerId);
 
@@ -26,8 +25,16 @@ export default function useGamePage() {
     const [buyingItem, setBuyingItem] = useState(null);
     const [sellingItem, setSellingItem] = useState(null);
 
-    const { handleBuy, handleSell } = useGameActions({
-        refreshGameAfterTrade,
+    const {
+        handleBuy,
+        handleSell,
+        fightData,
+        loading: fightLoading,
+        handleFight,
+        clearFight
+    } = useGameActions({
+        playerId,
+        refreshGame,
         addToast,
         setBuyingItem,
         setSellingItem
@@ -37,7 +44,8 @@ export default function useGamePage() {
         login,
         logout,
         addToast,
-        resetGame
+        resetGame,
+        clearFight
     });
 
     return {
@@ -52,13 +60,18 @@ export default function useGamePage() {
         inventory,
         playerStats,
         loading,
-        refreshAll,
-        refreshGameAfterTrade,
+        refreshGame,
         resetGame,
 
         // actions
         handleBuy,
         handleSell,
+
+        // combat
+        fightData,
+        fightLoading,
+        handleFight,
+        clearFight,
 
         // ui state
         buyingItem,

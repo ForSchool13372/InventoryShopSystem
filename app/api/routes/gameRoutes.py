@@ -1,4 +1,7 @@
-﻿from fastapi import APIRouter, Depends, WebSocket
+﻿from fastapi import APIRouter, Depends, WebSocket, HTTPException
+from starlette.websockets import WebSocketDisconnect
+import logging
+from typing import Set
 import asyncio
 
 from app.api.routes.schemas.gameSchemas import (
@@ -11,7 +14,7 @@ from app.api.routes.schemas.gameSchemas import (
 )
 
 from app.core.utils.apiUtils import safeExecute
-from app.core.deps import getCurrentGame
+from app.core.deps import getCurrentGame, getCurrentGameWs
 from app.core.utils.rateLimiter import rateLimiter
 
 from app.core.wsManager import wsManager
@@ -25,13 +28,17 @@ router = APIRouter(prefix="/api", tags=["Game API"])
 inventoryRepository = InventoryRepository()
 playerRepository = PlayerRepository()
 leaderboardService = LeaderboardService(playerRepository)
+logger = logging.getLogger(__name__)
+
 
 # =========================================================
 # LOGIN
 # =========================================================
 @router.post("/login", response_model=LoginResponse)
 def login(data: LoginRequest):
-    return safeExecute(lambda: LoginResponse(**getCurrentGame(data.playerId).login()))
+    return safeExecute(
+        lambda: LoginResponse(**getCurrentGame(data.playerId).login())
+    )
 
 
 # =========================================================
@@ -39,13 +46,19 @@ def login(data: LoginRequest):
 # =========================================================
 @router.get("/player", response_model=PlayerResponse)
 def getPlayer(game=Depends(getCurrentGame)):
-    player = game.getPlayerStats()
+    try:
+        return PlayerResponse(**game.getPlayerStats())
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
 
-    return PlayerResponse(
-        gold=player["gold"],
-        hp=player["hp"],
-        level=player["level"],
-        xp=player["xp"]
+
+# =========================================================
+# FIGHT (NEW)
+# =========================================================
+@router.post("/fight")
+def fight(game=Depends(getCurrentGame)):
+    return safeExecute(
+        lambda: game.fight()
     )
 
 
@@ -62,10 +75,7 @@ def buy(
         return {"error": "Too many requests"}
 
     return safeExecute(
-        lambda: game.buy(
-            data.itemName,
-            data.quantity
-        )
+        lambda: game.buy(data.itemName, data.quantity)
     )
 
 
@@ -82,10 +92,7 @@ def sell(
         return {"error": "Too many requests"}
 
     return safeExecute(
-        lambda: game.sell(
-            data.itemName,
-            data.quantity
-        )
+        lambda: game.sell(data.itemName, data.quantity)
     )
 
 
@@ -96,12 +103,7 @@ def sell(
 def getInventory(game=Depends(getCurrentGame)):
     rows = inventoryRepository.loadInventory(game.playerId)
 
-    return InventoryResponse(
-        items=[
-            {"itemName": r["itemName"], "quantity": r["quantity"]}
-            for r in rows
-        ]
-    )
+    return InventoryResponse(items=rows)
 
 
 # =========================================================
@@ -117,7 +119,7 @@ def getShop(game=Depends(getCurrentGame)):
 # =========================================================
 @router.get("/events")
 def getEvents(game=Depends(getCurrentGame)):
-    return {"events": game.eventService.getEvents()}
+    return {"events": game.gameEventService.getEvents()}
 
 
 # =========================================================
@@ -129,22 +131,35 @@ def health():
 
 
 # =========================================================
-# LEADERBOARD WEBSOCKET
+# LEADERBOARD WEBSOCKET (EVENT-DRIVEN)
 # =========================================================
 @router.websocket("/ws/leaderboard")
 async def leaderboardSocket(websocket: WebSocket):
     await wsManager.connect(websocket)
 
     try:
+        leaderboard = leaderboardService.getLeaderboard()
+
+        await websocket.send_json({
+            "type": "LEADERBOARD_UPDATE",
+            "data": leaderboard
+        })
+
         while True:
-            await websocket.send_json({
-                "type": "LEADERBOARD_UPDATE",
-                "data": leaderboardService.getLeaderboard()
-            })
             await asyncio.sleep(5)
 
-    except Exception:
-        pass
+            leaderboard = leaderboardService.getLeaderboard()
+
+            await websocket.send_json({
+                "type": "LEADERBOARD_UPDATE",
+                "data": leaderboard
+            })
+
+    except WebSocketDisconnect:
+        logger.info("Client disconnected from leaderboard websocket")
+
+    except Exception as e:
+        logger.exception("Leaderboard websocket error")
 
     finally:
         wsManager.disconnect(websocket)

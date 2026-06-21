@@ -1,12 +1,22 @@
-from pydantic import BaseModel, field_validator
-from typing import List, Literal
+from pydantic import BaseModel, field_validator, Field, ConfigDict
+from typing import List
+
+
+# =========================================================
+# BASE (GLOBAL RULE: snake_case DB -> camelCase API)
+# =========================================================
+
+class BaseSchema(BaseModel):
+    model_config = ConfigDict(
+        populate_by_name=True
+    )
 
 
 # =========================================================
 # REQUEST MODELS
 # =========================================================
 
-class ItemRequest(BaseModel):
+class ItemRequest(BaseSchema):
     itemName: str
     quantity: int
 
@@ -25,41 +35,79 @@ class ItemRequest(BaseModel):
         return v
 
 
-class LoginRequest(BaseModel):
+class LoginRequest(BaseSchema):
     playerId: int
 
 
 # =========================================================
-# RESPONSE MODELS (THIS IS THE IMPORTANT UPGRADE)
+# RESPONSE MODELS
 # =========================================================
 
-class LoginResponse(BaseModel):
+class LoginResponse(BaseSchema):
     success: bool
     token: str
     id: int
 
 
-class PlayerResponse(BaseModel):
+# =========================================================
+# PLAYER
+# =========================================================
+
+class PlayerCore(BaseSchema):
     gold: int
     hp: int
+    maxHp: int
+
+
+class PlayerProgression(BaseSchema):
     level: int
     xp: int
 
 
-class InventoryResponse(BaseModel):
-    items: list
+class PlayerCombat(BaseSchema):
+    attack: int
+    defense: int
+    critChance: float
+    critMultiplier: float
 
 
-class ShopItem(BaseModel):
-    itemName: str
+class PlayerResponse(BaseSchema):
+    core: PlayerCore
+    progression: PlayerProgression
+    combat: PlayerCombat
+
+
+# =========================================================
+# INVENTORY
+# =========================================================
+
+class InventoryItem(BaseSchema):
+    itemName: str = Field(alias="itemname")
+    quantity: int
+
+
+class InventoryResponse(BaseSchema):
+    items: List[InventoryItem]
+
+
+# =========================================================
+# SHOP
+# =========================================================
+
+class ShopItem(BaseSchema):
+    itemName: str = Field(alias="itemname")
     stock: int
     price: int
 
 
-class ShopResponse(BaseModel):
+class ShopResponse(BaseSchema):
     data: List[ShopItem]
 
 
-class ActionResponse(BaseModel):
+# =========================================================
+# GENERIC ACTION RESPONSE
+# =========================================================
+
+class ActionResponse(BaseSchema):
     success: bool
     message: str | None = None

@@ -4,7 +4,7 @@ from app.repositories.inventoryRepository import InventoryRepository
 from app.services.itemService import ItemService
 from app.services.combatService import CombatService
 from app.services.leaderboardService import LeaderboardService
-from app.core.gameData import createEnemies, createQuests
+from app.core.seed import createEnemies, createQuests
 from app.repositories.playerRepository import PlayerRepository
 from app.core.gameContext import GameContext
 from app.state.gameState import gameState
@@ -44,10 +44,18 @@ class PlayerFactory:
     def fromData(data):
         from app.models.player import Player
 
-        player = Player(gold=data.get("gold", 0))
-        player.hp = data.get("hp", 100)
-        player.level = data.get("level", 1)
-        player.xp = data.get("xp", 0)
+        player = Player(
+            gold=data.get("gold", 0),
+            hp=data.get("hp", 100),
+            maxHp=data.get("maxhp", 100),
+            level=data.get("level", 1),
+            xp=data.get("xp", 0)
+        )
+
+        player.combat["attack"] = data.get("attack", player.combat["attack"])
+        player.combat["defense"] = data.get("defense", player.combat["defense"])
+        player.combat["critChance"] = data.get("critchance", player.combat["critChance"])
+        player.combat["critMultiplier"] = data.get("critmultiplier", player.combat["critMultiplier"])
 
         return player
 
@@ -66,18 +74,31 @@ class GameFactory:
         from app.core.questManager import QuestManager
         from app.services.gameEventService import GameEventService
         from app.core.controller import Controller
+        from app.core.wsManager import wsManager  
 
         playerId = int(playerId)
 
-        data = self.repos.player.load(playerId)
+        # =========================
+        # ALWAYS SINGLE SOURCE OF TRUTH
+        # =========================
+        player = gameState.getPlayer(playerId)
 
-        if not data:
-            raise ValueError(f"Player not found: {playerId}")
+        if player is None:
+            data = self.repos.player.load(playerId)
 
-        player = PlayerFactory.fromData(data)
+            if not data:
+                raise ValueError(f"Player not found: {playerId}")
+
+            player = PlayerFactory.fromData(data)
+            gameState.addPlayer(playerId, player)
 
         questManager = QuestManager(self.world.quests, player)
-        gameEventService = GameEventService(player, questManager)
+
+        gameEventService = GameEventService(
+            gameState,
+            questManager,
+            wsManager
+        )
 
         ctx = GameContext(
             player=player,

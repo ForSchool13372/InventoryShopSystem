@@ -9,6 +9,7 @@ import PlayerStats from "./components/PlayerStats";
 import Toasts from "./components/Toasts";
 import Leaderboard from "./components/Leaderboard";
 import Header from "./components/Header";
+import CombatPanel from "./components/combatPanel";
 
 import { getTheme } from "./theme";
 import { page, fadeUp } from "./animations";
@@ -49,11 +50,17 @@ function App() {
         loading,
         handleBuy,
         handleSell,
+
+        fightData,
+        fightLoading,
+        handleFight,
+        clearFight,
+
         buyingItem,
         sellingItem,
         toasts,
         darkMode,
-        toggleDarkMode
+        toggleDarkMode,
     } = useGamePage();
 
     const theme = getTheme(darkMode);
@@ -117,57 +124,76 @@ function App() {
                 </Section>
 
                 {token && (
-                    <Section delay={0.1}>
-                        <div style={{
-                            display: "grid",
-                            gridTemplateColumns: "3fr 1.2fr",
-                            gap: "24px",
-                            marginTop: "20px",
-                            marginBottom: "20px",
-                            alignItems: "start"
-                        }}>
+                    <>
+                        {/* MAIN GRID */}
+                        <Section delay={0.1}>
                             <div style={{
-                                display: "flex",
-                                flexDirection: "column",
-                                gap: "24px"
+                                display: "grid",
+                                gridTemplateColumns: "3fr 1.2fr",
+                                gap: "24px",
+                                marginTop: "20px",
+                                marginBottom: "20px",
+                                alignItems: "start"
                             }}>
-                                <Section delay={0.1}>
-                                    <Shop
-                                        items={items}
-                                        token={token}
-                                        onBuy={handleBuy}
-                                        theme={theme}
-                                        buyingItem={buyingItem}
+                                <div style={{
+                                    display: "flex",
+                                    flexDirection: "column",
+                                    gap: "24px"
+                                }}>
+                                    <Section delay={0.1}>
+                                        <Shop
+                                            items={items}
+                                            token={token}
+                                            onBuy={handleBuy}
+                                            theme={theme}
+                                            buyingItem={buyingItem}
+                                            playerStats={playerStats}
+                                        />
+                                    </Section>
+
+                                    <Section delay={0.15}>
+                                        <Inventory
+                                            inventory={inventory}
+                                            token={token}
+                                            onSell={handleSell}
+                                            theme={theme}
+                                            sellingItem={sellingItem}
+                                        />
+                                    </Section>
+
+                                    <Section delay={0.2}>
+                                        <Leaderboard
+                                            theme={theme}
+                                            token={token}
+                                        />
+                                    </Section>
+                                </div>
+
+                                <Section delay={0.12}>
+                                    <PlayerStats
                                         playerStats={playerStats}
-                                    />
-                                </Section>
-
-                                <Section delay={0.15}>
-                                    <Inventory
-                                        inventory={inventory}
-                                        token={token}
-                                        onSell={handleSell}
                                         theme={theme}
-                                        sellingItem={sellingItem}
-                                    />
-                                </Section>
-
-                                <Section delay={0.2}>
-                                    <Leaderboard
-                                        theme={theme}
-                                        token={token}
                                     />
                                 </Section>
                             </div>
+                        </Section>
 
-                            <Section delay={0.12}>
-                                <PlayerStats
-                                    playerStats={playerStats}
+                        {/* COMBAT FULL WIDTH SECTION */}
+                        <Section delay={0.18}>
+                            <div style={{
+                                width: "100%",
+                                marginTop: "20px"
+                            }}>
+                                <CombatPanel
                                     theme={theme}
+                                    fightData={fightData}
+                                    fightLoading={fightLoading}
+                                    handleFight={handleFight}
+                                    clearFight={clearFight}
                                 />
-                            </Section>
-                        </div>
-                    </Section>
+                            </div>
+                        </Section>
+                    </>
                 )}
             </Layout>
 

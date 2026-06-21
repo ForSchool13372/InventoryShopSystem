@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter
 import logging
 
 from app.core.gameFactory import GameFactory
@@ -17,7 +17,7 @@ gameFactory = GameFactory()
 # =========================================================
 def getGame(playerId: int):
     game = gameFactory.create(playerId)
-    if not game or not game.player:
+    if not game:
         return None
     return game
 
@@ -36,34 +36,15 @@ def devResponse(data=None, success=True, error=None):
 @router.get("/login/{playerId}")
 def devLogin(playerId: int):
     game = getGame(playerId)
+
     if not game:
         return devResponse(success=False, error="Player not found")
 
     result = game.login()
 
-    logger.info(f"[DEV LOGIN] playerId={playerId}")
+    logger.info(f"[DEV LOGIN] playerid={playerId}")
 
     return devResponse(data=result)
-
-
-# =========================================================
-# QUICK TOKEN FETCH (DEBUG)
-# =========================================================
-@router.get("/token/{playerId}")
-def devToken(playerId: int):
-    game = getGame(playerId)
-    if not game:
-        return devResponse(success=False, error="Player not found")
-
-    # IMPORTANT FIX: avoid calling login again
-    token = getattr(game, "token", None) or result.get("token") if (result := game.login()) else None
-
-    logger.info(f"[DEV TOKEN] playerId={playerId}")
-
-    return devResponse(data={
-        "token": token,
-        "playerId": playerId
-    })
 
 
 # =========================================================
@@ -72,15 +53,11 @@ def devToken(playerId: int):
 @router.get("/player/{playerId}")
 def devPlayer(playerId: int):
     game = getGame(playerId)
+
     if not game:
         return devResponse(success=False, error="Player not found")
 
-    return devResponse(data={
-        "gold": game.player.gold,
-        "hp": game.player.hp,
-        "level": game.player.level,
-        "xp": game.player.xp
-    })
+    return devResponse(data=game.getPlayerStats())
 
 
 # =========================================================
@@ -89,11 +66,95 @@ def devPlayer(playerId: int):
 @router.get("/inventory/{playerId}")
 def devInventory(playerId: int):
     game = getGame(playerId)
+
     if not game:
         return devResponse(success=False, error="Player not found")
 
-    logger.info(f"[DEV INVENTORY] playerId={playerId}")
+    logger.info(f"[DEV INVENTORY] playerid={playerId}")
 
     return devResponse(data={
         "items": game.getInventory()
+    })
+
+
+# =========================================================
+# FIGHT (DEV)
+# =========================================================
+@router.post("/fight/{playerId}")
+def devFight(playerId: int):
+    game = getGame(playerId)
+
+    if not game:
+        return devResponse(success=False, error="Player not found")
+
+    logger.info(f"[DEV FIGHT] playerid={playerId}")
+
+    result = game.fight()
+
+    return devResponse(data=result)
+
+
+# =========================================================
+# BUY (DEV)
+# =========================================================
+@router.post("/buy/{playerId}")
+def devBuy(playerId: int, itemName: str, quantity: int = 1):
+    game = getGame(playerId)
+
+    if not game:
+        return devResponse(success=False, error="Player not found")
+
+    logger.info(f"[DEV BUY] playerid={playerId} item={itemName} qty={quantity}")
+
+    result = game.buy(itemName, quantity)
+
+    return devResponse(data=result)
+
+
+# =========================================================
+# SELL (DEV)
+# =========================================================
+@router.post("/sell/{playerId}")
+def devSell(playerId: int, itemName: str, quantity: int = 1):
+    game = getGame(playerId)
+
+    if not game:
+        return devResponse(success=False, error="Player not found")
+
+    logger.info(f"[DEV SELL] playerid={playerId} item={itemName} qty={quantity}")
+
+    result = game.sell(itemName, quantity)
+
+    return devResponse(data=result)
+
+
+# =========================================================
+# SHOP (DEV)
+# =========================================================
+@router.get("/shop/{playerId}")
+def devShop(playerId: int):
+    game = getGame(playerId)
+
+    if not game:
+        return devResponse(success=False, error="Player not found")
+
+    logger.info(f"[DEV SHOP] playerid={playerId}")
+
+    return devResponse(data=game.shop.getShop())
+
+
+# =========================================================
+# EVENTS (DEV)
+# =========================================================
+@router.get("/events/{playerId}")
+def devEvents(playerId: int):
+    game = getGame(playerId)
+
+    if not game:
+        return devResponse(success=False, error="Player not found")
+
+    logger.info(f"[DEV EVENTS] playerid={playerId}")
+
+    return devResponse(data={
+        "events": game.gameEventService.getEvents()
     })

@@ -1,7 +1,7 @@
 from typing import Dict, Any
 from app.core.auth import createAccessToken
 from app.state.gameState import gameState
-from app.models.player import Player
+from app.core.gameFactory import PlayerFactory
 
 
 class Controller:
@@ -38,6 +38,12 @@ class Controller:
             pass
 
     # =========================================================
+    # HELPERS
+    # =========================================================
+    def _getPlayer(self):
+        return gameState.getPlayer(self.playerId)
+
+    # =========================================================
     # LIFECYCLE
     # =========================================================
     def login(self) -> Dict[str, Any]:
@@ -46,13 +52,7 @@ class Controller:
         if not data:
             return {"success": False, "message": "Player not found"}
 
-        player = Player(
-            gold=data["gold"],
-            hp=data["hp"],
-            level=data["level"],
-            xp=data["xp"]
-        )
-
+        player = PlayerFactory.fromData(data)
         gameState.addPlayer(self.playerId, player)
 
         token: str = createAccessToken({
@@ -68,9 +68,11 @@ class Controller:
         }
 
     def revive(self) -> Dict[str, Any]:
-        player = gameState.getPlayer(self.playerId)
-        player.revive()
+        player = self._getPlayer()
+        if not player:
+            return {"success": False}
 
+        player.revive()
         self._emitEvent("REVIVE")
         return {"success": True}
 
@@ -78,7 +80,7 @@ class Controller:
     # PLAYER
     # =========================================================
     def getPlayerStats(self) -> Dict[str, Any]:
-        player = gameState.getPlayer(self.playerId)
+        player = self._getPlayer()
 
         if not player:
             return {
@@ -94,7 +96,9 @@ class Controller:
     # GAME ACTIONS
     # =========================================================
     def fight(self) -> Dict[str, Any]:
-        player = gameState.getPlayer(self.playerId)
+        player = self._getPlayer()
+        if not player:
+            return {"success": False}
 
         result = self.combat.handleFight(player, self.world.enemies)
 
@@ -109,10 +113,14 @@ class Controller:
             "enemy": result.get("enemy") if result else None
         })
 
+        self.playerRepo.save(self.playerId, player)
+
         return result
 
     def buy(self, itemName: str, quantity: int) -> Dict[str, Any]:
-        player = gameState.getPlayer(self.playerId)
+        player = self._getPlayer()
+        if not player:
+            return {"success": False}
 
         item = self.items.getItem(itemName)
         if not item:
@@ -121,7 +129,6 @@ class Controller:
         ctx = self._buildShopCtx(player, item, quantity)
         result = self.shop.buy(ctx)
 
-        # optional persistence (NOT source of truth anymore)
         self.playerRepo.save(self.playerId, player)
 
         self._emitEvent("BUY", {
@@ -132,7 +139,9 @@ class Controller:
         return result
 
     def sell(self, itemName: str, quantity: int) -> Dict[str, Any]:
-        player = gameState.getPlayer(self.playerId)
+        player = self._getPlayer()
+        if not player:
+            return {"success": False}
 
         item = self.items.getItem(itemName)
         if not item:
@@ -154,7 +163,7 @@ class Controller:
     # DATA ACCESS
     # =========================================================
     def getShop(self) -> Any:
-        return self.shopRepo.getShopItems()
+        return self.shopRepo.getShopStock()
 
     def getInventory(self) -> Any:
         return self.inventoryRepo.loadInventory(self.playerId)

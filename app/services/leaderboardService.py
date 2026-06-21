@@ -7,13 +7,17 @@ class LeaderboardService:
 
         sortedPlayers = sorted(
             allPlayers,
-            key=lambda p: (p.get("level", 1), p.get("xp", 0), p.get("gold", 0)),
+            key=lambda p: (
+                p.get("level", 1),
+                p.get("xp", 0),
+                p.get("gold", 0)
+            ),
             reverse=True
         )
 
         return [
             {
-                "playerId": p["playerId"],
+                "playerId": p["id"],  
                 "level": p.get("level", 1),
                 "xp": p.get("xp", 0),
                 "gold": p.get("gold", 0)

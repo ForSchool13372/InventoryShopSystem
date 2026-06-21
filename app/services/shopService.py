@@ -15,13 +15,13 @@ class ShopService:
         self._validate_item(ctx.item)
         self._validate_quantity(ctx.quantity)
 
-        itemName = ctx.item.name
+        itemName = ctx.item["itemName"]
         quantity = ctx.quantity
         playerId = ctx.playerId
 
-        totalCost = ctx.item.price * quantity
+        totalCost = ctx.item["price"] * quantity
 
-        if ctx.player.gold < totalCost:
+        if ctx.player.core["gold"] < totalCost:
             return self._fail("Not enough gold")
 
         with engine.begin() as conn:
@@ -49,18 +49,18 @@ class ShopService:
                 {"cost": totalCost, "id": playerId}
             )
 
-        ctx.player.gold -= totalCost
+        ctx.player.core["gold"] -= totalCost
         return self._success("Purchase Successful")
 
     def sell(self, ctx):
         self._validate_item(ctx.item)
         self._validate_quantity(ctx.quantity)
 
-        itemName = ctx.item.name
+        itemName = ctx.item["itemName"]
         quantity = ctx.quantity
         playerId = ctx.playerId
 
-        totalGain = ctx.item.price * quantity
+        totalGain = ctx.item["price"] * quantity
 
         with engine.begin() as conn:
 
@@ -87,7 +87,7 @@ class ShopService:
                 {"gain": totalGain, "id": playerId}
             )
 
-        ctx.player.gold += totalGain
+        ctx.player.core["gold"] += totalGain
         return self._success("Sale Successful")
 
     # =========================================================
@@ -98,8 +98,11 @@ class ShopService:
         if item is None:
             raise ValueError("Item does not exist")
 
-        if not hasattr(item, "price"):
-            raise ValueError("Invalid item")
+        if not isinstance(item, dict):
+            raise ValueError("Invalid item type")
+
+        if "price" not in item or "itemName" not in item:
+            raise ValueError("Invalid item structure")
 
     def _validate_quantity(self, quantity):
         if quantity <= 0:

@@ -1,4 +1,4 @@
-from typing import Dict
+from typing import Dict, Optional, List
 from app.models.player import Player
 
 
@@ -6,30 +6,44 @@ class GameState:
     def __init__(self):
         self.players: Dict[int, Player] = {}
 
-    # -----------------------------
-    # LOAD / REGISTER PLAYER
-    # -----------------------------
-    def addPlayer(self, playerId: int, player: Player):
+    # =========================================================
+    # PLAYER MANAGEMENT
+    # =========================================================
+
+    def addPlayer(self, playerId: int, player: Player) -> None:
         self.players[playerId] = player
 
-    def getPlayer(self, playerId: int) -> Player:
+    def getPlayer(self, playerId: int) -> Optional[Player]:
         return self.players.get(playerId)
 
-    def removePlayer(self, playerId: int):
-        if playerId in self.players:
-            del self.players[playerId]
+    def removePlayer(self, playerId: int) -> None:
+        self.players.pop(playerId, None)
 
-    # -----------------------------
-    # LEADERBOARD SOURCE
-    # -----------------------------
-    def getLeaderboard(self):
-        return [
-            {
+    def hasPlayer(self, playerId: int) -> bool:
+        return playerId in self.players
+
+    # =========================================================
+    # LEADERBOARD (IN-MEMORY)
+    # =========================================================
+
+    def getLeaderboard(self) -> List[dict]:
+        leaderboard = []
+
+        for pid, player in self.players.items():
+            stats = player.getStats()
+
+            leaderboard.append({
                 "playerId": pid,
-                **player.getStats()
-            }
-            for pid, player in self.players.items()
-        ]
+                "gold": stats["gold"],
+                "level": stats["level"],
+                "hp": stats["hp"],
+                "xp": stats["xp"],
+            })
+
+        # sort by level then xp
+        leaderboard.sort(key=lambda x: (x["level"], x["xp"]), reverse=True)
+
+        return leaderboard
 
 
 # GLOBAL SINGLETON

@@ -1,10 +1,12 @@
-from datetime import datetime, timezone
+﻿from datetime import datetime, timezone
+import asyncio
 
 
 class GameEventService:
-    def __init__(self, gameState, questManager):
+    def __init__(self, gameState, questManager, wsManager=None):
         self.gameState = gameState
         self.questManager = questManager
+        self.wsManager = wsManager
         self.eventHistory = []
 
     # =========================================================
@@ -22,16 +24,23 @@ class GameEventService:
         if not player:
             return
 
+        data = enrichedEvent.get("data", {})
+
         # =========================================================
         # GAME LOGIC
         # =========================================================
 
         if eventType == "FIGHT_WIN":
-            player.gainXP(enrichedEvent.get("xp", 0))
-            self.questManager.update(enrichedEvent.get("enemy"))
+            player.gainXP(data.get("xp", 0))
+
+            player.core["gold"] += data.get("gold", 0)
+
+            self.questManager.update(data.get("enemy"))
+            self._broadcastLeaderboard()
 
         elif eventType == "FIGHT_LOSE":
-            player.hp = 0
+            player.core["hp"] = 0
+            self._broadcastLeaderboard()
 
     # =========================================================
     # EVENT STORAGE
@@ -53,3 +62,20 @@ class GameEventService:
             "playerId": event["playerId"],
             "data": event.get("data", {}),
         }
+
+    # =========================================================
+    # WS INTEGRATION
+    # =========================================================
+    def _broadcastLeaderboard(self):
+        if not self.wsManager:
+            return
+
+        game = self.gameState.getGameInstance()
+        if not game:
+            return
+
+        asyncio.create_task(
+            self.wsManager.broadcastLeaderboard(
+                game.getLeaderboard()
+            )
+        )

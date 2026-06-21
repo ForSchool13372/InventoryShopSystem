@@ -1,3 +1,6 @@
+import random
+
+
 class Enemy:
     def __init__(
         self,
@@ -9,34 +12,41 @@ class Enemy:
     ):
         self.name = name
 
-        # Combat stats
+        # =========================
+        # COMBAT STATS
+        # =========================
         self.maxHp = hp
         self.hp = hp
 
-        # Rewards
-        self.xp = xp
-
-        # Damage range
         self.minDamage = minDamage
         self.maxDamage = maxDamage
 
+        # derived "attack" stat for compatibility
+        self.attack = (minDamage + maxDamage) // 2
+
+        # =========================
+        # REWARDS
+        # =========================
+        self.xp = xp
 
     # =========================================================
     # COMBAT
     # =========================================================
-
     def takeDamage(self, damage: int):
         self.hp = max(0, self.hp - damage)
 
+    def dealDamage(self):
+        return random.randint(self.minDamage, self.maxDamage)
 
     def reset(self):
         self.hp = self.maxHp
 
+    def isDead(self):
+        return self.hp <= 0
 
     # =========================================================
-    # SERIALIZATION (optional but good for backend consistency)
+    # SERIALIZATION
     # =========================================================
-
     def toDict(self):
         return {
             "name": self.name,
@@ -45,4 +55,5 @@ class Enemy:
             "xp": self.xp,
             "minDamage": self.minDamage,
             "maxDamage": self.maxDamage,
+            "attack": self.attack
         }

@@ -14,62 +14,45 @@ export default function useGame(token, playerId) {
 
     const shouldLoad = token && playerId;
 
-    if (!shouldLoad && loading) {
-        setLoading(false);
-    }
-
     // =========================================================
-    // INDIVIDUAL LOADERS
+    // SINGLE SOURCE OF TRUTH FETCH
     // =========================================================
-    const loadShop = useCallback(async () => {
-        const data = await getShop();
-        setItems(data?.data ?? []);
-    }, []);
-
-    const loadInventory = useCallback(async () => {
+    const fetchGameState = useCallback(async () => {
         if (!shouldLoad) return;
-        const data = await getInventory();
-        setInventory(data?.items ?? []);
+
+        const [shop, inventoryData, player] = await Promise.all([
+            getShop(),
+            getInventory(),
+            getPlayer()
+        ]);
+
+        setItems(
+            (shop?.data ?? []).map(item => ({
+                itemName: item.itemname,
+                stock: item.stock,
+                price: item.price
+            }))
+        );
+
+        setInventory(inventoryData?.items ?? []);
+
+        setPlayerStats({ ...(player ?? {}) });
+
     }, [shouldLoad]);
 
-    const loadPlayerStats = useCallback(async () => {
+    // =========================================================
+    // REFRESH (ONLY ONE)
+    // =========================================================
+    const refreshGame = useCallback(async () => {
         if (!shouldLoad) return;
-        const data = await getPlayer();
-        setPlayerStats(data ?? null);
-    }, [shouldLoad]);
 
-    // =========================================================
-    // REFRESH STRATEGIES
-    // =========================================================
-    const refreshAll = useCallback(async () => {
-        await Promise.all([
-            loadShop(),
-            loadInventory(),
-            loadPlayerStats()
-        ]);
-    }, [loadShop, loadInventory, loadPlayerStats]);
-
-    const refreshGameAfterTrade = useCallback(async () => {
-        await Promise.all([
-            loadShop(),        // stock changed
-            loadInventory(),   // items changed
-            loadPlayerStats()  // gold/XP changed
-        ]);
-    }, [loadShop, loadInventory, loadPlayerStats]);
-
-    const refreshInventoryOnly = useCallback(async () => {
-        await loadInventory();
-    }, [loadInventory]);
-
-    const refreshPlayerOnly = useCallback(async () => {
-        await loadPlayerStats();
-    }, [loadPlayerStats]);
-
-    const resetGame = () => {
-        setItems([]);
-        setInventory([]);
-        setPlayerStats(null);
-    };
+        setLoading(true);
+        try {
+            await fetchGameState();
+        } finally {
+            setLoading(false);
+        }
+    }, [fetchGameState, shouldLoad]);
 
     // =========================================================
     // INITIAL LOAD
@@ -82,7 +65,7 @@ export default function useGame(token, playerId) {
         const syncData = async () => {
             setLoading(true);
             try {
-                await refreshAll();
+                await fetchGameState();
             } finally {
                 if (!cancelled) setLoading(false);
             }
@@ -93,23 +76,28 @@ export default function useGame(token, playerId) {
         return () => {
             cancelled = true;
         };
-    }, [shouldLoad, refreshAll]);
+    }, [shouldLoad, fetchGameState]);
 
+    // =========================================================
+    // RESET
+    // =========================================================
+    const resetGame = () => {
+        setItems([]);
+        setInventory([]);
+        setPlayerStats(null);
+    };
+
+    // =========================================================
+    // RETURN
+    // =========================================================
     return {
         items,
         inventory,
         playerStats,
         loading,
 
-        // full
-        refreshAll,
+        refreshGame,
 
-        // smarter UX ones
-        refreshGameAfterTrade,
-        refreshInventoryOnly,
-        refreshPlayerOnly,
-
-        // setters (optional keep)
         setItems,
         setInventory,
         setPlayerStats,

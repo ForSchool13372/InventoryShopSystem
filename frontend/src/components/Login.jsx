@@ -31,7 +31,6 @@ function Login({ token, onLogin, onLogout, error, theme }) {
         borderRadius: "16px",
         boxShadow: "0 12px 35px rgba(0,0,0,0.12)",
         border: "1px solid rgba(255,255,255,0.04)",
-        transition: "all 0.25s ease"
     };
 
     const titleStyle = {
