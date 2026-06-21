@@ -3,18 +3,19 @@ from app.services.shopService import ShopService
 
 
 # =========================================================
-# FAKE OBJECTS
+# FAKE OBJECTS (UPDATED TO MATCH NEW SERVICE CONTRACT)
 # =========================================================
 
-class FakeItem:
-    def __init__(self, name="sword", price=10):
-        self.name = name
-        self.price = price
+def make_item():
+    return {
+        "itemName": "sword",
+        "price": 10
+    }
 
 
 class FakePlayer:
     def __init__(self):
-        self.gold = 100
+        self.core = {"gold": 100}
 
 
 def make_ctx(item, quantity=1, playerId=1):
@@ -73,7 +74,7 @@ def test_shop_service_get_shop():
 def test_shop_service_buy_success():
     service = ShopService(FakeShopRepoBuy())
 
-    ctx = make_ctx(FakeItem(), quantity=1)
+    ctx = make_ctx(make_item(), quantity=1)
 
     result = service.buy(ctx)
 
@@ -83,7 +84,7 @@ def test_shop_service_buy_success():
 def test_shop_service_sell_success():
     service = ShopService(FakeShopRepoSell())
 
-    ctx = make_ctx(FakeItem(), quantity=1)
+    ctx = make_ctx(make_item(), quantity=1)
 
     result = service.sell(ctx)
 

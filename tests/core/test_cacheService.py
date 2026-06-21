@@ -122,11 +122,9 @@ def test_delete_removes_key(monkeypatch):
 
 
 def test_health_returns_ping_result(monkeypatch):
-    fakeRedis = FakeRedis()
-
     monkeypatch.setattr(
-        "app.core.cacheService.redisClient",
-        fakeRedis,
+        "app.core.cacheService.checkRedisConnection",
+        lambda: True
     )
 
     cache = CacheService()

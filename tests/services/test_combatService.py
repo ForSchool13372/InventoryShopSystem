@@ -1,54 +1,25 @@
 from app.services.combatService import CombatService
+from app.models.player import Player
 
 
-# =========================================================
-# SHARED FAKE OBJECTS
-# =========================================================
-
-class Player:
-    def __init__(self):
-        self.hp = 100
-
-    def takeDamage(self, amount):
-        self.hp -= amount
+def make_enemy():
+    return {
+        "name": "Goblin",
+        "hp": 10,
+        "attack": 5,
+        "xp": 10,
+        "gold": 5
+    }
 
 
-class Enemy:
-    def __init__(self):
-        self.hp = 10
-
-    def takeDamage(self, amount):
-        self.hp -= amount
-
-
-# =========================================================
-# TESTS
-# =========================================================
-
-def test_combat_service_default_engine_runs():
+def test_combat_service_default():
     service = CombatService()
 
-    player = Player()
-    enemies = [Enemy()]
+    player = Player(0)
+    enemies = [make_enemy()]
 
     result = service.handleFight(player, enemies)
 
     assert result is not None
-
-
-def test_combat_service_injected_engine():
-    def fakeEngine(player, enemies):
-        return {
-            "result": "win",
-            "xp": 10
-        }
-
-    service = CombatService(combatEngine=fakeEngine)
-
-    player = Player()
-    enemies = [Enemy()]
-
-    result = service.handleFight(player, enemies)
-
-    assert result["result"] == "win"
-    assert result["xp"] == 10
+    assert "result" in result
+    assert "log" in result

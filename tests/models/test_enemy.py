@@ -51,4 +51,5 @@ def test_to_dict_returns_correct_structure():
         "xp": 50,
         "minDamage": 5,
         "maxDamage": 10,
+        "attack": 7,
     }

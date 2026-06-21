@@ -70,7 +70,7 @@ class FakeRepo:
     def save(self, playerId, player):
         self.saved = (playerId, player)
 
-    def getShopItems(self):
+    def getShopStock(self):
         return ["item1"]
 
     def loadInventory(self, playerId):

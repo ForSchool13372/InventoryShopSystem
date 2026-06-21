@@ -8,7 +8,16 @@ def test_getPlayer(client, token):
 
     body = response.json()
 
-    assert "gold" in body
-    assert "hp" in body
-    assert "level" in body
-    assert "xp" in body
+    # nested structure (NEW SYSTEM)
+    assert "core" in body
+    assert "progression" in body
+    assert "combat" in body
+
+    # core stats
+    assert "gold" in body["core"]
+    assert "hp" in body["core"]
+    assert "maxHp" in body["core"]
+
+    # progression stats
+    assert "level" in body["progression"]
+    assert "xp" in body["progression"]

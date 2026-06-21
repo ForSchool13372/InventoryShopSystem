@@ -26,53 +26,48 @@ def test_update_does_nothing_if_locked():
     quest = Quest("Slay Goblins", "goblin", 2, 50)
     player = FakePlayer()
 
-    result = quest.update("goblin", player)
+    result = quest.update("goblin")
 
-    assert result is False
+    assert result == 0
     assert quest.progress == 0
 
 
 def test_update_increments_progress_when_unlocked():
     quest = Quest("Slay Goblins", "goblin", 2, 50)
     quest.unlocked = True
-    player = FakePlayer()
 
-    result = quest.update("goblin", player)
+    result = quest.update("goblin")
 
     assert quest.progress == 1
-    assert result is False
+    assert result == 0
 
 
 def test_update_ignores_wrong_enemy():
     quest = Quest("Slay Goblins", "goblin", 2, 50)
     quest.unlocked = True
-    player = FakePlayer()
 
-    result = quest.update("orc", player)
+    result = quest.update("orc")
 
-    assert result is False
+    assert result == 0
     assert quest.progress == 0
 
 
-def test_quest_completes_and_grants_xp():
+def test_quest_completes_and_returns_xp():
     quest = Quest("Slay Goblins", "goblin", 1, 50)
     quest.unlocked = True
-    player = FakePlayer()
 
-    result = quest.update("goblin", player)
+    result = quest.update("goblin")
 
-    assert result is True
+    assert result == 50
     assert quest.completed is True
-    assert player.xp == 50
 
 
 def test_update_after_completion_does_nothing():
     quest = Quest("Slay Goblins", "goblin", 1, 50)
     quest.unlocked = True
-    player = FakePlayer()
 
-    quest.update("goblin", player)
-    result = quest.update("goblin", player)
+    quest.update("goblin")
+    result = quest.update("goblin")
 
-    assert result is False
+    assert result == 0
     assert quest.progress == 1

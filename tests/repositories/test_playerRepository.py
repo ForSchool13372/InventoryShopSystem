@@ -10,6 +10,9 @@ class FakeResult:
     def __init__(self, row=None):
         self._row = row
 
+    def mappings(self):
+        return self
+
     def fetchone(self):
         return self._row
 
@@ -24,12 +27,17 @@ class FakeConn:
         q = str(query).lower()
 
         # -------------------------
-        # LOAD PLAYER
+        # LOAD PLAYER SUCCESS
         # -------------------------
         if "from player" in q and "where id" in q:
-            return FakeResult((100, 50, 1, 10))
+            return FakeResult({
+                "gold": 100,
+                "hp": 50,
+                "level": 1,
+                "xp": 10
+            })
 
-        return FakeResult()
+        return FakeResult(None)
 
     def __enter__(self):
         return self
@@ -94,13 +102,20 @@ def test_save_player_dict(monkeypatch):
         FakeEngine()
     )
 
-    # FIX: convert dict → object with attributes
     class PlayerObj:
         def __init__(self, d):
             self.gold = d["gold"]
             self.hp = d["hp"]
             self.level = d["level"]
             self.xp = d["xp"]
+
+        def toDict(self):
+            return {
+                "gold": self.gold,
+                "hp": self.hp,
+                "level": self.level,
+                "xp": self.xp
+            }
 
     player = PlayerObj({
         "gold": 200,
@@ -128,6 +143,14 @@ def test_save_player_object(monkeypatch):
             self.hp = 80
             self.level = 2
             self.xp = 20
+
+        def toDict(self):
+            return {
+                "gold": self.gold,
+                "hp": self.hp,
+                "level": self.level,
+                "xp": self.xp
+            }
 
     repo.save(1, PlayerObj())
 
