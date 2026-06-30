@@ -2,6 +2,7 @@ import pytest
 import app.core.redisClient as redisModule
 from tests.fakes.fakeRedis import FakeRedis
 from app.core.game.controller import Controller
+from app.core.database import Base, engine
 
 from fastapi.testclient import TestClient
 from app.main import app
@@ -22,6 +23,16 @@ def fake_redis(monkeypatch):
     fake = FakeRedis()
     monkeypatch.setattr(redisModule, "redisClient", fake)
     return fake
+
+@pytest.fixture(scope="session", autouse=True)
+def setup_test_db():
+    # Create all tables BEFORE ANY TEST RUNS
+    Base.metadata.create_all(bind=engine)
+
+    yield
+
+    # Optional cleanup after tests
+    Base.metadata.drop_all(bind=engine)
 
 
 # =========================================================
