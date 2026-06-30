@@ -43,7 +43,7 @@ jobs:
       # =========================================================
       - name: Seed database
         run: |
-          python -c "from app.core.seed import seedPlayers, seedShop, seedQuests, seedPlayerQuests; seedPlayers(); seedShop(); seedQuests(); seedPlayerQuests()"
+          python -c "from app.core.game.seed import seedPlayers, seedShop, seedQuests, seedPlayerQuests; seedPlayers(); seedShop(); seedQuests(); seedPlayerQuests()"
 
       # =========================================================
       # 3. RUN TESTS
