@@ -11,6 +11,7 @@ jobs:
     env:
       SECRET_KEY: ${{ secrets.SECRET_KEY }}
       DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      PYTHONUNBUFFERED: "1"
 
     steps:
       - uses: actions/checkout@v4
@@ -22,35 +23,27 @@ jobs:
 
       - name: Install dependencies
         run: |
+          pip install --upgrade pip
           pip install -r requirements.txt
-          pip install pytest-cov
+          pip install pytest-cov psycopg2-binary
+
+      - name: Verify DATABASE_URL (debug)
+        run: python -c "import os; print('DB:', os.getenv('DATABASE_URL'))"
 
       - name: Set PYTHONPATH
         run: echo "PYTHONPATH=." >> $GITHUB_ENV
 
-      # =========================================================
-      # INIT DB SCHEMA (NEON SAFE)
-      # =========================================================
       - name: Init database schema
         run: |
-          python -c "from app.core.database import Base, engine; import app.models.player, app.models.item, app.models.enemy, app.models.quest; Base.metadata.create_all(bind=engine)"
+          python -c "from app.core.database import Base, engine; import app.models.player, app.models.shop, app.models.playerItems; Base.metadata.create_all(bind=engine); print('DB schema created')"
 
-      # =========================================================
-      # SEED DATABASE
-      # =========================================================
       - name: Seed database
         run: |
-          python -c "from app.core.game.seed import seedPlayers, seedShop, seedQuests, seedPlayerQuests; seedPlayers(); seedShop(); seedQuests(); seedPlayerQuests()"
+          python -c "from app.core.game.seed import seedPlayers, seedShop, seedQuests, seedPlayerQuests; seedPlayers(); seedShop(); seedQuests(); seedPlayerQuests(); print('DB seeded')"
 
-      # =========================================================
-      # RUN TESTS
-      # =========================================================
       - name: Run tests
         run: pytest --cov=app --cov-report=xml -v
 
-      # =========================================================
-      # UPLOAD COVERAGE
-      # =========================================================
       - name: Upload coverage
         uses: codecov/codecov-action@v4
         with:

@@ -10,9 +10,13 @@ load_dotenv()
 
 DATABASE_URL = os.getenv("DATABASE_URL")
 
+# DEBUG PRINT (ADD THIS)
+print("🔥 DATABASE_URL LOADED:", DATABASE_URL)
+
 # fallback ONLY if env missing
 if not DATABASE_URL:
     DATABASE_URL = "sqlite:///game.db"
+    print("⚠️ FALLBACK: Using SQLite")
 
 # =========================================================
 # FIX: ensure sqlite works properly in CI + threads
