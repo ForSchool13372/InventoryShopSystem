@@ -8,7 +8,9 @@ from typing import TypedDict, Optional, Dict, Any, cast
 # CONFIG
 # =========================================================
 
-SECRET_KEY = os.getenv("SECRET_KEY", "dev_secret_only")
+SECRET_KEY = os.getenv("SECRET_KEY")
+if not SECRET_KEY:
+    raise Exception("SECRET_KEY not set")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60
 
