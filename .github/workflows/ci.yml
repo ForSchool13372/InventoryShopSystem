@@ -29,27 +29,33 @@ jobs:
         run: echo "PYTHONPATH=." >> $GITHUB_ENV
 
       # =========================================================
-      # 1. REBUILD DATABASE SCHEMA (FIX: ensures correct columns)
+      # 1. RESET DATABASE FILE (IMPORTANT FOR SQLITE CLEAN STATE)
+      # =========================================================
+      - name: Reset database
+        run: rm -f game.db
+
+      # =========================================================
+      # 2. REBUILD DATABASE SCHEMA
       # =========================================================
       - name: Rebuild DB schema
         run: |
           python -c "from app.core.database import Base, engine; Base.metadata.drop_all(bind=engine); Base.metadata.create_all(bind=engine)"
 
       # =========================================================
-      # 2. SEED DATABASE
+      # 3. SEED DATABASE
       # =========================================================
       - name: Seed database
         run: |
           python -c "from app.core.game.seed import seedPlayers, seedShop, seedQuests, seedPlayerQuests; seedPlayers(); seedShop(); seedQuests(); seedPlayerQuests()"
 
       # =========================================================
-      # 3. RUN TESTS
+      # 4. RUN TESTS
       # =========================================================
       - name: Run tests
         run: pytest --cov=app --cov-report=xml -v
 
       # =========================================================
-      # 4. COVERAGE
+      # 5. COVERAGE
       # =========================================================
       - name: Upload coverage
         uses: codecov/codecov-action@v4
