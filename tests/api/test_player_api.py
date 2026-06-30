@@ -16,7 +16,7 @@ def test_getPlayer(client, token):
     # core stats
     assert "gold" in body["core"]
     assert "hp" in body["core"]
-    assert "maxHp" in body["core"]
+    assert "maxhp" in body["core"]
 
     # progression stats
     assert "level" in body["progression"]
