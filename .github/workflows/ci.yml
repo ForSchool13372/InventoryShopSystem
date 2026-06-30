@@ -35,7 +35,7 @@ jobs:
 
       - name: Init database schema
         run: |
-          python -c "from app.core.database import Base, engine; import app.models.player, app.models.shop, app.models.playerItems; Base.metadata.create_all(bind=engine); print('DB schema created')"
+          python -c "import importlib; import pkgutil; import app.models; from app.core.database import Base, engine; [importlib.import_module(f'app.models.{m}') for _, m, _ in pkgutil.iter_modules(app.models.__path__)]; Base.metadata.create_all(bind=engine); print('DB schema created (dynamic)')"
 
       - name: Seed database
         run: |
