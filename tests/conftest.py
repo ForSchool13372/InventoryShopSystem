@@ -24,6 +24,7 @@ def fake_redis(monkeypatch):
     monkeypatch.setattr(redisModule, "redisClient", fake)
     return fake
 
+
 @pytest.fixture(scope="session", autouse=True)
 def setup_test_db():
     from app.core.database import Base, engine
@@ -39,6 +40,7 @@ def setup_test_db():
 @pytest.fixture
 def client():
     return TestClient(app)
+
 
 @pytest.fixture
 def ws_client(client):

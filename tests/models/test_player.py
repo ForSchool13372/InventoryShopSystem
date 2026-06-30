@@ -7,7 +7,7 @@ def test_player_initialization_defaults():
 
     assert player.core["gold"] == 50
     assert player.core["hp"] == 100
-    assert player.core["maxHp"] == 100
+    assert player.core["maxhp"] == 100
     assert player.progression["level"] == 1
     assert player.progression["xp"] == 0
 
@@ -26,7 +26,7 @@ def test_revive_restores_hp():
     player = Player(playerId=1, gold=0, hp=10)
 
     player.revive()
-    assert player.core["hp"] == player.core["maxHp"]
+    assert player.core["hp"] == player.core["maxhp"]
 
 
 def test_gain_xp_no_level_up():
