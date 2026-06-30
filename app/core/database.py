@@ -8,7 +8,18 @@ from dotenv import load_dotenv
 # =========================================================
 load_dotenv()
 
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///game.db")
+DATABASE_URL = os.getenv("DATABASE_URL")
+
+# fallback ONLY if env missing
+if not DATABASE_URL:
+    DATABASE_URL = "sqlite:///game.db"
+
+# =========================================================
+# FIX: ensure sqlite works properly in CI + threads
+# =========================================================
+connect_args = {}
+if DATABASE_URL.startswith("sqlite"):
+    connect_args = {"check_same_thread": False}
 
 # =========================================================
 # ORM BASE
@@ -16,18 +27,22 @@ DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///game.db")
 Base = declarative_base()
 
 # =========================================================
-# ENGINE (IMPORTANT FIX)
+# ENGINE
 # =========================================================
 engine = create_engine(
     DATABASE_URL,
     pool_pre_ping=True,
     pool_size=5,
     max_overflow=10,
-    future=True
+    future=True,
+    connect_args=connect_args
 )
 
 # =========================================================
-# CONNECTION HELPER
+# INIT DB (IMPORTANT)
 # =========================================================
+def init_db():
+    Base.metadata.create_all(bind=engine)
+
 def getConnection():
     return engine.begin()
