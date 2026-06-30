@@ -1,4 +1,23 @@
-def test_getPlayer(client, token):
+import pytest
+from fastapi import FastAPI
+from fastapi.testclient import TestClient
+
+from app.api.routes.gameRoutes import router as gameRouter
+
+
+# =========================================================
+# BYPASS TEST APP (avoids main.py + circular imports)
+# =========================================================
+app = FastAPI()
+app.include_router(gameRouter)
+
+client = TestClient(app)
+
+
+# =========================================================
+# TEST
+# =========================================================
+def test_getPlayer(token):
     response = client.get(
         "/api/player",
         headers={"Authorization": f"Bearer {token}"}
