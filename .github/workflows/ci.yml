@@ -10,6 +10,7 @@ jobs:
 
     env:
       SECRET_KEY: ${{ secrets.SECRET_KEY }}
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
     steps:
       - uses: actions/checkout@v4
@@ -27,15 +28,32 @@ jobs:
           pip install -r requirements.txt
           pip install pytest-cov
 
-      - name: Debug installed packages
-        run: pip list
-
       - name: Set PYTHONPATH
         run: echo "PYTHONPATH=." >> $GITHUB_ENV
 
+      # =========================================================
+      # 1. CREATE TABLES (CRITICAL)
+      # =========================================================
+      - name: Initialize database schema
+        run: |
+          python -c "from app.core.database import Base, engine; Base.metadata.create_all(bind=engine)"
+
+      # =========================================================
+      # 2. SEED DATABASE
+      # =========================================================
+      - name: Seed database
+        run: |
+          python -c "from app.core.seed import seedPlayers, seedShop, seedQuests, seedPlayerQuests; seedPlayers(); seedShop(); seedQuests(); seedPlayerQuests()"
+
+      # =========================================================
+      # 3. RUN TESTS
+      # =========================================================
       - name: Run tests with coverage
         run: pytest --cov=app --cov-report=xml -v
 
+      # =========================================================
+      # 4. UPLOAD COVERAGE
+      # =========================================================
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
         with:
