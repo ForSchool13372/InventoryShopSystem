@@ -1,6 +1,5 @@
 ﻿import os
 from sqlalchemy import create_engine
-from sqlalchemy.engine import Engine
 from sqlalchemy.orm import declarative_base
 from dotenv import load_dotenv
 
@@ -9,11 +8,7 @@ from dotenv import load_dotenv
 # =========================================================
 load_dotenv()
 
-DATABASE_URL = os.getenv("DATABASE_URL")
-
-# fallback for local dev only
-if not DATABASE_URL:
-    DATABASE_URL = "sqlite:///game.db"
+DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///game.db")
 
 # =========================================================
 # ORM BASE
@@ -21,17 +16,18 @@ if not DATABASE_URL:
 Base = declarative_base()
 
 # =========================================================
-# ENGINE
+# ENGINE (IMPORTANT FIX)
 # =========================================================
-engine: Engine = create_engine(
+engine = create_engine(
     DATABASE_URL,
     pool_pre_ping=True,
     pool_size=5,
-    max_overflow=10
+    max_overflow=10,
+    future=True
 )
 
 # =========================================================
-# CONNECTION HELPER (OPTIONAL)
+# CONNECTION HELPER
 # =========================================================
 def getConnection():
     return engine.begin()
