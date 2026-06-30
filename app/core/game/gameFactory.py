@@ -51,16 +51,15 @@ class PlayerFactory:
             playerId=playerId,
             gold=data.get("gold", 0),
             hp=data.get("hp", 100),
-            maxHp=data.get("maxhp", 100),
+            maxhp=data.get("maxhp", 100),
             level=data.get("level", 1),
             xp=data.get("xp", 0)
         )
 
-        # normalize combat keys safely
         player.combat["attack"] = data.get("attack", 10)
         player.combat["defense"] = data.get("defense", 5)
-        player.combat["critChance"] = data.get("critchance", 0.05)
-        player.combat["critMultiplier"] = data.get("critmultiplier", 1.5)
+        player.combat["critchance"] = data.get("critchance", 0.05)
+        player.combat["critmultiplier"] = data.get("critmultiplier", 1.5)
 
         return player
 

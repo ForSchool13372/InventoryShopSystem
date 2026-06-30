@@ -28,8 +28,8 @@ class CombatService:
             # PLAYER TURN
             damage = player.combat["attack"]
 
-            if random.random() < player.combat["critChance"]:
-                damage *= player.combat["critMultiplier"]
+            if random.random() < player.combat["critchance"]:
+                damage *= player.combat["critmultiplier"]
                 log.append(f"Turn {turn}: 💥 CRITICAL HIT! You deal {int(damage)} damage.")
             else:
                 log.append(f"Turn {turn}: ⚔️ You deal {damage} damage.")
