@@ -87,17 +87,17 @@ class PlayerRepository:
         rowDict = dict(row)
 
         return {
-            "id": rowDict["id"],
-            "gold": rowDict["gold"],
-            "hp": rowDict["hp"],
-            "maxhp": rowDict["maxhp"],
+            "id": rowDict.get("id"),
+            "gold": rowDict.get("gold"),
+            "hp": rowDict.get("hp"),
+            "maxhp": rowDict.get("maxhp"),
 
-            "level": rowDict["level"],
-            "xp": rowDict["xp"],
+            "level": rowDict.get("level"),
+            "xp": rowDict.get("xp"),
 
-            "attack": rowDict["attack"],
-            "defense": rowDict["defense"],
+            "attack": rowDict.get("attack"),
+            "defense": rowDict.get("defense"),
 
-            "critChance": rowDict["critchance"],
-            "critMultiplier": rowDict["critmultiplier"],
+            "critChance": rowDict.get("critchance"),
+            "critMultiplier": rowDict.get("critmultiplier"),
         }
