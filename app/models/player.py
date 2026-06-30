@@ -4,19 +4,19 @@
         playerId: int,
         gold: int = 0,
         hp: int = 100,
-        maxHp: int = 100,
+        maxhp: int = 100,
         level: int = 1,
         xp: int = 0
     ):
         self.playerId = playerId
 
         # =========================
-        # CORE (SAFE DEFAULTS)
+        # CORE
         # =========================
         self.core = {
             "gold": gold or 0,
             "hp": hp or 100,
-            "maxHp": maxHp or 100
+            "maxhp": maxhp or 100
         }
 
         # =========================
@@ -33,8 +33,8 @@
         self.combat = {
             "attack": 10,
             "defense": 5,
-            "critChance": 0.05,
-            "critMultiplier": 1.5
+            "critchance": 0.05,
+            "critmultiplier": 1.5
         }
 
         self.clampHp()
@@ -44,16 +44,16 @@
     # =========================
     def clampHp(self):
         hp = self.core.get("hp") or 0
-        maxHp = self.core.get("maxHp") or 100
+        maxhp = self.core.get("maxhp") or 100
 
-        self.core["hp"] = max(0, min(hp, maxHp))
-        self.core["maxHp"] = maxHp
+        self.core["hp"] = max(0, min(hp, maxhp))
+        self.core["maxhp"] = maxhp
 
     def isDead(self):
         return self.core["hp"] <= 0
 
     def revive(self):
-        self.core["hp"] = self.core["maxHp"]
+        self.core["hp"] = self.core["maxhp"]
 
     # =========================
     # DAMAGE SYSTEM
@@ -86,10 +86,10 @@
             self.progression["level"] += 1
             leveledUp = True
 
-            self.core["maxHp"] += 10
+            self.core["maxhp"] += 10
             self.core["hp"] = min(
-                self.core["maxHp"],
-                self.core["hp"] + self.core["maxHp"] // 2
+                self.core["maxhp"],
+                self.core["hp"] + self.core["maxhp"] // 2
             )
 
             self.combat["attack"] += 2
@@ -109,13 +109,13 @@
             "playerId": self.playerId,
             "gold": self.core["gold"],
             "hp": self.core["hp"],
-            "maxhp": self.core["maxHp"],
+            "maxhp": self.core["maxhp"],
             "level": self.progression["level"],
             "xp": self.progression["xp"],
             "attack": self.combat["attack"],
             "defense": self.combat["defense"],
-            "critchance": self.combat["critChance"],
-            "critmultiplier": self.combat["critMultiplier"]
+            "critchance": self.combat["critchance"],
+            "critmultiplier": self.combat["critmultiplier"]
         }
 
     def getStats(self):
