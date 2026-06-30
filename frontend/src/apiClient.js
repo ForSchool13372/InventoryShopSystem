@@ -132,3 +132,14 @@ export const startFight = () =>
     apiRequest(`${API}/api/fight`, {
         method: "POST"
     });
+
+// =========================================================
+// QUESTS
+// =========================================================
+export const getQuests = () =>
+    apiRequest(`${API}/api/quests`);
+
+export const claimQuest = (questName) =>
+    apiRequest(`${API}/api/quests/claim/${questName}`, {
+        method: "POST"
+    });

@@ -5,6 +5,7 @@ from app.models.player import Player
 class GameState:
     def __init__(self):
         self.players: Dict[int, Player] = {}
+        self.games: Dict[int, any] = {}
 
     # =========================================================
     # PLAYER MANAGEMENT
@@ -23,25 +24,40 @@ class GameState:
         return playerId in self.players
 
     # =========================================================
-    # LEADERBOARD (IN-MEMORY)
+    # SYNC HELPERS
+    # =========================================================
+
+    def updatePlayer(self, playerId: int, player: Player) -> None:
+        self.players[playerId] = player
+
+    def replaceAll(self, players: Dict[int, Player]) -> None:
+        self.players = players
+
+    # =========================================================
+    # LEADERBOARD
     # =========================================================
 
     def getLeaderboard(self) -> List[dict]:
         leaderboard = []
 
         for pid, player in self.players.items():
-            stats = player.getStats()
+
+            # Player object expected (not dict)
+            core = player.core
+            progression = player.progression
 
             leaderboard.append({
                 "playerId": pid,
-                "gold": stats["gold"],
-                "level": stats["level"],
-                "hp": stats["hp"],
-                "xp": stats["xp"],
+                "gold": core.get("gold", 0),
+                "hp": core.get("hp", 0),
+                "level": progression.get("level", 1),
+                "xp": progression.get("xp", 0),
             })
 
-        # sort by level then xp
-        leaderboard.sort(key=lambda x: (x["level"], x["xp"]), reverse=True)
+        leaderboard.sort(
+            key=lambda x: (x["level"], x["xp"]),
+            reverse=True
+        )
 
         return leaderboard
 

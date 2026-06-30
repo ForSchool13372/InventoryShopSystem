@@ -153,10 +153,11 @@ Response:
 
 ### Structure
 - `App.jsx` → API orchestration layer + global state
-- `Login.jsx` → authentication UI
-- `Shop.jsx` → shop interface
-- `Inventory.jsx` → inventory management
-- `PlayerStats.jsx` → live stats display
+- `Login.jsx` → Authentication UI
+- `Shop.jsx` → Shop interface
+- `Inventory.jsx` → Inventory management
+- `PlayerStats.jsx` → Live stats display
+- `combatPanel.jsx` -> Basic Combat System
 
 ### Features
 - Component-based architecture

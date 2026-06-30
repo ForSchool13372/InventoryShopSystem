@@ -1,7 +1,7 @@
 from fastapi import APIRouter
 import logging
 
-from app.core.gameFactory import GameFactory
+from app.core.game.gameFactory import GameFactory
 
 router = APIRouter(
     prefix="/dev",
@@ -81,7 +81,7 @@ def devInventory(playerId: int):
 # FIGHT (DEV)
 # =========================================================
 @router.post("/fight/{playerId}")
-def devFight(playerId: int):
+async def devFight(playerId: int):
     game = getGame(playerId)
 
     if not game:
@@ -89,7 +89,7 @@ def devFight(playerId: int):
 
     logger.info(f"[DEV FIGHT] playerid={playerId}")
 
-    result = game.fight()
+    result = await game.fight()
 
     return devResponse(data=result)
 
@@ -98,7 +98,7 @@ def devFight(playerId: int):
 # BUY (DEV)
 # =========================================================
 @router.post("/buy/{playerId}")
-def devBuy(playerId: int, itemName: str, quantity: int = 1):
+async def devBuy(playerId: int, itemName: str, quantity: int = 1):
     game = getGame(playerId)
 
     if not game:
@@ -106,7 +106,7 @@ def devBuy(playerId: int, itemName: str, quantity: int = 1):
 
     logger.info(f"[DEV BUY] playerid={playerId} item={itemName} qty={quantity}")
 
-    result = game.buy(itemName, quantity)
+    result = await game.buy(itemName, quantity)
 
     return devResponse(data=result)
 
@@ -115,7 +115,7 @@ def devBuy(playerId: int, itemName: str, quantity: int = 1):
 # SELL (DEV)
 # =========================================================
 @router.post("/sell/{playerId}")
-def devSell(playerId: int, itemName: str, quantity: int = 1):
+async def devSell(playerId: int, itemName: str, quantity: int = 1):
     game = getGame(playerId)
 
     if not game:
@@ -123,7 +123,7 @@ def devSell(playerId: int, itemName: str, quantity: int = 1):
 
     logger.info(f"[DEV SELL] playerid={playerId} item={itemName} qty={quantity}")
 
-    result = game.sell(itemName, quantity)
+    result = await game.sell(itemName, quantity)
 
     return devResponse(data=result)
 
@@ -158,3 +158,38 @@ def devEvents(playerId: int):
     return devResponse(data={
         "events": game.gameEventService.getEvents()
     })
+
+# =========================================================
+# QUESTS (DEV)
+# =========================================================
+@router.get("/quests/{playerId}")
+def devQuests(playerId: int):
+    game = getGame(playerId)
+
+    if not game:
+        return devResponse(success=False, error="Player not found")
+
+    logger.info(f"[DEV QUESTS] playerid={playerId}")
+
+    return devResponse(data={
+        "quests": [
+            q.getStatus() for q in game.questManager.quests
+        ]
+    })
+
+
+# =========================================================
+# CLAIM QUEST (DEV)
+# =========================================================
+@router.post("/quests/claim/{playerId}")
+async def devClaimQuest(playerId: int, questName: str):
+    game = getGame(playerId)
+
+    if not game:
+        return devResponse(success=False, error="Player not found")
+
+    logger.info(f"[DEV CLAIM QUEST] playerid={playerId} quest={questName}")
+
+    result = await game.claimQuest(questName)
+
+    return devResponse(data=result)

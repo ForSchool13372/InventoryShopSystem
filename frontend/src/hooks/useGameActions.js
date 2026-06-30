@@ -72,7 +72,10 @@ export default function useGameActions({
         try {
             const res = await startFight();
 
-            setFightData(res);
+            setFightData({
+                ...res,
+                log: res?.log ?? []
+            });
 
             await refreshGame?.();
 

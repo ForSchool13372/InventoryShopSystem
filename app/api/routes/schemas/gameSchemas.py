@@ -84,6 +84,10 @@ class PlayerResponse(BaseSchema):
 class InventoryItem(BaseSchema):
     itemName: str = Field(alias="itemname")
     quantity: int
+    itemType: str | None = Field(default=None, alias="itemtype")
+    description: str | None = None
+    rarity: str | None = None
+    price: int | None = None
 
 
 class InventoryResponse(BaseSchema):
@@ -98,6 +102,9 @@ class ShopItem(BaseSchema):
     itemName: str = Field(alias="itemname")
     stock: int
     price: int
+    itemType: str | None = Field(default=None, alias="itemtype")
+    description: str | None = None
+    rarity: str | None = None
 
 
 class ShopResponse(BaseSchema):

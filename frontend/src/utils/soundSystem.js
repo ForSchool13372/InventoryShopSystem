@@ -5,7 +5,8 @@ const sounds = {
     error: "/sounds/error.mp3",
     buy: "/sounds/buy.mp3",
     sell: "/sounds/sell.mp3",
-    click: "/sounds/click.mp3"
+    click: "/sounds/click.mp3",
+    claim: "/sounds/claim.mp3"
 };
 
 const play = (type) => {
@@ -17,7 +18,7 @@ const play = (type) => {
     }
 
     const audio = new Audio(sounds[type]);
-    audio.volume = 0.4;
+    audio.volume = 1;
     audio.play().catch(() => { });
 
     currentAudio = audio;

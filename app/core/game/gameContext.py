@@ -1,3 +1,7 @@
+from app.services.leaderboardService import LeaderboardService
+from app.repositories.playerRepository import PlayerRepository
+
+
 class GameContext:
     def __init__(
         self,
@@ -26,12 +30,24 @@ class GameContext:
         self.gameEventService = gameEventService
 
         # =========================================================
-        # OPTIONAL (CLEAN EXTENSION POINT)
+        # OPTIONAL
         # =========================================================
         self.auth = auth
 
+        # =========================================================
+        # SHORTCUT REPOS
+        # =========================================================
+        self.playerRepo = self.repos.player
+
     # =========================================================
-    # SHORTCUT ACCESSORS (OPTIONAL BUT CLEANER LONG TERM)
+    # LEADERBOARD (SINGLE SOURCE OF TRUTH)
+    # =========================================================
+    @property
+    def leaderboardService(self):
+        return self.services.leaderboard
+
+    # =========================================================
+    # SHORTCUT ACCESSORS
     # =========================================================
 
     @property

@@ -1,17 +1,20 @@
 import pytest
 import app.core.redisClient as redisModule
-from tests.fakeRedis import FakeRedis
+from tests.fakes.fakeRedis import FakeRedis
+from app.core.game.controller import Controller
 
 from fastapi.testclient import TestClient
-
 from app.main import app
+
 from app.models.item import Item
 from app.models.player import Player
 from app.models.enemy import Enemy
 
+from tests.fakes.fakeGameContext import FakeCtx, FakeQuestManager
+
 
 # =========================================================
-# REDIS FIX (MOCK - MUST BE AT TOP)
+# GLOBAL MOCKS (AUTOUSE FIXTURES)
 # =========================================================
 
 @pytest.fixture(autouse=True)
@@ -22,7 +25,7 @@ def fake_redis(monkeypatch):
 
 
 # =========================================================
-# CLIENT FIXTURE
+# API TEST CLIENT FIXTURES
 # =========================================================
 
 @pytest.fixture
@@ -35,21 +38,20 @@ def ws_client(client):
 
 
 # =========================================================
-# AUTH FIXTURE
+# AUTH FIXTURES
 # =========================================================
 
 @pytest.fixture
 def token(client):
     response = client.post("/api/login", json={"playerId": 1})
-
     data = response.json()
-    assert "token" in data
 
+    assert "token" in data
     return data["token"]
 
 
 # =========================================================
-# FACTORIES
+# FACTORY HELPERS
 # =========================================================
 
 @pytest.fixture
@@ -80,77 +82,8 @@ def create_enemy():
 
 
 # =========================================================
-# FAKE ENGINE
+# SIMPLE REPO FAKE (ONLY USED HERE)
 # =========================================================
-
-class FakeResult:
-    def __init__(self, row=None, rows=None):
-        self._row = row
-        self._rows = rows or []
-
-    def fetchone(self):
-        return self._row
-
-    def fetchall(self):
-        return self._rows
-
-
-class FakeConn:
-    def __init__(self):
-        self.executed = []
-
-    def execute(self, query, params=None):
-        self.executed.append((str(query), params))
-
-        q = str(query)
-
-        if "SELECT stock" in q:
-            return FakeResult(row=(10,))
-
-        if "FROM shop" in q:
-            return FakeResult(rows=[("sword", 10, 5)])
-
-        if "playerItems" in q:
-            return FakeResult(row=(3,))
-
-        return FakeResult()
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        return False
-
-
-class FakeEngine:
-    def begin(self):
-        return FakeConn()
-
-
-@pytest.fixture
-def fake_engine():
-    return FakeEngine()
-
-
-# =========================================================
-# OTHER FAKES
-# =========================================================
-
-class FakeRNG:
-    def randint(self, a, b):
-        return 10
-
-    def choice(self, items):
-        return items[0]
-
-
-class FakeQuestManager:
-    def __init__(self):
-        self.updated_enemy = None
-
-    def update(self, enemy):
-        self.updated_enemy = enemy
-
 
 class FakeShopRepo:
     def __init__(self):
@@ -183,18 +116,25 @@ class FakeShopRepo:
         return {"quantity": self.playerItems[itemName]}
 
 
-# =========================================================
-# FIXTURE EXPORTS
-# =========================================================
-
 @pytest.fixture
-def fake_rng():
-    return FakeRNG()
+def fake_shop_repo():
+    return FakeShopRepo()
+
+
+# =========================================================
+# QUEST FIXTURE (MUST BE BEFORE CONTROLLER)
+# =========================================================
 
 @pytest.fixture
 def fake_quest_manager():
     return FakeQuestManager()
 
+
+# =========================================================
+# CONTROLLER FIXTURE (NOW CLEAN)
+# =========================================================
+
 @pytest.fixture
-def fake_shop_repo():
-    return FakeShopRepo()
+def controller(fake_shop_repo, fake_quest_manager):
+    ctx = FakeCtx(fake_shop_repo, fake_quest_manager)
+    return Controller(ctx)

@@ -1,10 +1,11 @@
 import pytest
-from app.core.gameFactory import PlayerFactory, GameFactory
+from app.core.game.gameFactory import PlayerFactory, GameFactory
 
 
 def test_player_factory_uses_defaults():
-    player = PlayerFactory.fromData({})
+    player = PlayerFactory.fromData(1, {})
 
+    assert player.playerId == 1
     assert player.core["gold"] == 0
     assert player.core["hp"] == 100
     assert player.progression["level"] == 1
@@ -13,6 +14,7 @@ def test_player_factory_uses_defaults():
 
 def test_player_factory_hydrates_player():
     player = PlayerFactory.fromData(
+        1,
         {
             "gold": 500,
             "hp": 75,
@@ -21,6 +23,7 @@ def test_player_factory_hydrates_player():
         }
     )
 
+    assert player.playerId == 1
     assert player.core["gold"] == 500
     assert player.core["hp"] == 75
     assert player.progression["level"] == 10
@@ -32,7 +35,7 @@ def test_game_factory_raises_when_player_not_found(monkeypatch):
 
     # IMPORTANT FIX: bypass cache
     monkeypatch.setattr(
-        "app.core.gameFactory.gameState.getPlayer",
+        "app.core.game.gameFactory.gameState.getPlayer",
         lambda playerId: None
     )
 

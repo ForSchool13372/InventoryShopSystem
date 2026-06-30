@@ -29,12 +29,24 @@ export default function useGame(token, playerId) {
         setItems(
             (shop?.data ?? []).map(item => ({
                 itemName: item.itemname,
+                itemType: item.itemtype,
+                rarity: item.rarity,
+                description: item.description,
                 stock: item.stock,
                 price: item.price
             }))
         );
 
-        setInventory(inventoryData?.items ?? []);
+        setInventory(
+            (inventoryData?.items ?? []).map(item => ({
+                itemName: item.itemName ?? item.itemname,
+                quantity: item.quantity ?? 0,
+                itemType: item.itemType ?? item.itemtype,
+                rarity: item.rarity,
+                description: item.description,
+                price: item.price
+            }))
+        );
 
         setPlayerStats({ ...(player ?? {}) });
 

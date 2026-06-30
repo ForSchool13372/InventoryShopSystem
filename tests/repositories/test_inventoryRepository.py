@@ -31,11 +31,24 @@ class FakeConn:
 
         q = str(query).lower()
 
-        # simulate SELECT inventory
         if "select" in q:
             return FakeResult([
-                {"itemname": "sword", "quantity": 2},
-                {"itemname": "potion", "quantity": 5}
+                {
+                    "itemname": "sword",
+                    "quantity": 2,
+                    "itemtype": "weapon",
+                    "rarity": "common",
+                    "description": "Basic sword",
+                    "price": 10
+                },
+                {
+                    "itemname": "potion",
+                    "quantity": 5,
+                    "itemtype": "consumable",
+                    "rarity": "common",
+                    "description": "Heals HP",
+                    "price": 5
+                }
             ])
 
         return FakeResult([])

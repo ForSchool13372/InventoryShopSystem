@@ -1,15 +1,17 @@
 from app.services.combatService import CombatService
 from app.models.player import Player
+from app.models.enemy import Enemy
 
 
 def make_enemy():
-    return {
-        "name": "Goblin",
-        "hp": 10,
-        "attack": 5,
-        "xp": 10,
-        "gold": 5
-    }
+    return Enemy(
+        name="Goblin",
+        hp=10,
+        xp=10,
+        gold=5,
+        minDamage=2,
+        maxDamage=5
+    )
 
 
 def test_combat_service_default():

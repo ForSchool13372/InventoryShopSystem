@@ -3,19 +3,20 @@
 import useGamePage from "./hooks/useGamePage";
 
 import Login from "./components/Login";
-import Shop from "./components/Shop";
-import Inventory from "./components/Inventory";
+import Shop from "./components/Shop/Shop";
+import Inventory from "./components/inventory/Inventory";
 import PlayerStats from "./components/PlayerStats";
 import Toasts from "./components/Toasts";
 import Leaderboard from "./components/Leaderboard";
 import Header from "./components/Header";
 import CombatPanel from "./components/combatPanel";
+import { QuestPanel } from "./components/QuestPanel";
 
 import { getTheme } from "./theme";
 import { page, fadeUp } from "./animations";
 
 // =========================================================
-// OUTSIDE COMPONENTS (FIX FOR YOUR ERROR)
+// OUTSIDE COMPONENTS
 // =========================================================
 const Layout = ({ children }) => (
     <div style={{
@@ -61,6 +62,8 @@ function App() {
         toasts,
         darkMode,
         toggleDarkMode,
+
+        refreshGame
     } = useGamePage();
 
     const theme = getTheme(darkMode);
@@ -125,57 +128,56 @@ function App() {
 
                 {token && (
                     <>
-                        {/* MAIN GRID */}
+                        {/* MAIN CONTENT (NO GRID) */}
                         <Section delay={0.1}>
                             <div style={{
-                                display: "grid",
-                                gridTemplateColumns: "3fr 1.2fr",
+                                display: "flex",
+                                flexDirection: "column",
                                 gap: "24px",
                                 marginTop: "20px",
-                                marginBottom: "20px",
-                                alignItems: "start"
+                                marginBottom: "20px"
                             }}>
-                                <div style={{
-                                    display: "flex",
-                                    flexDirection: "column",
-                                    gap: "24px"
-                                }}>
-                                    <Section delay={0.1}>
-                                        <Shop
-                                            items={items}
-                                            token={token}
-                                            onBuy={handleBuy}
-                                            theme={theme}
-                                            buyingItem={buyingItem}
-                                            playerStats={playerStats}
-                                        />
-                                    </Section>
-
-                                    <Section delay={0.15}>
-                                        <Inventory
-                                            inventory={inventory}
-                                            token={token}
-                                            onSell={handleSell}
-                                            theme={theme}
-                                            sellingItem={sellingItem}
-                                        />
-                                    </Section>
-
-                                    <Section delay={0.2}>
-                                        <Leaderboard
-                                            theme={theme}
-                                            token={token}
-                                        />
-                                    </Section>
-                                </div>
-
-                                <Section delay={0.12}>
-                                    <PlayerStats
-                                        playerStats={playerStats}
+                                <Section delay={0.1}>
+                                    <Shop
+                                        items={items}
+                                        token={token}
+                                        onBuy={handleBuy}
                                         theme={theme}
+                                        buyingItem={buyingItem}
+                                        playerStats={playerStats}
                                     />
                                 </Section>
+
+                                <Section delay={0.15}>
+                                    <Inventory
+                                        inventory={inventory}
+                                        token={token}
+                                        onSell={handleSell}
+                                        theme={theme}
+                                        sellingItem={sellingItem}
+                                    />
+                                </Section>
+
+                                <Section delay={0.2}>
+                                    <Leaderboard
+                                        theme={theme}
+                                        token={token}
+                                    />
+                                </Section>
+
+                                <Section delay={0.22}>
+                                    <QuestPanel theme={theme} refreshGame={refreshGame} />
+                                </Section>
+
                             </div>
+                        </Section>
+
+                        {/* PLAYER STATS (MOVED DOWN = CLEAN UX) */}
+                        <Section delay={0.12}>
+                            <PlayerStats
+                                playerStats={playerStats}
+                                theme={theme}
+                            />
                         </Section>
 
                         {/* COMBAT FULL WIDTH SECTION */}

@@ -1,8 +1,6 @@
 ﻿from fastapi import APIRouter, Depends, WebSocket, HTTPException
 from starlette.websockets import WebSocketDisconnect
 import logging
-from typing import Set
-import asyncio
 
 from app.api.routes.schemas.gameSchemas import (
     ItemRequest,
@@ -14,7 +12,7 @@ from app.api.routes.schemas.gameSchemas import (
 )
 
 from app.core.utils.apiUtils import safeExecute
-from app.core.deps import getCurrentGame, getCurrentGameWs
+from app.core.deps import getCurrentGame
 from app.core.utils.rateLimiter import rateLimiter
 
 from app.core.wsManager import wsManager
@@ -23,16 +21,21 @@ from app.repositories.playerRepository import PlayerRepository
 from app.services.leaderboardService import LeaderboardService
 
 
+# =========================================================
+# ROUTER SETUP
+# =========================================================
 router = APIRouter(prefix="/api", tags=["Game API"])
 
+logger = logging.getLogger(__name__)
+
+# Global service instances
 inventoryRepository = InventoryRepository()
 playerRepository = PlayerRepository()
 leaderboardService = LeaderboardService(playerRepository)
-logger = logging.getLogger(__name__)
 
 
 # =========================================================
-# LOGIN
+# AUTH / LOGIN
 # =========================================================
 @router.post("/login", response_model=LoginResponse)
 def login(data: LoginRequest):
@@ -53,20 +56,18 @@ def getPlayer(game=Depends(getCurrentGame)):
 
 
 # =========================================================
-# FIGHT (NEW)
+# COMBAT
 # =========================================================
 @router.post("/fight")
-def fight(game=Depends(getCurrentGame)):
-    return safeExecute(
-        lambda: game.fight()
-    )
+async def fight(game=Depends(getCurrentGame)):
+    return await game.fight()
 
 
 # =========================================================
-# BUY
+# SHOP ACTIONS
 # =========================================================
 @router.post("/buy")
-def buy(
+async def buy(
     data: ItemRequest,
     game=Depends(getCurrentGame),
     allowed=Depends(rateLimiter("buy"))
@@ -74,16 +75,11 @@ def buy(
     if not allowed:
         return {"error": "Too many requests"}
 
-    return safeExecute(
-        lambda: game.buy(data.itemName, data.quantity)
-    )
+    return await game.buy(data.itemName, data.quantity)
 
 
-# =========================================================
-# SELL
-# =========================================================
 @router.post("/sell")
-def sell(
+async def sell(
     data: ItemRequest,
     game=Depends(getCurrentGame),
     allowed=Depends(rateLimiter("sell"))
@@ -91,9 +87,7 @@ def sell(
     if not allowed:
         return {"error": "Too many requests"}
 
-    return safeExecute(
-        lambda: game.sell(data.itemName, data.quantity)
-    )
+    return await game.sell(data.itemName, data.quantity)
 
 
 # =========================================================
@@ -102,7 +96,6 @@ def sell(
 @router.get("/inventory", response_model=InventoryResponse)
 def getInventory(game=Depends(getCurrentGame)):
     rows = inventoryRepository.loadInventory(game.playerId)
-
     return InventoryResponse(items=rows)
 
 
@@ -123,7 +116,7 @@ def getEvents(game=Depends(getCurrentGame)):
 
 
 # =========================================================
-# HEALTH
+# HEALTH CHECK
 # =========================================================
 @router.get("/health")
 def health():
@@ -131,35 +124,42 @@ def health():
 
 
 # =========================================================
-# LEADERBOARD WEBSOCKET (EVENT-DRIVEN)
+# WEBSOCKET - LEADERBOARD
 # =========================================================
 @router.websocket("/ws/leaderboard")
 async def leaderboardSocket(websocket: WebSocket):
     await wsManager.connect(websocket)
 
     try:
-        leaderboard = leaderboardService.getLeaderboard()
+        # initial push
+        await wsManager.broadcastLeaderboard(
+            leaderboardService.getLeaderboard()
+        )
 
-        await websocket.send_json({
-            "type": "LEADERBOARD_UPDATE",
-            "data": leaderboard
-        })
-
+        # keep connection alive
         while True:
-            await asyncio.sleep(5)
-
-            leaderboard = leaderboardService.getLeaderboard()
-
-            await websocket.send_json({
-                "type": "LEADERBOARD_UPDATE",
-                "data": leaderboard
-            })
+            await websocket.receive_text()
 
     except WebSocketDisconnect:
-        logger.info("Client disconnected from leaderboard websocket")
-
-    except Exception as e:
-        logger.exception("Leaderboard websocket error")
+        pass
 
     finally:
         wsManager.disconnect(websocket)
+
+# =========================================================
+# Quests
+# =========================================================
+@router.get("/quests")
+def getQuests(game=Depends(getCurrentGame)):
+    return {
+        "quests": [
+            q.getStatus() for q in game.questManager.quests
+        ]
+    }
+
+@router.post("/quests/claim/{questName}")
+async def claimQuest(
+    questName: str,
+    game=Depends(getCurrentGame)
+):
+    return await game.claimQuest(questName)

@@ -42,7 +42,14 @@ class FakeConn:
         # -------------------------
         if "from shop" in q and "select" in q:
             return FakeResult([
-                {"itemname": "sword", "stock": 10, "price": 5}
+                {
+                    "itemname": "sword",
+                    "stock": 10,
+                    "price": 5,
+                    "itemtype": "weapon",
+                    "description": "Basic sword",
+                    "rarity": "common"
+                }
             ])
 
         # -------------------------
@@ -87,7 +94,11 @@ def test_get_shop_stock():
     result = repo.getShopStock(conn)
 
     assert isinstance(result, list)
-    assert result[0]["itemname"] == "sword"
+
+    assert result[0]["itemName"] == "sword"
+    assert result[0]["itemType"] == "weapon"
+    assert result[0]["rarity"] == "common"
+    assert result[0]["description"] == "Basic sword"
     assert result[0]["stock"] == 10
     assert result[0]["price"] == 5
 

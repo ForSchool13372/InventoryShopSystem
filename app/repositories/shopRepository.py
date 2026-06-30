@@ -6,14 +6,24 @@ class ShopRepository:
     # =========================================================
     # SHOP
     # =========================================================
-
     def getShopStock(self, conn):
         rows = conn.execute(text("""
-            SELECT itemname, stock, price
+            SELECT itemname, stock, price,
+                   itemtype, description, rarity
             FROM shop
         """)).mappings().all()
 
-        return [dict(row) for row in rows]
+        return [
+            {
+                "itemName": row["itemname"],
+                "itemType": row["itemtype"],
+                "rarity": row["rarity"],
+                "description": row["description"],
+                "price": row["price"],
+                "stock": row["stock"]
+            }
+            for row in rows
+]
 
     def getStock(self, conn, itemName: str):
         result = conn.execute(

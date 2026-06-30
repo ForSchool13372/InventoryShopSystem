@@ -1,92 +1,67 @@
 ﻿import random
+import secrets
 
 
 class CombatService:
-    def __init__(self):
-        pass
-
-    # =========================================================
-    # HELPERS (makes hybrid system safe)
-    # =========================================================
-    def _get(self, obj, key):
-        if isinstance(obj, dict):
-            return obj[key]
-        return getattr(obj, key)
-
-    # =========================================================
-    # PUBLIC API
-    # =========================================================
     def handleFight(self, player, enemies):
 
-        enemy = random.choice(enemies)
+        # 🔒 EARLY EXIT: no fight if dead
+        if player.core["hp"] <= 0:
+            return {
+                "result": "lose",
+                "enemy": None,
+                "xp": 0,
+                "gold": 0,
+                "log": ["💀 You are already defeated."]
+            }
 
-        # =========================
-        # SAFE PLAYER STATS
-        # =========================
-        playerStats = getattr(player, "combat", {
-            "attack": 10,
-            "critChance": 0,
-            "critMultiplier": 1.5,
-            "defense": 0
-        })
-
-        enemyHp = self._get(enemy, "hp")
-        enemyAttack = self._get(enemy, "attack")
-        enemyName = self._get(enemy, "name")
+        enemy = secrets.choice(enemies)
 
         log = []
         turn = 1
 
-        while self._get(player, "core")["hp"] > 0 and enemyHp > 0:
+        log.append(f"⚔️ A wild {enemy.name} appears!")
 
-            # =========================
+        # Always run at least one turn
+        while True:
+
             # PLAYER TURN
-            # =========================
-            damage = playerStats["attack"]
+            damage = player.combat["attack"]
 
-            if random.random() < playerStats["critChance"]:
-                damage *= playerStats["critMultiplier"]
-                log.append(
-                    f"Turn {turn}: 💥 CRITICAL HIT! You deal {damage} damage to {enemyName}."
-                )
+            if random.random() < player.combat["critChance"]:
+                damage *= player.combat["critMultiplier"]
+                log.append(f"Turn {turn}: 💥 CRITICAL HIT! You deal {int(damage)} damage.")
             else:
-                log.append(
-                    f"Turn {turn}: ⚔️ You deal {damage} damage to {enemyName}."
-                )
+                log.append(f"Turn {turn}: ⚔️ You deal {damage} damage.")
 
-            enemyHp -= damage
+            enemy.takeDamage(damage)
 
-            if enemyHp <= 0:
+            # Enemy dies AFTER logging → break
+            if enemy.isDead():
                 break
 
-            # =========================
             # ENEMY TURN
-            # =========================
-            player.takeDamage(enemyAttack)
+            actualDamage = player.takeDamage(enemy.attack)
+            log.append(f"Turn {turn}: 🩸 {enemy.name} hits you for {actualDamage} damage.")
 
-            log.append(
-                f"Turn {turn}: 🩸 {enemyName} deals {enemyAttack} damage to you."
-            )
+            if player.isDead():
+                break
 
             turn += 1
 
-        # =========================
         # RESULT
-        # =========================
-        if self._get(player, "core")["hp"] > 0:
+        if player.core["hp"] > 0:
             result = "win"
-            log.append(f"🏆 You defeated {enemyName}!")
-            log.append(f"⭐ You gained {self._get(enemy, 'xp')} XP!")
-            log.append(f"💰 You gained {self._get(enemy, 'gold')} gold!")
-
+            log.append(f"🏆 You defeated {enemy.name}!")
+            log.append(f"⭐ +{enemy.xp} XP | 💰 +{enemy.gold} gold")
         else:
             result = "lose"
-            log.append(f"💀 You were defeated by {enemyName}!")
+            log.append(f"💀 You were defeated by {enemy.name}...")
 
         return {
             "result": result,
             "enemy": enemy,
-            "xp": self._get(enemy, "xp"),
-            "gold": self._get(enemy, "gold"),
+            "xp": enemy.xp,
+            "gold": enemy.gold,
             "log": log
         }

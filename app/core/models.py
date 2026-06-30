@@ -20,7 +20,7 @@ class Player(Base):
     attack = Column(Integer, default=10)
     defense = Column(Integer, default=5)
 
-    critChance = Column(Integer, default=5)  # store as int or float depending on your DB choice
+    critChance = Column(Integer, default=5)  
     critMultiplier = Column(Integer, default=2)
 
 

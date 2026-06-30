@@ -7,6 +7,7 @@ class Enemy:
         name: str,
         hp: int,
         xp: int,
+        gold: int,
         minDamage: int,
         maxDamage: int
     ):
@@ -21,13 +22,14 @@ class Enemy:
         self.minDamage = minDamage
         self.maxDamage = maxDamage
 
-        # derived "attack" stat for compatibility
+        # compatibility stat
         self.attack = (minDamage + maxDamage) // 2
 
         # =========================
         # REWARDS
         # =========================
         self.xp = xp
+        self.gold = gold
 
     # =========================================================
     # COMBAT
@@ -53,6 +55,7 @@ class Enemy:
             "maxHp": self.maxHp,
             "hp": self.hp,
             "xp": self.xp,
+            "gold": self.gold,
             "minDamage": self.minDamage,
             "maxDamage": self.maxDamage,
             "attack": self.attack

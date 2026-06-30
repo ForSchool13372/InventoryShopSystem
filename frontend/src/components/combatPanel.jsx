@@ -1,4 +1,4 @@
-﻿import { motion } from "framer-motion";
+﻿import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 export default function CombatPanel({
@@ -25,25 +25,17 @@ export default function CombatPanel({
     const prevLogRef = useRef([]);
 
     useEffect(() => {
+        if (!fightData || fightLoading) return;
         if (!log.length) return;
 
-        const isSame =
-            prevLogRef.current.length === log.length &&
-            prevLogRef.current.every((v, i) => v === log[i]);
-
-        if (isSame) return;
-
-        prevLogRef.current = log;
-
+        prevLogRef.current = [];
         setDisplayLog([]);
         setIsReplaying(true);
 
         let i = 0;
-
         const interval = setInterval(() => {
-            setDisplayLog((prev) => [...prev, log[i]]);
+            setDisplayLog(prev => [...prev, log[i]]);
             i++;
-
             if (i >= log.length) {
                 clearInterval(interval);
                 setIsReplaying(false);
@@ -51,7 +43,8 @@ export default function CombatPanel({
         }, 400);
 
         return () => clearInterval(interval);
-    }, [log]);
+    }, [fightData, fightLoading, log]);
+
 
     const locked = fightLoading || isReplaying;
 
@@ -70,7 +63,11 @@ export default function CombatPanel({
                         opacity: locked ? 0.6 : 1,
                         cursor: locked ? "not-allowed" : "pointer"
                     }}
-                    onClick={handleFight}
+                    onClick={() => {
+                        setDisplayLog([]);   // ← FIX: clear old logs instantly
+                        setIsReplaying(true);   // immediately hide old loot
+                        handleFight();       // then start the fight
+                    }}
                     disabled={locked}
                 >
                     {fightLoading
@@ -100,6 +97,36 @@ export default function CombatPanel({
                     ))
                 )}
             </div>
+
+             
+            <AnimatePresence>
+                {!isReplaying && fightData?.items?.length > 0 && (
+                    <motion.div
+                        initial={{ opacity: 0, y: 6 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 6 }}
+                        transition={{ duration: 0.25 }}
+                        style={{
+                            marginTop: "10px",
+                            padding: "10px",
+                            borderRadius: "8px",
+                            background: "rgba(34,197,94,0.08)",
+                            border: "1px solid rgba(34,197,94,0.25)",
+                            fontSize: "0.8rem"
+                        }}
+                    >
+                        <div style={{ fontWeight: 800, marginBottom: "6px" }}>
+                            🎁 Loot Dropped
+                        </div>
+
+                        {fightData.items.map((item, i) => (
+                            <div key={i}>
+                                + {item.itemName.charAt(0).toUpperCase() + item.itemName.slice(1)} ×{item.qty}
+                            </div>
+                        ))}
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </motion.div>
     );
 }
@@ -131,10 +158,6 @@ const styles = {
         borderRadius: "10px",
         background: "rgba(255,0,0,0.06)",
         border: "1px solid rgba(255,0,0,0.2)"
-    },
-
-    nameRow: {
-        fontWeight: 800
     },
 
     actions: {

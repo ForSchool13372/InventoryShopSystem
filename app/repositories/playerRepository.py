@@ -4,6 +4,9 @@ from app.core.database import engine
 
 class PlayerRepository:
 
+    # =========================================================
+    # LOAD (DB -> Python)
+    # =========================================================
     def load(self, playerId: int):
         with engine.begin() as conn:
             result = conn.execute(
@@ -18,25 +21,31 @@ class PlayerRepository:
             if not result:
                 return None
 
-            return dict(result)
+            return self._mapRow(result)
 
-
+    # =========================================================
+    # SAVE (Python -> DB)
+    # =========================================================
     def save(self, playerId: int, player):
         data = player.toDict()
 
-        data = {
-            "gold": data.get("gold", 0),
-            "hp": data.get("hp", 100),
-            "maxhp": data.get("maxHp", 100),
+        params = {
+            "id": playerId,
 
-            "level": data.get("level", 1),
-            "xp": data.get("xp", 0),
+            # core
+            "gold": data.get("gold"),
+            "hp": data.get("hp"),
+            "maxhp": data.get("maxhp"),
 
-            "attack": data.get("attack", 10),
-            "defense": data.get("defense", 5),
+            # progression
+            "level": data.get("level"),
+            "xp": data.get("xp"),
 
-            "critchance": data.get("critChance", 0.05),
-            "critmultiplier": data.get("critMultiplier", 1.5),
+            # combat
+            "attack": data.get("attack"),
+            "defense": data.get("defense"),
+            "critchance": data.get("critchance"),
+            "critmultiplier": data.get("critmultiplier"),
         }
 
         with engine.begin() as conn:
@@ -54,10 +63,12 @@ class PlayerRepository:
                         critmultiplier = :critmultiplier
                     WHERE id = :id
                 """),
-                {"id": playerId, **data}
+                params
             )
 
-
+    # =========================================================
+    # GET ALL (DB -> Python)
+    # =========================================================
     def getAll(self):
         with engine.begin() as conn:
             result = conn.execute(
@@ -67,4 +78,26 @@ class PlayerRepository:
                 """)
             ).mappings().all()
 
-            return [dict(row) for row in result]
+            return [self._mapRow(row) for row in result]
+
+    # =========================================================
+    # MAPPER (DB -> Python format)
+    # =========================================================
+    def _mapRow(self, row):
+        rowDict = dict(row)
+
+        return {
+            "id": rowDict["id"],
+            "gold": rowDict["gold"],
+            "hp": rowDict["hp"],
+            "maxhp": rowDict["maxhp"],
+
+            "level": rowDict["level"],
+            "xp": rowDict["xp"],
+
+            "attack": rowDict["attack"],
+            "defense": rowDict["defense"],
+
+            "critChance": rowDict["critchance"],
+            "critMultiplier": rowDict["critmultiplier"],
+        }

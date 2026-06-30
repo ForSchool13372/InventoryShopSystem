@@ -7,10 +7,16 @@ class ShopService:
     def __init__(self, shopRepo):
         self.shopRepo = shopRepo
 
+    # =========================================================
+    # SHOP VIEW
+    # =========================================================
     def getShop(self):
         with engine.begin() as conn:
             return self.shopRepo.getShopStock(conn)
 
+    # =========================================================
+    # BUY
+    # =========================================================
     def buy(self, ctx):
         self._validate_item(ctx.item)
         self._validate_quantity(ctx.quantity)
@@ -27,8 +33,7 @@ class ShopService:
         with engine.begin() as conn:
 
             stock = self.shopRepo.getStock(conn, itemName)
-
-            if stock["stock"] < quantity:
+            if not stock or stock.get("stock", 0) < quantity:
                 return self._fail("Not enough stock")
 
             self.shopRepo.decreaseStock(conn, itemName, quantity)
@@ -49,9 +54,15 @@ class ShopService:
                 {"cost": totalCost, "id": playerId}
             )
 
-        ctx.player.core["gold"] -= totalCost
-        return self._success("Purchase Successful")
+        return {
+            "success": True,
+            "message": "Purchase Successful",
+            "cost": totalCost
+        }
 
+    # =========================================================
+    # SELL
+    # =========================================================
     def sell(self, ctx):
         self._validate_item(ctx.item)
         self._validate_quantity(ctx.quantity)
@@ -66,7 +77,7 @@ class ShopService:
 
             owned = self.shopRepo.getPlayerItemQuantity(conn, playerId, itemName)
 
-            if owned["quantity"] < quantity:
+            if not owned or owned.get("quantity", 0) < quantity:
                 return self._fail("Not enough items")
 
             self.shopRepo.removePlayerItem(
@@ -87,31 +98,39 @@ class ShopService:
                 {"gain": totalGain, "id": playerId}
             )
 
-        ctx.player.core["gold"] += totalGain
-        return self._success("Sale Successful")
+        return {
+            "success": True,
+            "message": "Sale Successful",
+            "gain": totalGain
+        }
 
     # =========================================================
     # VALIDATION
     # =========================================================
-
     def _validate_item(self, item):
-        if item is None:
+        if not item:
             raise ValueError("Item does not exist")
 
         if not isinstance(item, dict):
             raise ValueError("Invalid item type")
 
-        if "price" not in item or "itemName" not in item:
+        # normalize casing safely
+        if "itemName" not in item:
+            if "itemname" in item:
+                item["itemName"] = item["itemname"]
+            else:
+                raise ValueError("Invalid item structure")
+
+        if "price" not in item:
             raise ValueError("Invalid item structure")
 
     def _validate_quantity(self, quantity):
-        if quantity <= 0:
+        if quantity is None or quantity <= 0:
             raise ValueError("Invalid quantity")
 
     # =========================================================
     # RESPONSE HELPERS
     # =========================================================
-
     def _success(self, message):
         return {"success": True, "message": message}
 

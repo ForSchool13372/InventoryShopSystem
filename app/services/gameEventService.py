@@ -9,42 +9,34 @@ class GameEventService:
         self.wsManager = wsManager
         self.eventHistory = []
 
-    # =========================================================
-    # PUBLIC API
-    # =========================================================
     def handleEvent(self, event):
         enrichedEvent = self._enrichEvent(event)
         self._storeEvent(enrichedEvent)
 
         eventType = enrichedEvent["type"]
         playerId = enrichedEvent["playerId"]
+        data = enrichedEvent.get("data", {})
 
         player = self.gameState.getPlayer(playerId)
-
         if not player:
             return
 
-        data = enrichedEvent.get("data", {})
-
-        # =========================================================
-        # GAME LOGIC
-        # =========================================================
-
+        # FIGHT WIN
         if eventType == "FIGHT_WIN":
             player.gainXP(data.get("xp", 0))
-
             player.core["gold"] += data.get("gold", 0)
 
-            self.questManager.update(data.get("enemy"))
-            self._broadcastLeaderboard()
-
+        # FIGHT LOSE
         elif eventType == "FIGHT_LOSE":
             player.core["hp"] = 0
+
+        # BUY / SELL
+        elif eventType in ("BUY", "SELL"):
+            pass
+
+        if eventType in ("FIGHT_WIN", "FIGHT_LOSE", "BUY", "SELL"):
             self._broadcastLeaderboard()
 
-    # =========================================================
-    # EVENT STORAGE
-    # =========================================================
     def _storeEvent(self, event):
         self.eventHistory.append(event)
 
@@ -52,9 +44,6 @@ class GameEventService:
         events = list(reversed(self.eventHistory))
         return events[:limit] if limit else events
 
-    # =========================================================
-    # EVENT ENRICHMENT
-    # =========================================================
     def _enrichEvent(self, event):
         return {
             "type": event["type"],
@@ -63,9 +52,6 @@ class GameEventService:
             "data": event.get("data", {}),
         }
 
-    # =========================================================
-    # WS INTEGRATION
-    # =========================================================
     def _broadcastLeaderboard(self):
         if not self.wsManager:
             return

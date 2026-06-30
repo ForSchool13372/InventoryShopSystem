@@ -2,7 +2,7 @@
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
 from app.core.auth import verifyToken
-from app.core.gameFactory import GameFactory
+from app.core.game.gameFactory import GameFactory
 from app.state.gameState import gameState
 
 authScheme = HTTPBearer()
@@ -36,19 +36,16 @@ def getCurrentPlayerId(
 # =========================================================
 def getCurrentGame(playerId: int = Depends(getCurrentPlayerId)):
 
-    # 🔥 If player already exists in memory → reuse it
-    if gameState.hasPlayer(playerId):
-        player = gameState.getPlayer(playerId)
+    # 🔥 If game already exists in memory → reuse it
+    if playerId in gameState.games:
+        return gameState.games[playerId]
 
-        # wrap existing player into controller again
-        return factory.create(playerId)
-
-    # 🔥 First time login → create + store in memory
+    # 🔥 First time → create and store
     game = factory.create(playerId)
-
-    gameState.addPlayer(playerId, game.ctx.player)
+    gameState.games[playerId] = game
 
     return game
+
 
 
 # =========================================================
@@ -69,4 +66,9 @@ def getCurrentGameWs(token: str):
     if not playerId:
         return None
 
-    return factory.create(playerId)
+    if playerId in gameState.games:
+        return gameState.games[playerId]
+
+    game = factory.create(playerId)
+    gameState.games[playerId] = game
+    return game

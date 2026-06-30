@@ -31,10 +31,16 @@ class FakeConn:
         # -------------------------
         if "from player" in q and "where id" in q:
             return FakeResult({
+                "id": 1,
                 "gold": 100,
                 "hp": 50,
+                "maxhp": 100,
                 "level": 1,
-                "xp": 10
+                "xp": 10,
+                "attack": 10,
+                "defense": 5,
+                "critchance": 0.05,
+                "critmultiplier": 1.5
             })
 
         return FakeResult(None)
@@ -65,7 +71,9 @@ def test_load_player(monkeypatch):
 
     result = repo.load(1)
 
+    assert result is not None
     assert isinstance(result, dict)
+
     assert result["gold"] == 100
     assert result["hp"] == 50
     assert result["level"] == 1

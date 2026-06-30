@@ -7,6 +7,7 @@ def test_enemy_initialization_sets_all_fields():
         name="Goblin",
         hp=100,
         xp=50,
+        gold=10,
         minDamage=5,
         maxDamage=10,
     )
@@ -15,12 +16,13 @@ def test_enemy_initialization_sets_all_fields():
     assert enemy.maxHp == 100
     assert enemy.hp == 100
     assert enemy.xp == 50
+    assert enemy.gold == 10
     assert enemy.minDamage == 5
     assert enemy.maxDamage == 10
 
 
 def test_take_damage_reduces_hp_but_not_below_zero():
-    enemy = Enemy("Goblin", 20, 10, 1, 3)
+    enemy = Enemy("Goblin", 20, 10, 5, 1, 3)
 
     enemy.takeDamage(5)
     assert enemy.hp == 15
@@ -30,7 +32,7 @@ def test_take_damage_reduces_hp_but_not_below_zero():
 
 
 def test_reset_restores_full_hp():
-    enemy = Enemy("Goblin", 30, 10, 1, 3)
+    enemy = Enemy("Goblin", 30, 10, 5, 1, 3)
 
     enemy.takeDamage(10)
     assert enemy.hp == 20
@@ -40,7 +42,7 @@ def test_reset_restores_full_hp():
 
 
 def test_to_dict_returns_correct_structure():
-    enemy = Enemy("Goblin", 100, 50, 5, 10)
+    enemy = Enemy("Goblin", 100, 50, 10, 5, 10)
 
     result = enemy.toDict()
 
@@ -49,6 +51,7 @@ def test_to_dict_returns_correct_structure():
         "maxHp": 100,
         "hp": 100,
         "xp": 50,
+        "gold": 10,
         "minDamage": 5,
         "maxDamage": 10,
         "attack": 7,
