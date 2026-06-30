@@ -12,7 +12,7 @@ class Player(Base):
 
     gold = Column(Integer, default=0)
     hp = Column(Integer, default=100)
-    maxHp = Column(Integer, default=100)
+    maxhp = Column(Integer, default=100)
 
     level = Column(Integer, default=1)
     xp = Column(Integer, default=0)
@@ -20,8 +20,8 @@ class Player(Base):
     attack = Column(Integer, default=10)
     defense = Column(Integer, default=5)
 
-    critChance = Column(Integer, default=5)  
-    critMultiplier = Column(Integer, default=2)
+    critchance = Column(Integer, default=5)
+    critmultiplier = Column(Integer, default=2)
 
 
 # =========================================================
