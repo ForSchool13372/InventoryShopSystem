@@ -26,12 +26,9 @@ def fake_redis(monkeypatch):
 
 @pytest.fixture(scope="session", autouse=True)
 def setup_test_db():
-    # Create all tables BEFORE ANY TEST RUNS
+    from app.core.database import Base, engine
     Base.metadata.create_all(bind=engine)
-
     yield
-
-    # Optional cleanup after tests
     Base.metadata.drop_all(bind=engine)
 
 
