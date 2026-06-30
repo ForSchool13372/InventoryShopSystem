@@ -10,7 +10,7 @@ jobs:
 
     env:
       SECRET_KEY: ${{ secrets.SECRET_KEY }}
-      DATABASE_URL: sqlite:///game.db
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
     steps:
       - uses: actions/checkout@v4
@@ -29,18 +29,11 @@ jobs:
         run: echo "PYTHONPATH=." >> $GITHUB_ENV
 
       # =========================================================
-      # HARD RESET (THIS IS THE IMPORTANT FIX)
+      # INIT DB SCHEMA (NEON SAFE)
       # =========================================================
-      - name: Reset DB file
+      - name: Init database schema
         run: |
-          rm -f game.db
-
-      # =========================================================
-      # FORCE CLEAN SCHEMA REBUILD
-      # =========================================================
-      - name: Rebuild DB schema
-        run: |
-          python -c "from app.core.database import Base, engine; Base.metadata.drop_all(bind=engine); Base.metadata.create_all(bind=engine)"
+          python -c "from app.core.database import Base, engine; import app.models.player, app.models.item, app.models.enemy, app.models.quest; Base.metadata.create_all(bind=engine)"
 
       # =========================================================
       # SEED DATABASE
@@ -56,7 +49,7 @@ jobs:
         run: pytest --cov=app --cov-report=xml -v
 
       # =========================================================
-      # COVERAGE
+      # UPLOAD COVERAGE
       # =========================================================
       - name: Upload coverage
         uses: codecov/codecov-action@v4
