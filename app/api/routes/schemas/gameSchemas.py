@@ -56,7 +56,7 @@ class LoginResponse(BaseSchema):
 class PlayerCore(BaseSchema):
     gold: int
     hp: int
-    maxHp: int
+    maxhp: int
 
 
 class PlayerProgression(BaseSchema):
@@ -67,8 +67,8 @@ class PlayerProgression(BaseSchema):
 class PlayerCombat(BaseSchema):
     attack: int
     defense: int
-    critChance: float
-    critMultiplier: float
+    critchance: float
+    critmultiplier: float
 
 
 class PlayerResponse(BaseSchema):
