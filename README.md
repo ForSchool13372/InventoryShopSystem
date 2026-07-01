@@ -68,9 +68,16 @@ Key properties:
 ### ⚔️ Combat System
 - Server-side combat simulation implemented in backend service layer
 - Deterministic outcome system (win/lose based on defined game rules)
-- XP rewards and player progression integration
+- Enemy-specific XP and gold rewards
+- Randomized loot drops with configurable drop tables
+- Automatic inventory updates after combat rewards
 - Event-driven state updates handled through service layer architecture
-- Currently accessible via backend/CLI (not yet integrated into frontend UI)
+
+### 📜 Quest System
+- Tracks progress toward enemy kill objectives
+- Supports enemy-specific kill requirements
+- Automatic progress updates after combat
+- Quest completion handled through backend service logic
 
 ### 📊 Stats System
 - Live player stats from backend state
