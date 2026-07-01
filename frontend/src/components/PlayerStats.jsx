@@ -48,7 +48,7 @@ function PlayerStats({ playerStats, theme }) {
                 <div style={styles.statList}>
                     <Stat
                         label="Health"
-                        value={`${core.hp ?? 0} / ${core.maxHp ?? 0}`}
+                        value={`${core.hp ?? 0} / ${core.maxhp ?? 0}`}
                         theme={theme}
                     />
 
@@ -67,12 +67,12 @@ function PlayerStats({ playerStats, theme }) {
                     <Stat label="Defense" value={combat.defense ?? 0} theme={theme} />
                     <Stat
                         label="Crit"
-                        value={`${((combat.critChance ?? 0) * 100).toFixed(1)}%`}
+                        value={`${((combat.critchance ?? 0) * 100).toFixed(1)}%`}
                         theme={theme}
                     />
                     <Stat
                         label="Crit Damage"
-                        value={`${(combat.critMultiplier ?? 1).toFixed(2)}x`}
+                        value={`${(combat.critmultiplier ?? 1).toFixed(2)}x`}
                         theme={theme}
                     />
                 </div>

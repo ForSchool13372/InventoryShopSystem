@@ -128,7 +128,7 @@ class Controller:
                 "core": {
                     "gold": 0,
                     "hp": 100,
-                    "maxHp": 100
+                    "maxhp": 100
                 },
                 "progression": {
                     "level": 1,
@@ -137,8 +137,8 @@ class Controller:
                 "combat": {
                     "attack": 10,
                     "defense": 5,
-                    "critChance": 0.05,
-                    "critMultiplier": 1.5
+                    "critchance": 0.05,
+                    "critmultiplier": 1.5
                 }
             }
 
