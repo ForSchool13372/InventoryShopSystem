@@ -28,7 +28,7 @@ class GameEventService:
 
         # FIGHT LOSE
         elif eventType == "FIGHT_LOSE":
-            player.core["hp"] = 0
+            pass
 
         # BUY / SELL
         elif eventType in ("BUY", "SELL"):

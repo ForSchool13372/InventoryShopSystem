@@ -5,10 +5,10 @@ import useGamePage from "./hooks/useGamePage";
 import Login from "./components/Login";
 import Shop from "./components/Shop/Shop";
 import Inventory from "./components/inventory/Inventory";
-import PlayerStats from "./components/PlayerStats";
+import PlayerStats from "./components/playerstats/PlayerStats";
 import Toasts from "./components/Toasts";
 import Leaderboard from "./components/Leaderboard";
-import Header from "./components/Header";
+import Header from "./components/header/Header";
 import CombatPanel from "./components/combatPanel";
 import { QuestPanel } from "./components/QuestPanel";
 

@@ -10,6 +10,10 @@ from tests.fakes.gameFakes import (
 )
 
 
+# =========================================================
+# QUEST MANAGER (FIXED)
+# =========================================================
+
 class FakeQuestManager:
     def __init__(self):
         self.quests = []
@@ -18,6 +22,20 @@ class FakeQuestManager:
     def update(self, enemy):
         self.updated_enemy = enemy
 
+    def claimQuest(self, quest):
+        # Controller expects xp + gold
+        quest.completed = True
+        quest.claimed = True
+
+        return {
+            "xp": 10,
+            "gold": 5
+        }
+
+
+# =========================================================
+# PLAYER REPO
+# =========================================================
 
 class FakePlayerRepoSimple:
     def load(self, playerId):
@@ -37,13 +55,47 @@ class FakePlayerRepoSimple:
         pass
 
 
+# =========================================================
+# QUEST REPO
+# =========================================================
+
 class FakeQuestRepo:
+    def __init__(self):
+        self.saved = None
+
     def saveQuests(self, playerId, quests):
         self.saved = (playerId, quests)
 
 
+# =========================================================
+# SHOP REPO (FIXED)
+# =========================================================
+
+class FakeShopRepo:
+    def __init__(self):
+        self.stock = {"sword": 10, "potion": 5}
+
+    def getShopStock(self):
+        return self.stock
+
+
+# =========================================================
+# INVENTORY REPO (FIXED)
+# =========================================================
+
+class FakeInventoryRepo:
+    def loadInventory(self, playerId):
+        return {
+            "items": []
+        }
+
+
+# =========================================================
+# CONTEXT
+# =========================================================
+
 class FakeCtx:
-    def __init__(self, fake_shop_repo, fake_quest_manager):
+    def __init__(self, fake_shop_repo=None, fake_quest_manager=None):
 
         self.playerId = 1
         self.playerRepo = FakePlayerRepoSimple()
@@ -59,14 +111,13 @@ class FakeCtx:
 
         self.repos = SimpleNamespace(
             player=self.playerRepo,
-            inventory=object(),
-            shop=fake_shop_repo,
+            inventory=FakeInventoryRepo(),
+            shop=FakeShopRepo(),
             quest=FakeQuestRepo()
         )
 
         self.world = object()
 
-        # IMPORTANT FIX: ensure quests exists
         self.questManager = fake_quest_manager or FakeQuestManager()
 
         self.gameEventService = FakeEventService()

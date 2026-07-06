@@ -98,6 +98,6 @@ class PlayerRepository:
             "attack": rowDict.get("attack"),
             "defense": rowDict.get("defense"),
 
-            "critChance": rowDict.get("critchance"),
-            "critMultiplier": rowDict.get("critmultiplier"),
+            "critchance": rowDict.get("critchance"),
+            "critmultiplier": rowDict.get("critmultiplier"),
         }

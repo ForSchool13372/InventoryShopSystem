@@ -14,17 +14,17 @@
         # CORE
         # =========================
         self.core = {
-            "gold": gold or 0,
-            "hp": hp or 100,
-            "maxhp": maxhp or 100
+            "gold": gold if gold is not None else 0,
+            "hp": hp if hp is not None else 100,
+            "maxhp": maxhp if maxhp is not None else 100
         }
 
         # =========================
         # PROGRESSION
         # =========================
         self.progression = {
-            "level": level or 1,
-            "xp": xp or 0
+            "level": level if level is not None else 1,
+            "xp": xp if xp is not None else 0
         }
 
         # =========================

@@ -1,4 +1,4 @@
-from typing import Dict, Optional, List
+﻿from typing import Dict, Optional, List
 from app.models.player import Player
 
 

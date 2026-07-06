@@ -69,7 +69,6 @@ class Controller:
     # =========================================================
     # LOGIN
     # =========================================================
-
     def login(self) -> Dict[str, Any]:
         data = self.playerRepo.load(self.playerId)
 
@@ -151,7 +150,7 @@ class Controller:
         player = self._getPlayer()
         if not player:
             return {"success": False}
-        
+
         result = self.combat.handleFight(player, createEnemies())
 
         if result["result"] == "win":
@@ -171,7 +170,6 @@ class Controller:
         self._emitEvent(eventType, result)
 
         self.playerRepo.save(self.playerId, player)
-        self._syncPlayer()
 
         await wsManager.broadcastLeaderboard(
             self.leaderboardService.getLeaderboard()

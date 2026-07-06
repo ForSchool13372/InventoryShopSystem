@@ -1,13 +1,15 @@
 export const getTheme = (darkMode) => ({
-    // main background (slightly cooler + cleaner white space)
+    isLight: !darkMode,   // <— THIS FIXES EVERYTHING
+
+    // main background
     background: darkMode ? "#0b0f19" : "#f8fafc",
 
-    // cards (adds subtle separation from background)
+    // cards
     cardBg: darkMode ? "#0f172a" : "#ffffff",
 
-    // main text (slightly softened for less harsh black)
-    text: darkMode ? "#e5e7eb" : "#0f172a",
+    // main text
+    text: darkMode ? "#e5e7eb" : "#1a1a1a",
 
-    // secondary text (more modern muted tone)
-    subText: darkMode ? "#94a3b8" : "#64748b"
+    // secondary text
+    subText: darkMode ? "#94a3b8" : "#4a4a4a"
 });

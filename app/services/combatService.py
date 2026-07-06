@@ -36,7 +36,7 @@ class CombatService:
 
             enemy.takeDamage(damage)
 
-            # Enemy dies AFTER logging → break
+            # 🚨 STOP IMMEDIATELY if enemy dies
             if enemy.isDead():
                 break
 
@@ -44,6 +44,7 @@ class CombatService:
             actualDamage = player.takeDamage(enemy.attack)
             log.append(f"Turn {turn}: 🩸 {enemy.name} hits you for {actualDamage} damage.")
 
+            # 🚨 STOP IMMEDIATELY if player dies
             if player.isDead():
                 break
 

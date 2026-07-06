@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+﻿import { useEffect, useState, useCallback } from "react";
 import {
     getShop,
     getInventory,
@@ -48,7 +48,8 @@ export default function useGame(token, playerId) {
             }))
         );
 
-        setPlayerStats({ ...(player ?? {}) });
+        // SAFE PLAYER UPDATE
+        if (player?.core) setPlayerStats(player);
 
     }, [shouldLoad]);
 

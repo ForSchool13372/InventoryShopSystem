@@ -69,9 +69,8 @@ def createQuests():
     ]
 
 
-
 # =========================================================
-# SHOP SEED
+# SHOP SEED (SAFE UPSERT)
 # =========================================================
 def seedShop():
     items = createItems()
@@ -100,7 +99,7 @@ def seedShop():
 
 
 # =========================================================
-# PLAYER SEED
+# PLAYER SEED (SAFE UPSERT)
 # =========================================================
 def seedPlayers():
     players = [
@@ -151,15 +150,12 @@ def seedPlayers():
 
 
 # =========================================================
-# QUEST SEED (WITH DELETE FIX)
+# QUEST SEED (UPSERT FIXED)
 # =========================================================
 def seedQuests():
     quests = createQuests()
 
     with engine.begin() as conn:
-
-        conn.execute(text("DELETE FROM quests"))
-
         conn.execute(
             text("""
                 INSERT INTO quests (
@@ -168,21 +164,25 @@ def seedQuests():
                 VALUES (
                     :name, :targetEnemy, :target, :rewardXP, :rewardGold
                 )
+                ON CONFLICT (name)
+                DO UPDATE SET
+                    targetenemy = EXCLUDED.targetenemy,
+                    target = EXCLUDED.target,
+                    rewardxp = EXCLUDED.rewardxp,
+                    rewardgold = EXCLUDED.rewardgold
             """),
             quests
         )
 
 
 # =========================================================
-# PLAYER QUEST SEED (WITH DELETE FIX)
+# PLAYER QUEST SEED (UPSERT FIXED)
 # =========================================================
 def seedPlayerQuests():
     quests = createQuests()
     playerIds = [1, 2, 3]
 
     with engine.begin() as conn:
-        conn.execute(text("DELETE FROM playerquests"))
-
         for pid in playerIds:
             for q in quests:
                 conn.execute(
@@ -203,12 +203,14 @@ def seedPlayerQuests():
                             :unlocked,
                             false
                         )
+                        ON CONFLICT (playerid, questname)
+                        DO UPDATE SET
+                            unlocked = EXCLUDED.unlocked
                     """),
                     {
                         "playerid": pid,
                         "questname": q["name"],
                         "unlocked": True if q["name"] == "Goblin Hunt" else False
-
                     }
                 )
 

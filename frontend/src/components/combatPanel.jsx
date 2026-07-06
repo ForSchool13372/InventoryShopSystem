@@ -10,32 +10,38 @@ export default function CombatPanel({
 }) {
     const enemy = fightData?.enemy;
 
+    const [displayLog, setDisplayLog] = useState([]);
+    const [isReplaying, setIsReplaying] = useState(false);
+
+    const lastFightIdRef = useRef(null);
+
+    const log = useMemo(() => fightData?.log ?? [], [fightData?.log]);
+
     const handleReset = () => {
         clearFight();
         setDisplayLog([]);
         setIsReplaying(false);
-        prevLogRef.current = [];
+        lastFightIdRef.current = null;
     };
 
-    const log = useMemo(() => fightData?.log ?? [], [fightData?.log]);
-
-    const [displayLog, setDisplayLog] = useState([]);
-    const [isReplaying, setIsReplaying] = useState(false);
-
-    const prevLogRef = useRef([]);
-
+    // ✅ SINGLE SAFE EFFECT (NO cascading renders)
     useEffect(() => {
-        if (!fightData || fightLoading) return;
-        if (!log.length) return;
+        if (!fightData) return;
 
-        prevLogRef.current = [];
+        // 🧠 prevent re-running on same fightData
+        const fightId = fightData.enemy?.name + "-" + (fightData.log?.length ?? 0);
+        if (lastFightIdRef.current === fightId) return;
+        lastFightIdRef.current = fightId;
+
         setDisplayLog([]);
         setIsReplaying(true);
 
         let i = 0;
+
         const interval = setInterval(() => {
             setDisplayLog(prev => [...prev, log[i]]);
             i++;
+
             if (i >= log.length) {
                 clearInterval(interval);
                 setIsReplaying(false);
@@ -43,8 +49,7 @@ export default function CombatPanel({
         }, 400);
 
         return () => clearInterval(interval);
-    }, [fightData, fightLoading, log]);
-
+    }, [fightData, log]);
 
     const locked = fightLoading || isReplaying;
 
@@ -64,9 +69,9 @@ export default function CombatPanel({
                         cursor: locked ? "not-allowed" : "pointer"
                     }}
                     onClick={() => {
-                        setDisplayLog([]);   // ← FIX: clear old logs instantly
-                        setIsReplaying(true);   // immediately hide old loot
-                        handleFight();       // then start the fight
+                        setDisplayLog([]);
+                        setIsReplaying(true);
+                        handleFight();
                     }}
                     disabled={locked}
                 >
@@ -80,7 +85,7 @@ export default function CombatPanel({
                 <button
                     style={{ ...styles.button, background: "#ef4444" }}
                     onClick={handleReset}
-                    disabled={fightLoading || isReplaying}
+                    disabled={locked}
                 >
                     Reset
                 </button>
@@ -98,7 +103,6 @@ export default function CombatPanel({
                 )}
             </div>
 
-             
             <AnimatePresence>
                 {!isReplaying && fightData?.items?.length > 0 && (
                     <motion.div

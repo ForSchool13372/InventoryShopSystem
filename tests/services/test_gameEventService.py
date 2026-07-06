@@ -1,58 +1,84 @@
-﻿class GameEventService:
-    def __init__(self, player, questManager):
-        self.player = player
+﻿from datetime import datetime, timezone
+import asyncio
+
+
+class GameEventService:
+    def __init__(self, gameState, questManager, wsManager=None):
+        self.gameState = gameState
         self.questManager = questManager
+        self.wsManager = wsManager
         self.eventHistory = []
 
-    # =========================================================
-    # MAIN EVENT HANDLER
-    # =========================================================
     def handleEvent(self, event):
-        eventType = event.get("type")
+        enrichedEvent = self._enrichEvent(event)
+        self._storeEvent(enrichedEvent)
 
-        # Convert controller event types → test event types
+        eventType = enrichedEvent["type"]
+        playerId = enrichedEvent["playerId"]
+        data = enrichedEvent.get("data", {})
+
+        player = self.gameState.getPlayer(playerId)
+        if not player:
+            return
+
         if eventType == "FIGHT_WIN":
-            eventType = "fightWin"
+            player.gainXP(data.get("xp", 0))
+            player.core["gold"] += data.get("gold", 0)
+
         elif eventType == "FIGHT_LOSE":
-            eventType = "fightLose"
+            pass
 
-        # -----------------------------
-        # fightWin
-        # -----------------------------
-        if eventType == "fightWin":
-            xp = event.get("xp", 0)
-            enemy = event.get("enemy")
+        elif eventType in ("BUY", "SELL"):
+            pass
 
-            # player gains XP
-            if hasattr(self.player, "gainXP"):
-                self.player.gainXP(xp)
-            else:
-                self.player.xp += xp
+        if eventType in ("FIGHT_WIN", "FIGHT_LOSE", "BUY", "SELL"):
+            self._broadcastLeaderboard()
 
-            # quest manager updates enemy
-            if self.questManager and enemy:
-                self.questManager.update(enemy)
+    # =========================================================
+    # SAFE BROADCAST (TEST FRIENDLY)
+    # =========================================================
+    def _broadcastLeaderboard(self):
+        if not self.wsManager:
+            return
 
-        # -----------------------------
-        # fightLose
-        # -----------------------------
-        elif eventType == "fightLose":
-            # tests expect hp = 0
-            self.player.hp = 0
+        game = self.gameState.getGameInstance()
+        if not game:
+            return
 
-        # -----------------------------
-        # store event in history
-        # -----------------------------
+        payload = game.getLeaderboard()
+
+        self._dispatchBroadcast(payload)
+
+    def _dispatchBroadcast(self, payload):
+        """
+        Production: async
+        Tests: runs sync (no event loop needed)
+        """
+
+        if asyncio.get_event_loop().is_running():
+            # real server runtime
+            asyncio.create_task(
+                self.wsManager.broadcastLeaderboard(payload)
+            )
+        else:
+            # test runtime (or sync context)
+            coro = self.wsManager.broadcastLeaderboard(payload)
+            asyncio.run(coro)
+
+    # =========================================================
+    # EVENT STORAGE
+    # =========================================================
+    def _storeEvent(self, event):
         self.eventHistory.append(event)
 
-        # keep last 50 events (tests only check limit=2)
-        if len(self.eventHistory) > 50:
-            self.eventHistory = self.eventHistory[-50:]
-
-    # =========================================================
-    # GET EVENTS
-    # =========================================================
     def getEvents(self, limit=None):
-        if limit is None:
-            return list(self.eventHistory)
-        return self.eventHistory[-limit:]
+        events = list(reversed(self.eventHistory))
+        return events[:limit] if limit else events
+
+    def _enrichEvent(self, event):
+        return {
+            "type": event["type"],
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "playerId": event["playerId"],
+            "data": event.get("data", {}),
+        }
