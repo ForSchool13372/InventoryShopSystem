@@ -1,5 +1,6 @@
 ﻿import { useState } from "react";
 import { AnimatePresence } from "framer-motion";
+import soundSystem from "@/utils/soundSystem";
 import InventoryItemCard from "./InventoryItemCard";
 
 function Inventory({ inventory, onSell, theme }) {
@@ -80,8 +81,13 @@ function Inventory({ inventory, onSell, theme }) {
         color: theme.text,
         padding: "20px",
         borderRadius: "18px",
-        boxShadow: "0 12px 35px rgba(0,0,0,0.08)",
-        border: "1px solid rgba(0,0,0,0.05)"
+
+        boxShadow: `
+        0 12px 35px rgba(0,0,0,0.25),
+        0 0 35px rgba(170,59,255,0.28)
+    `,
+
+        border: "1px solid rgba(170,59,255,0.35)"
     };
 
     const buttonBase = {
@@ -117,21 +123,30 @@ function Inventory({ inventory, onSell, theme }) {
             {/* GLOBAL ACTIONS */}
             <div style={{ display: "flex", gap: "8px", marginBottom: "12px" }}>
                 <button
-                    onClick={selectAll}
+                    onClick={() => {
+                        soundSystem.play("click");
+                        selectAll();
+                    }}
                     style={{ ...buttonBase, background: "#374151", color: "white" }}
                 >
                     Select All
                 </button>
 
                 <button
-                    onClick={clearSelection}
+                    onClick={() => {
+                        soundSystem.play("click");
+                        clearSelection();
+                    }}
                     style={{ ...buttonBase, background: "#6b7280", color: "white" }}
                 >
                     Clear
                 </button>
 
                 <button
-                    onClick={() => sellSelected(filteredInventory)}
+                    onClick={() => {
+                        soundSystem.play("click");
+                        sellSelected(filteredInventory);
+                    }}
                     disabled={selectedItems.size === 0}
                     style={{ ...buttonBase, background: "#ef4444", color: "white" }}
                 >

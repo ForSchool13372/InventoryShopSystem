@@ -12,17 +12,21 @@ class CombatService:
                 "enemy": None,
                 "xp": 0,
                 "gold": 0,
-                "log": ["💀 You are already defeated."]
+                "log": ["💀 You are already defeated."],
+                "startingPlayerHp": player.core["hp"],
+                "finalPlayerHp": player.core["hp"]
             }
 
         enemy = secrets.choice(enemies)
+
+        startingHp = enemy.hp
+        startingPlayerHp = player.core["hp"]
 
         log = []
         turn = 1
 
         log.append(f"⚔️ A wild {enemy.name} appears!")
 
-        # Always run at least one turn
         while True:
 
             # PLAYER TURN
@@ -30,39 +34,71 @@ class CombatService:
 
             if random.random() < player.combat["critchance"]:
                 damage *= player.combat["critmultiplier"]
-                log.append(f"Turn {turn}: 💥 CRITICAL HIT! You deal {int(damage)} damage.")
+
+                log.append(
+                    f"Turn {turn}: 💥 CRITICAL HIT! You deal {int(damage)} damage."
+                )
+
             else:
-                log.append(f"Turn {turn}: ⚔️ You deal {damage} damage.")
+                log.append(
+                    f"Turn {turn}: ⚔️ You deal {damage} damage."
+                )
 
             enemy.takeDamage(damage)
 
-            # 🚨 STOP IMMEDIATELY if enemy dies
             if enemy.isDead():
                 break
 
+
             # ENEMY TURN
             actualDamage = player.takeDamage(enemy.attack)
-            log.append(f"Turn {turn}: 🩸 {enemy.name} hits you for {actualDamage} damage.")
 
-            # 🚨 STOP IMMEDIATELY if player dies
+            log.append(
+                f"Turn {turn}: 🩸 {enemy.name} hits you for {actualDamage} damage."
+            )
+
             if player.isDead():
                 break
 
             turn += 1
 
+
+        finalHp = enemy.hp
+        finalPlayerHp = player.core["hp"]
+
+
         # RESULT
         if player.core["hp"] > 0:
             result = "win"
-            log.append(f"🏆 You defeated {enemy.name}!")
-            log.append(f"⭐ +{enemy.xp} XP | 💰 +{enemy.gold} gold")
+
+            log.append(
+                f"🏆 You defeated {enemy.name}!"
+            )
+
+            log.append(
+                f"⭐ +{enemy.xp} XP | 💰 +{enemy.gold} gold"
+            )
+
         else:
             result = "lose"
-            log.append(f"💀 You were defeated by {enemy.name}...")
+
+            log.append(
+                f"💀 You were defeated by {enemy.name}..."
+            )
+
 
         return {
             "result": result,
             "enemy": enemy,
             "xp": enemy.xp,
             "gold": enemy.gold,
-            "log": log
+            "log": log,
+
+            # Enemy HP tracking
+            "startingHp": startingHp,
+            "finalHp": finalHp,
+
+            # Player HP tracking
+            "startingPlayerHp": startingPlayerHp,
+            "finalPlayerHp": finalPlayerHp
         }

@@ -55,12 +55,28 @@ async def test_fight_win(controller):
 
     # side effects should exist
     assert "enemy" in res
+    assert "startingHp" in res["enemy"]
+    assert "finalHp" in res["enemy"]
 
 
 @pytest.mark.asyncio
 async def test_fight_lose_or_generic(controller, monkeypatch):
     # force combat loss path
-    controller.combat.handleFight = lambda p, e: {"result": "lose", "enemy": e}
+    def fakeLose(player, enemies):
+        enemy = enemies[0]
+
+        return {
+            "result": "lose",
+            "enemy": enemy,
+            "startingHp": enemy.hp,
+            "finalHp": enemy.hp
+        }
+
+    monkeypatch.setattr(
+        controller.combat,
+        "handleFight",
+        fakeLose
+    )
 
     res = await controller.fight()
 

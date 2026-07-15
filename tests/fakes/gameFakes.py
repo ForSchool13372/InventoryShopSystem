@@ -7,9 +7,22 @@ from types import SimpleNamespace
 
 class FakeCombat:
     def handleFight(self, player, enemies):
+        enemy = SimpleNamespace(
+            name="goblin",
+            hp=30,
+            maxHp=30,
+            minDamage=1,
+            maxDamage=5,
+            attack=5,
+            xp=10,
+            gold=5
+        )
+
         return {
             "result": "win",
-            "enemy": SimpleNamespace(name="goblin")
+            "enemy": enemy,
+            "startingHp": 30,
+            "finalHp": 0
         }
 
 

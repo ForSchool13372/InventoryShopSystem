@@ -1,13 +1,17 @@
 export const playerStatsStyles = {
     card: (t) => ({
         background: t.cardBg,
-        border: `1px solid ${t.subText}33`,
+        border: "1px solid rgba(170,59,255,0.35)",
         borderRadius: "12px",
         padding: "14px",
         color: t.text,
         display: "flex",
         flexDirection: "column",
-        gap: "12px"
+        gap: "12px",
+        boxShadow: `
+        0 12px 35px rgba(0,0,0,0.25),
+        0 0 35px rgba(170,59,255,0.28)
+    `
     }),
 
     title: (t) => ({

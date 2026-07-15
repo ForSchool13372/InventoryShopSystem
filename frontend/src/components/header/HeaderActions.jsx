@@ -1,4 +1,5 @@
 ﻿import { motion } from "framer-motion";
+import soundSystem from "@/utils/soundSystem";
 
 export default function HeaderActions({
     darkMode,
@@ -6,6 +7,8 @@ export default function HeaderActions({
     setShowInfo,
     setShowUpdateLog
 }) {
+    const playClick = () => soundSystem.play("click");
+
     return (
         <div style={{ display: "flex", gap: "10px" }}>
 
@@ -13,7 +16,10 @@ export default function HeaderActions({
             <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                onClick={() => setShowUpdateLog(true)}
+                onClick={() => {
+                    playClick();
+                    setShowUpdateLog(true);
+                }}
                 style={{
                     padding: "8px 12px",
                     borderRadius: "10px",
@@ -22,7 +28,8 @@ export default function HeaderActions({
                     background: "linear-gradient(180deg, #0ea5e9, #0284c7)",
                     color: "#fff",
                     fontWeight: "700",
-                    boxShadow: "0 10px 25px rgba(14,165,233,0.25)"
+                    boxShadow: "0 10px 25px rgba(14,165,233,0.25)",
+                    whiteSpace: "nowrap"
                 }}
             >
                 📝 Update Log
@@ -32,16 +39,20 @@ export default function HeaderActions({
             <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                onClick={() => setShowInfo(true)}
+                onClick={() => {
+                    playClick();
+                    setShowInfo(true);
+                }}
                 style={{
-                    padding: "8px 12px",
+                    padding: "8px 14px",
                     borderRadius: "10px",
                     border: "1px solid rgba(255,255,255,0.08)",
                     cursor: "pointer",
                     background: "linear-gradient(180deg, #4f46e5, #3730a3)",
                     color: "#fff",
                     fontWeight: "700",
-                    boxShadow: "0 10px 25px rgba(79,70,229,0.25)"
+                    boxShadow: "0 10px 25px rgba(79,70,229,0.25)",
+                    whiteSpace: "nowrap"
                 }}
             >
                 ℹ️ Info
@@ -51,7 +62,10 @@ export default function HeaderActions({
             <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                onClick={toggleDarkMode}
+                onClick={() => {
+                    playClick();
+                    toggleDarkMode();
+                }}
                 style={{
                     padding: "8px 12px",
                     borderRadius: "10px",
@@ -61,11 +75,13 @@ export default function HeaderActions({
                         ? "linear-gradient(180deg, #e5e7eb, #cbd5e1)"
                         : "linear-gradient(180deg, #111827, #0b1220)",
                     color: darkMode ? "#111827" : "#fff",
-                    fontWeight: "700"
+                    fontWeight: "700",
+                    whiteSpace: "nowrap"
                 }}
             >
                 {darkMode ? "Light ☀️" : "Dark 🌙"}
             </motion.button>
+
         </div>
     );
 }

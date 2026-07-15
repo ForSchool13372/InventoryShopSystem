@@ -1,13 +1,26 @@
-﻿import { useState } from "react";
+﻿import { useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import soundSystem from "@/utils/soundSystem";
 import SectionCard from "./SectionCard";
 
 export default function UpdateLogModal({ showUpdateLog, setShowUpdateLog, theme }) {
-
     const [tab, setTab] = useState("current");
 
-    if (!showUpdateLog) return null;
+    // prevents hover spam
+    const lastHoverTime = useRef(0);
+    const HOVER_COOLDOWN = 120; // ms
 
+    const hoverSound = () => {
+        const now = Date.now();
+        if (now - lastHoverTime.current < HOVER_COOLDOWN) return;
+
+        lastHoverTime.current = now;
+        soundSystem.play("hover");
+    };
+
+    const playClick = () => soundSystem.play("click");
+
+    if (!showUpdateLog) return null;
 
     const tabStyle = (active) => ({
         padding: "10px 16px",
@@ -59,15 +72,13 @@ export default function UpdateLogModal({ showUpdateLog, setShowUpdateLog, theme 
                     color: theme.text
                 }}
             >
-                {/* Title */}
+                {/* TITLE */}
                 <h2
                     style={{
                         marginTop: 0,
                         fontSize: "1.4rem",
                         fontWeight: 800,
-                        letterSpacing: "0.5px",
-                        color: "#c7d2fe",
-                        textShadow: "0 0 20px rgba(79,70,229,0.35)"
+                        color: "#c7d2fe"
                     }}
                 >
                     Update Log
@@ -86,18 +97,32 @@ export default function UpdateLogModal({ showUpdateLog, setShowUpdateLog, theme 
                         marginBottom: "10px"
                     }}
                 >
-                    <div style={tabStyle(tab === "current")} onClick={() => setTab("current")}>
+                    <div
+                        style={tabStyle(tab === "current")}
+                        onClick={() => setTab("current")}
+                        onMouseEnter={hoverSound}
+                    >
                         📦 Current
                     </div>
-                    <div style={tabStyle(tab === "planned")} onClick={() => setTab("planned")}>
+
+                    <div
+                        style={tabStyle(tab === "planned")}
+                        onClick={() => setTab("planned")}
+                        onMouseEnter={hoverSound}
+                    >
                         🛠 Planned
                     </div>
-                    <div style={tabStyle(tab === "patches")} onClick={() => setTab("patches")}>
+
+                    <div
+                        style={tabStyle(tab === "patches")}
+                        onClick={() => setTab("patches")}
+                        onMouseEnter={hoverSound}
+                    >
                         📜 Patch Notes
                     </div>
                 </div>
 
-                {/* TAB CONTENT */}
+                {/* CONTENT */}
                 <AnimatePresence mode="wait">
                     {tab === "current" && (
                         <motion.div key="current" {...fadeAnim}>
@@ -139,7 +164,7 @@ export default function UpdateLogModal({ showUpdateLog, setShowUpdateLog, theme 
                     )}
                 </AnimatePresence>
 
-                {/* CLOSE BUTTON */}
+                {/* CLOSE */}
                 <div
                     style={{
                         display: "flex",
@@ -150,7 +175,10 @@ export default function UpdateLogModal({ showUpdateLog, setShowUpdateLog, theme 
                     <motion.button
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
-                        onClick={() => setShowUpdateLog(false)}
+                        onClick={() => {
+                            playClick();
+                            setShowUpdateLog(false);
+                        }}
                         style={{
                             padding: "10px 16px",
                             borderRadius: "10px",
@@ -159,7 +187,7 @@ export default function UpdateLogModal({ showUpdateLog, setShowUpdateLog, theme 
                             background:
                                 "linear-gradient(180deg, #0ea5e9, #0284c7)",
                             color: "#fff",
-                            fontWeight: "700",
+                            fontWeight: 700,
                             boxShadow: "0 10px 25px rgba(14,165,233,0.25)"
                         }}
                     >

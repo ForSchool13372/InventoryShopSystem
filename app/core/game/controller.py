@@ -153,11 +153,16 @@ class Controller:
 
         result = self.combat.handleFight(player, createEnemies())
 
-        if result["result"] == "win":
-            self.questManager.update(result["enemy"].name)
-            self.repos.quest.saveQuests(self.playerId, self.questManager.quests)
+        enemy = result["enemy"]
 
-            loot = self.loot.generateLoot(result["enemy"])
+        if result["result"] == "win":
+            self.questManager.update(enemy.name)
+            self.repos.quest.saveQuests(
+                self.playerId,
+                self.questManager.quests
+            )
+
+            loot = self.loot.generateLoot(enemy)
             self.inventoryService.addItems(self.playerId, loot)
             result["items"] = loot
 
@@ -174,6 +179,18 @@ class Controller:
         await wsManager.broadcastLeaderboard(
             self.leaderboardService.getLeaderboard()
         )
+
+        result["enemy"] = {
+            "name": enemy.name,
+            "startingHp": result["startingHp"],
+            "finalHp": result["finalHp"],
+            "maxHp": enemy.maxHp,
+            "minDamage": enemy.minDamage,
+            "maxDamage": enemy.maxDamage,
+            "attack": enemy.attack,
+            "xp": enemy.xp,
+            "gold": enemy.gold
+        }
 
         return result
 

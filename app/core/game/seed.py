@@ -36,7 +36,7 @@ def createItems():
 
 
 # =========================================================
-# ENEMIES
+# ENEMIES (not persisted here, runtime only)
 # =========================================================
 def createEnemies():
     return [
@@ -70,7 +70,7 @@ def createQuests():
 
 
 # =========================================================
-# SHOP SEED (SAFE UPSERT)
+# SHOP SEED (SAFE UPSERT - DOES NOT WIPE)
 # =========================================================
 def seedShop():
     items = createItems()
@@ -88,18 +88,19 @@ def seedShop():
                 )
                 ON CONFLICT (itemname)
                 DO UPDATE SET
-                    stock = EXCLUDED.stock,
-                    price = EXCLUDED.price,
-                    itemtype = EXCLUDED.itemtype,
-                    description = EXCLUDED.description,
-                    rarity = EXCLUDED.rarity
+                    -- only update if item doesn't exist or you WANT balance changes
+                    stock = shop.stock,
+                    price = shop.price,
+                    itemtype = shop.itemtype,
+                    description = shop.description,
+                    rarity = shop.rarity
             """),
             items
         )
 
 
 # =========================================================
-# PLAYER SEED (SAFE UPSERT)
+# PLAYER SEED (NO OVERWRITE - ONLY INSERT IF MISSING)
 # =========================================================
 def seedPlayers():
     players = [
@@ -120,16 +121,7 @@ def seedPlayers():
                     :attack, :defense, :critchance, :critmultiplier
                 )
                 ON CONFLICT (id)
-                DO UPDATE SET
-                    gold = EXCLUDED.gold,
-                    hp = EXCLUDED.hp,
-                    maxhp = EXCLUDED.maxhp,
-                    level = EXCLUDED.level,
-                    xp = EXCLUDED.xp,
-                    attack = EXCLUDED.attack,
-                    defense = EXCLUDED.defense,
-                    critchance = EXCLUDED.critchance,
-                    critmultiplier = EXCLUDED.critmultiplier
+                DO NOTHING
             """),
             [
                 {
@@ -150,7 +142,7 @@ def seedPlayers():
 
 
 # =========================================================
-# QUEST SEED (UPSERT FIXED)
+# QUEST SEED (INSERT ONLY, NO RESET OF PROGRESS)
 # =========================================================
 def seedQuests():
     quests = createQuests()
@@ -165,18 +157,14 @@ def seedQuests():
                     :name, :targetEnemy, :target, :rewardXP, :rewardGold
                 )
                 ON CONFLICT (name)
-                DO UPDATE SET
-                    targetenemy = EXCLUDED.targetenemy,
-                    target = EXCLUDED.target,
-                    rewardxp = EXCLUDED.rewardxp,
-                    rewardgold = EXCLUDED.rewardgold
+                DO NOTHING
             """),
             quests
         )
 
 
 # =========================================================
-# PLAYER QUEST SEED (UPSERT FIXED)
+# PLAYER QUEST SEED (PRESERVE PROGRESS)
 # =========================================================
 def seedPlayerQuests():
     quests = createQuests()
@@ -205,7 +193,8 @@ def seedPlayerQuests():
                         )
                         ON CONFLICT (playerid, questname)
                         DO UPDATE SET
-                            unlocked = EXCLUDED.unlocked
+                            -- ONLY unlock state can change safely
+                            unlocked = playerquests.unlocked
                     """),
                     {
                         "playerid": pid,
@@ -223,4 +212,4 @@ if __name__ == "__main__":
     seedShop()
     seedQuests()
     seedPlayerQuests()
-    print("Seed complete")
+    print("Seed complete (persistent mode)")

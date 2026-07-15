@@ -6,7 +6,8 @@ const sounds = {
     buy: "/sounds/buy.mp3",
     sell: "/sounds/sell.mp3",
     click: "/sounds/click.mp3",
-    claim: "/sounds/claim.mp3"
+    claim: "/sounds/claim.mp3",
+    hover: "/sounds/hover.mp3"
 };
 
 const play = (type) => {

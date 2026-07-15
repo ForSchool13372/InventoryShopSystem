@@ -112,11 +112,16 @@ function Shop({ items, token, onBuy, theme, playerStats }) {
                         display: "grid",
                         gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
                         gap: "12px",
+
                         maxHeight: "70vh",
                         overflowY: "auto",
-                        paddingTop: "10px",
-                        paddingBottom: "20px",
-                        scrollPaddingTop: "12px"
+
+                        paddingTop: "20px",
+                        paddingBottom: "30px",
+                        paddingLeft: "10px",
+                        paddingRight: "10px",
+
+                        scrollPaddingTop: "20px"
                     }}
                 >
                     {filteredItems.map((item) => (

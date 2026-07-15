@@ -2,15 +2,15 @@
 
 import useGamePage from "./hooks/useGamePage";
 
-import Login from "./components/Login";
+import Login from "./components/login/Login";
 import Shop from "./components/Shop/Shop";
 import Inventory from "./components/inventory/Inventory";
 import PlayerStats from "./components/playerstats/PlayerStats";
 import Toasts from "./components/Toasts";
-import Leaderboard from "./components/Leaderboard";
+import Leaderboard from "./components/leaderboard/Leaderboard";
 import Header from "./components/header/Header";
-import CombatPanel from "./components/combatPanel";
-import { QuestPanel } from "./components/QuestPanel";
+import CombatPanel from "./components/combatpanel/combatPanel";
+import { QuestPanel } from "./components/questpanel/QuestPanel";
 
 import { getTheme } from "./theme";
 import { page, fadeUp } from "./animations";
@@ -104,6 +104,7 @@ function App() {
                 <Header
                     token={token}
                     playerId={playerId}
+                    playerStats={playerStats}
                     darkMode={darkMode}
                     toggleDarkMode={toggleDarkMode}
                     theme={theme}
@@ -192,6 +193,7 @@ function App() {
                                     fightLoading={fightLoading}
                                     handleFight={handleFight}
                                     clearFight={clearFight}
+                                    playerStats={playerStats}
                                 />
                             </div>
                         </Section>

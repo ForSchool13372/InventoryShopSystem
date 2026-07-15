@@ -1,17 +1,17 @@
-﻿# Inventory Shop System (Full-Stack)
+﻿# Realmforge RPG (Full-Stack)
 
 [![Codecov](https://codecov.io/gh/ForSchool13372/InventoryShopSystem/branch/main/graph/badge.svg)](https://codecov.io/gh/ForSchool13372/InventoryShopSystem)
 [![Tests](https://img.shields.io/badge/tests-pytest-green)]()
 [![Backend](https://img.shields.io/badge/backend-FastAPI-009688)]()
 [![Frontend](https://img.shields.io/badge/frontend-React-61DAFB)]()
 
-A full-stack RPG simulation system with authentication, shop economy, inventory, and combat mechanics, built using a production-style FastAPI service-layer architecture and React frontend.
+A full-stack RPG progression system featuring combat, quests, inventory, shop economy, player progression, and real-time state management, built using a production-style FastAPI service-layer architecture and React frontend.
 
 ---
 
 ## 🎮 Live Demo
 
-Real-time gameplay simulation with shop transactions, inventory updates, and player progression.
+Real-time RPG gameplay featuring combat encounters, loot drops, inventory management, quests, and player progression.
 
 ![Demo](assets/demo.gif)
 

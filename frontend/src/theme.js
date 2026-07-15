@@ -2,14 +2,14 @@ export const getTheme = (darkMode) => ({
     isLight: !darkMode,
 
     // Background colors
-    background: darkMode ? "#0b0f19" : "#f8fafc",
+    background: darkMode ? "#050816" : "#f6f7fb",
 
     // Card surfaces
-    cardBg: darkMode ? "#0f172a" : "#ffffff",
+    cardBg: darkMode ? "#0b1224" : "#ffffff",
 
     // Primary text color
-    text: darkMode ? "#e5e7eb" : "#1a1a1a",
+    text: darkMode ? "#f8fafc" : "#111827",
 
     // Secondary text color
-    subText: darkMode ? "#94a3b8" : "#4a4a4a"
+    subText: darkMode ? "#94a3b8" : "#475569"
 });

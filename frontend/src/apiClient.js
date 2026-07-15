@@ -85,6 +85,9 @@ export const loginPlayer = (playerId) => {
 // =========================================================
 export const getPlayer = () => apiRequest(`${API}/api/player`);
 
+export const getPlayerById = (playerId) =>
+    apiRequest(`${API}/api/player/${playerId}`);
+
 export const getInventory = () => apiRequest(`${API}/api/inventory`);
 
 export const getShop = () => apiRequest(`${API}/api/shop`);

@@ -1,4 +1,4 @@
-import { motion } from "framer-motion";
+﻿import { motion } from "framer-motion";
 import { fadeUp } from "../../animations";
 
 export default function HeaderBar({ theme, token, playerId }) {
@@ -13,34 +13,54 @@ export default function HeaderBar({ theme, token, playerId }) {
                 display: "flex",
                 flexDirection: "column",
                 gap: "12px",
-                paddingBottom: "14px",
-                borderBottom: `1px solid ${theme.isLight ? "rgba(0,0,0,0.08)" : "rgba(255,255,255,0.06)"
-                    }`
+                padding: "0",
+                margin: "0",
+                border: "none",
+                boxSizing: "border-box",
+                width: "100%",
+                transform: "translateZ(0)"
             }}
+
         >
             {/* MAIN TITLE */}
             <h1
                 style={{
-                    fontSize: "2.2rem",
-                    fontWeight: 800,
                     margin: 0,
-                    letterSpacing: "-0.5px",
-                    color: theme.text
+                    fontSize: "1.75rem",
+                    fontWeight: 900,
+                    letterSpacing: "1px",
+                    color: theme.text,
+                    textTransform: "uppercase",
+                    textShadow: `
+            0 2px 6px rgba(0,0,0,0.35),
+            0 0 10px rgba(79,70,229,0.35),
+            0 0 20px rgba(79,70,229,0.18)
+        `
                 }}
             >
-                Inventory Shop System
+                Realmforge RPG
             </h1>
 
-            {/* IDENTITY BAR */}
+
+            {/* IDENTITY BAR UNDER TITLE */}
             <div
                 style={{
                     display: "flex",
                     alignItems: "center",
-                    gap: "14px"
+                    gap: "14px",
+                    paddingLeft: "0"
                 }}
             >
                 {/* STATUS PILL */}
-                <div
+                <motion.div
+                    whileHover={{
+                        scale: 1.05,
+                        y: -1,
+                        boxShadow: isLoggedIn
+                            ? "0 0 18px rgba(34,197,94,0.35)"
+                            : "0 0 16px rgba(148,163,184,0.2)"
+                    }}
+                    transition={{ duration: 0.18 }}
                     style={{
                         display: "flex",
                         alignItems: "center",
@@ -55,10 +75,24 @@ export default function HeaderBar({ theme, token, playerId }) {
                             : "1px solid rgba(148,163,184,0.35)",
                         color: isLoggedIn ? "#22c55e" : theme.subText,
                         fontWeight: 700,
-                        fontSize: "0.8rem"
+                        fontSize: "0.8rem",
+                        cursor: "default"
                     }}
                 >
-                    <span
+                    <motion.span
+                        animate={
+                            isLoggedIn
+                                ? {
+                                    scale: [1, 1.3, 1],
+                                    opacity: [1, 0.6, 1]
+                                }
+                                : {}
+                        }
+                        transition={{
+                            duration: 1.8,
+                            repeat: Infinity,
+                            ease: "easeInOut"
+                        }}
                         style={{
                             width: "8px",
                             height: "8px",
@@ -67,11 +101,19 @@ export default function HeaderBar({ theme, token, playerId }) {
                         }}
                     />
                     {isLoggedIn ? "Online" : "Offline"}
-                </div>
+                </motion.div>
 
                 {/* PLAYER BADGE */}
                 {isLoggedIn && (
-                    <div
+                    <motion.div
+                        whileHover={{
+                            scale: 1.04,
+                            y: -2,
+                            boxShadow: theme.isLight
+                                ? "0 10px 24px rgba(59,130,246,0.18)"
+                                : "0 10px 28px rgba(96,165,250,0.25)"
+                        }}
+                        transition={{ duration: 0.18 }}
                         style={{
                             display: "flex",
                             alignItems: "center",
@@ -80,10 +122,10 @@ export default function HeaderBar({ theme, token, playerId }) {
                             borderRadius: "10px",
                             background: theme.cardBg,
                             border: `1px solid ${theme.subText}33`,
-                            boxShadow: "0 4px 12px rgba(0,0,0,0.08)"
+                            boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
+                            cursor: "default"
                         }}
                     >
-                        {/* Avatar Circle */}
                         <div
                             style={{
                                 width: "30px",
@@ -101,21 +143,18 @@ export default function HeaderBar({ theme, token, playerId }) {
                             {`P${playerId}`}
                         </div>
 
-
-                        {/* Player Label */}
                         <span
                             style={{
-                                fontSize: "1rem",
+                                fontSize: "0.5rem",
                                 fontWeight: 600,
                                 color: theme.text
                             }}
                         >
                             Player {playerId}
                         </span>
-                    </div>
+                    </motion.div>
                 )}
 
-                {/* GUEST SUBTITLE */}
                 {!isLoggedIn && (
                     <span
                         style={{

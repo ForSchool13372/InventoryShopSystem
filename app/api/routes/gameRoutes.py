@@ -54,6 +54,18 @@ def getPlayer(game=Depends(getCurrentGame)):
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
 
+@router.get("/player/{playerId}", response_model=PlayerResponse)
+def getPlayerById(playerId: int):
+    game = getCurrentGame(playerId)
+
+    if not game:
+        raise HTTPException(
+            status_code=404,
+            detail="Player not found"
+        )
+
+    return PlayerResponse(**game.getPlayerStats())
+
 
 # =========================================================
 # COMBAT
