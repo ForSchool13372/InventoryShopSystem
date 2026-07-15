@@ -5,7 +5,7 @@ import redis
 load_dotenv()
 
 # =========================================================
-# REDIS CLIENT (LAZY INIT - SAFE FOR TESTS + CI)
+# REDIS CLIENT
 # =========================================================
 
 redisClient = None
